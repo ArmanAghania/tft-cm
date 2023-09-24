@@ -1,0 +1,73 @@
+{% extends "base.html" %}  {# Assuming you have a base.html template #}
+
+{% block content %}
+<div class="container mx-auto mt-10">
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <h2 class="mb-6 text-2xl font-bold">Sales Details</h2>
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="lead">
+                Lead:
+            </label>
+            <p id="lead" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight">
+                {{ object.lead }}
+            </p>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="date_added">
+                Date Added:
+            </label>
+            <p id="date_added" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight">
+                {{ object.date_added }}
+            </p>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="amount">
+                Amount:
+            </label>
+            <p id="amount" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight">
+                {{ object.amount }}
+            </p>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="deposit">
+                Deposit:
+            </label>
+            <p id="deposit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight">
+                {{ object.deposit }}
+            </p>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="new_sales">
+                New Sales:
+            </label>
+            <p id="new_sales" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight">
+                {{ object.new_sales }}
+            </p>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="agent">
+                Agent:
+            </label>
+            <p id="agent" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight">
+                {{ object.agent }}
+            </p>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <a href="{% url 'sales_update' object.pk %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Edit Sales
+            </a>
+            <a href="{% url 'sales_delete' object.pk %}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                Delete Sales
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

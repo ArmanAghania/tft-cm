@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load tailwind_filters %}
+{% load static %}
+{% block content %}
+<div class="container px-5 py-24 mx-auto flex flex-wrap">
+        
+    <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
+        <div>
+            <h1 class="text-4xl text-gray-800">Bank Numbers</h1>
+        </div>
+        {% if request.user.is_organisor %}
+        <div>
+            <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:bank-create' %}">
+                New Number 
+            </a>
+            <br/>
+            <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:bank-export' %}">
+                Export
+            </a>
+            <br/>
+            <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:bank-import' %}">
+                Import
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <div class="w-full justify-center">
+        <!-- Search Input -->
+    <input type="text" id="searchInput" placeholder="Search leads..." class="p-2 border rounded w-full" onkeyup="searchLeads()">
+
+<!-- Search Results Container (initially empty) -->
+<div id="searchResults" class="w-full mt-2 border-t border-gray-200 bg-white shadow-lg max-h-64 overflow-auto z-10"></div>
+    <div class="flex flex-col w-full">
+        <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+            <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200" id="lead-table">
+                <thead class="bg-gray-50">
+                    <tr>
+                        
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onClick="sortTable(0)" >
+                        Cell Phone Number
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onClick="sortTable(2)">
+                            Agent
+                            </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onClick="sortTable(5)">
+                            Date Added
+                            </th>
+                        <th scope="col" class="relative px-6 py-3">
+                            <span class="sr-only">Edit</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    {% for bank_number in page_obj %}
+                        <tr class="bg-white">
+                            <form method="post" >
+                            
+                            
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                {{ bank_number.number }}
+                            </td>
+                            
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if bank_number.agent %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        {{ bank_number.agent }}
+                                    </span>
+                                {% else %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        Unassigned
+                                    </span>
+                                {% endif %}
+                            </td>
+                           
+                            
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ bank_number.date_added_jalali }}
+                            
+                        </form>
+                        </tr>
+                       
+                    {% empty %}
+
+
+                    {% endfor %}
+
+                </tbody>
+            </table>
+            <div class="pagination flex justify-center">
+                <span class="step-links ">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">&laquo; First Page</a>
+                        <a href="?page={{ page_obj.previous_page_number }} " class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">Previous Page</a>
+                    {% endif %}
+            
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+            
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">Next Page</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">Last Page &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+            
+            
+            <script>
+                function sortTable(colIndex) {
+                    var table, rows, switching, i, x, y, shouldSwitch;
+                    table = document.getElementById("lead-table");
+                    switching = true;
+        
+                    while (switching) {
+                        switching = false;
+                        rows = table.rows;
+        
+                        for (i = 1; i < (rows.length - 1); i++) {
+                            shouldSwitch = false;
+                            x = rows[i].getElementsByTagName("TD")[colIndex];
+                            y = rows[i + 1].getElementsByTagName("TD")[colIndex];
+        
+                            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        }
+        
+                        if (shouldSwitch) {
+                            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                            switching = true;
+                        }
+                    }
+                }
+
+                async function searchLeads() {
+                    const query = document.getElementById('searchInput').value;
+                    const resultsContainer = document.getElementById('searchResults');
+            
+                    if (query.length >= 3) {  // Adjust this if you want to start searching after a different number of characters.
+                        const response = await fetch(`search_bank/?q=${query}`);
+                        const results = await response.json();
+            
+                        resultsContainer.innerHTML = '';  // Clear previous results
+            
+                        results.forEach(number => {
+                            const leadDiv = document.createElement('div');
+                            leadDiv.innerHTML = number.agent ? 
+                                `<div class="border-b border-gray-200 p-2 hover:bg-gray-100">${number.number} - ${number.agent}</div>` : 
+                                `<div class="border-b border-gray-200 p-2 hover:bg-gray-100">${number.number}</div>`;
+                            resultsContainer.appendChild(leadDiv);
+                        });
+                    } else {
+                        resultsContainer.innerHTML = '';  // Clear the results if query is too short
+                    }
+                }
+            </script>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    {% endblock %}

@@ -1,0 +1,1693 @@
+import logging
+import datetime
+from typing import Any
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.http.response import JsonResponse
+from django.shortcuts import render, redirect, reverse, get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponse
+from django.views import generic, View
+from agents.mixins import OrganisorAndLoginRequiredMixin
+from .models import (Lead, 
+                     Agent, 
+                     Category, 
+                     FollowUp, 
+                     BankNumbers, 
+                     User, 
+                     Sale,
+                     DuplicateToFollow,
+                     Source,
+                     Team)
+from .forms import (LeadModelForm,
+                    CustomUserCreationForm,
+                    AssignAgentForm,
+                    LeadCategoryUpdateForm,
+                    CategoryModelForm,
+                    FollowUpModelForm,
+                    FormatForm,
+                    LeadImportForm,
+                    BankImportForm,
+                    BankModelForm,
+                    DistributionForm,
+                    CategorySelectionForm,
+                    ConfirmationForm,
+                    LeadSearchForm,
+                    SaleModelForm,
+                    SourceModelForm,
+                    TeamModelForm,
+)
+from .resources import LeadResource, BankResource
+import csv
+from django.db.models import Sum, Count
+from datetime import timedelta, date, datetime
+from django.db.models.functions import Length
+import pandas as pd
+import random
+from formtools.wizard.views import SessionWizardView
+from django.utils.datastructures import MultiValueDictKeyError
+from django.utils import timezone
+from .filters import LeadFilter
+from django.urls import reverse_lazy
+from django.forms import modelformset_factory
+from chartjs.views.lines import BaseLineChartView
+from dateutil.relativedelta import relativedelta
+from extensions.utils import jalali_converter
+import jdatetime
+from telegram import Bot
+import asyncio
+from aiolimiter import AsyncLimiter
+from background_task import background
+import json
+import requests
+from django.conf import settings
+from asgiref.sync import sync_to_async
+
+logger = logging.getLogger(__name__)
+
+
+# CRUD+L - Create, Retrieve, Update and Delete + List
+
+
+class SignupView(generic.CreateView):
+    template_name = "registration/signup.html"
+    form_class = CustomUserCreationForm
+
+    def get_success_url(self):
+        return reverse("login")
+
+class LandingPageView(generic.TemplateView):
+    template_name = "landing.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect("dashboard")
+        return super().dispatch(request, *args, **kwargs)
+
+class DashboardView(OrganisorAndLoginRequiredMixin, generic.TemplateView):
+    template_name = "dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(DashboardView, self).get_context_data(**kwargs)
+
+        user = self.request.user
+
+        # How many leads we have in total
+        total_lead_count = Lead.objects.filter(organisation=user.userprofile).count()
+
+        # How many new leads in the last 30 days
+        thirty_days_ago = date.today() - timedelta(days=30)
+
+        total_in_past30 = Lead.objects.filter(
+            organisation=user.userprofile, date_added__gte=thirty_days_ago
+        ).count()
+
+        # How many converted leads in the last 30 days
+        converted_category = Category.objects.get(name="Converted")
+        converted_in_past30 = Lead.objects.filter(
+            organisation=user.userprofile,
+            category=converted_category,
+            converted_date__gte=thirty_days_ago,
+        ).count()
+
+        context.update(
+            {
+                "total_lead_count": total_lead_count,
+                "total_in_past30": total_in_past30,
+                "converted_in_past30": converted_in_past30,
+            }
+        )
+        return context
+
+def landing_page(request):
+    return render(request, "landing.html")
+
+class BankListView(OrganisorAndLoginRequiredMixin, generic.ListView):
+    template_name = "leads/bank_list.html"
+    context_object_name = "bank"
+    paginate_by = 10
+
+    def get_queryset(self):
+        user = self.request.user
+        
+        if user.is_organisor:
+            queryset = BankNumbers.objects.filter(organisation=user.userprofile).order_by('date_added')
+
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        total_bank_numbers = BankNumbers.objects.all().count()
+        bank_list = BankNumbers.objects.filter(organisation=user.userprofile).order_by('date_added')
+        context["bank_numbers"] = {
+            'bank_total': total_bank_numbers if total_bank_numbers else 0,
+            'bank_list': bank_list if bank_list else 'خالی'
+        }
+
+        return context
+
+def bank_list(request):
+    user = request.user
+    bank_n = BankNumbers.objects.filter(organisation=user.userprofile).sort_by
+
+    context = {'bank_n': bank_n}
+    return render(request, "leads/bank_list.html", context)
+    
+class BankCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
+    template_name = "leads/bank_create.html"
+    form_class = BankModelForm
+
+    def get_success_url(self):
+        return reverse("leads:bank-list")
+
+    def form_valid(self, form):
+        user = self.request.user
+        if BankNumbers.objects.filter(organisation=user.userprofile, number=form.cleaned_data["number"]).exists() == False:
+            bank = form.save(commit=False)
+            bank.organisation = self.request.user.userprofile
+            bank.save()
+            
+            messages.success(self.request, "شماره بانک جدید ایجاد شد.")
+            return super(BankCreateView, self).form_valid(form)
+        else: 
+            messages.error(self.request, "این شماره در بانک وجود دارد")
+            return redirect("leads:bank-list")
+
+def bank_create(request):
+    form = BankModelForm()
+    if request.method == "POST":
+        form = BankModelForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("/bank")
+    context = {"form": form}
+    return render(request, "leads/bank_create.html", context)
+
+class LeadListView(LoginRequiredMixin, generic.ListView):
+    template_name = "leads/lead_list.html"
+    context_object_name = "leads"
+    paginate_by = 10
+    
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Lead.objects.filter(organisation=user.userprofile).order_by('date_assigned')
+        else:
+            queryset = Lead.objects.filter(
+                organisation=user.agent.organisation, agent__isnull=False
+            ).order_by('date_assigned')
+            # filter for the agent that is logged in
+            queryset = queryset.filter(agent__user=user)
+
+        # Handling the search query
+        query = self.request.GET.get('query', None)
+        if query:
+            queryset = queryset.filter(phone_number__icontains=query)
+
+        self.filterset = LeadFilter(self.request.GET, queryset=queryset)
+    
+        return self.filterset.qs
+            
+    
+    
+    
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        if user.is_organisor:
+            queryset = Lead.objects.filter(
+                organisation=user.userprofile, agent__isnull=True
+            )
+            context["unassigned_leads"] = queryset
+
+        # Calculate agent sales data
+        agent = self.request.user.id
+        today = date.today()
+
+        base_filter_args = {}
+        if not user.is_organisor:
+            base_filter_args["lead__agent__user"] = user
+
+       
+        total_bank_numbers = BankNumbers.objects.filter(organisation=user.userprofile).count()
+
+        leads_not_in_bank_count = Lead.objects.filter(organisation=user.userprofile).exclude(phone_number__in=BankNumbers.objects.filter(organisation=user.userprofile).values('number')).count()
+
+        context["bank_numbers"] = {
+            'bank_total': total_bank_numbers if total_bank_numbers else 0,
+        }
+
+        context["new_leads"] = {
+            'new_leads_total': leads_not_in_bank_count if leads_not_in_bank_count else 0,
+        }
+
+        # Add the search form
+        context["search_form"] = LeadSearchForm(self.request.GET or None)
+
+        context["filter_form"] = self.filterset.form
+
+       # Calculate agent sales data
+        agent = self.request.user.id
+        today = date.today()
+        print(today)
+        # Calculate date range for weekly and monthly sales
+        one_week_ago = today - timedelta(days=7)
+        one_month_ago = today - timedelta(days=30)
+
+        base_filter_args = {}
+        if user.is_organisor:
+            # Aggregate sales
+            daily_sales = Sale.objects.filter(organisation=user.userprofile, date__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
+            weekly_sales = Sale.objects.filter(organisation=user.userprofile, date__date__range=(one_week_ago, today)).aggregate(Sum('amount'))['amount__sum'] or 0
+            monthly_sales = Sale.objects.filter(organisation=user.userprofile, date__date__range=(one_month_ago, today)).aggregate(Sum('amount'))['amount__sum'] or 0
+            total_sales = Sale.objects.filter(organisation=user.userprofile, ).aggregate(Sum('amount'))['amount__sum'] or 0
+        elif user.is_agent:
+            # Aggregate sales
+            daily_sales = Sale.objects.filter(organisation=user.agent.organisation,agent = user.agent, date__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
+            weekly_sales = Sale.objects.filter(organisation=user.agent.organisation,agent = user.agent, date__date__range=(one_week_ago, today)).aggregate(Sum('amount'))['amount__sum'] or 0
+            monthly_sales = Sale.objects.filter(organisation=user.agent.organisation,agent = user.agent, date__date__range=(one_month_ago, today)).aggregate(Sum('amount'))['amount__sum'] or 0
+            total_sales = Sale.objects.filter(organisation=user.agent.organisation, agent = user.agent ).aggregate(Sum('amount'))['amount__sum'] or 0
+
+        context["sales_data"] = {
+            'daily_sales': daily_sales,
+            'weekly_sales': weekly_sales,
+            'monthly_sales': monthly_sales,
+            'total_sales': total_sales,
+        }
+
+        # Convert today's Gregorian date to Jalali
+        today_jalali = jdatetime.date.fromgregorian(date=datetime.today())
+
+        # Calculate the start of the Jalali month
+        start_date_jalali = jdatetime.date(today_jalali.year, today_jalali.month, 1)
+
+        # Convert the start and end Jalali dates back to Gregorian
+        start_date = start_date_jalali.togregorian()
+        end_date = datetime.today()
+
+        if user.is_organisor:
+            # Filter leads for the organisation in the last month
+            total_leads = Lead.objects.filter(organisation=user.userprofile, date_assigned__range=(start_date, end_date)).count()
+            total_leads_overall = Lead.objects.filter(organisation=user.userprofile).count()
+
+            print(total_leads)
+            # Filter sales made by the organisation in the last month
+            converted_leads = Sale.objects.filter(organisation=user.userprofile, date__range=(start_date, end_date)).values('lead').distinct().count()
+            converted_leads_overall = Sale.objects.filter(organisation=user.userprofile).values('lead').distinct().count()
+
+            print(converted_leads)
+            if total_leads == 0:
+                percentage = 0
+            else:
+                percentage = (converted_leads / total_leads) * 100
+
+            if total_leads_overall == 0:
+                percentage_overall = 0
+            else:
+                percentage_overall = (converted_leads_overall / total_leads_overall) * 100
+
+            agents_data = {
+                'total_leads': total_leads,
+                'converted_leads': converted_leads,
+                'percentage': percentage,
+                'total_leads_overall': total_leads_overall,
+                'converted_leads_overall': converted_leads_overall,
+                'percentage_overall': percentage_overall,
+            }
+
+        else:
+            # Filter leads for the agent in the last month
+            total_leads = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user, date_assigned__range=(start_date, end_date)).count()
+            total_leads_overall = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user).count()
+
+            # Filter sales made by the agent in the last month
+            converted_leads = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user, date__range=(start_date, end_date)).values('lead').distinct().count()
+            converted_leads_overall = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user).values('lead').distinct().count()
+
+            if total_leads == 0:
+                percentage = 0
+            else:
+                percentage = (converted_leads / total_leads) * 100
+
+            if total_leads_overall == 0:
+                percentage_overall = 0
+            else:
+                percentage_overall = (converted_leads_overall / total_leads_overall) * 100
+
+            agents_data = {
+                'total_leads': total_leads,
+                'converted_leads': converted_leads,
+                'percentage': percentage,
+                'total_leads_overall': total_leads_overall,
+                'converted_leads_overall': converted_leads_overall,
+                'percentage_overall': percentage_overall,
+            }
+
+        context['agents_data'] = agents_data
+        
+        return context
+
+def lead_list(request):
+    leads = Lead.objects.all().sort_by
+
+    context = {'leads': leads}
+    return render(request, "leads/lead_list.html", context)
+
+class LeadDetailView(LoginRequiredMixin, generic.DetailView):
+    template_name = "leads/lead_detail.html"
+    context_object_name = "lead"
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Lead.objects.filter(organisation=user.userprofile)
+        else:
+            queryset = Lead.objects.filter(organisation=user.agent.organisation)
+            # filter for the agent that is logged in
+            queryset = queryset.filter(agent__user=user)
+        return queryset
+
+def lead_detail(request, pk):
+    lead = Lead.objects.get(id=pk)
+    context = {"lead": lead}
+    return render(request, "leads/lead_detail.html", context)
+
+class LeadCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
+    template_name = "leads/lead_create.html"
+    form_class = LeadModelForm
+
+    def get_success_url(self):
+        return reverse("leads:lead-list")
+    
+    def get_form_kwargs(self):
+        kwargs = super(LeadCreateView, self).get_form_kwargs()
+        kwargs.update({'user': self.request.user})  # Pass user to the form
+        return kwargs
+
+    def form_valid(self, form):
+        user = self.request.user
+        if BankNumbers.objects.filter(organisation=user.userprofile, number=form.cleaned_data["phone_number"]).exists() == False:
+            lead = form.save(commit=False)
+            lead.organisation = self.request.user.userprofile
+            lead.save()
+            send_mail(
+                subject="A lead has been created",
+                message="Go to the site to see the new lead",
+                from_email="test@test.com",
+                recipient_list=["test2@test.com"],
+            )
+            messages.success(self.request, "You have successfully created a lead")
+            return super(LeadCreateView, self).form_valid(form)
+        else: 
+            bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=form.cleaned_data["phone_number"])
+            DuplicateToFollow.objects.get_or_create(user = self.request.user, number=form.cleaned_data["phone_number"], organisation_id=self.request.user.userprofile.id, agent=bank_number.agent)
+            messages.error(self.request, "Lead already exists!")
+            return redirect("leads:lead-list")
+
+def lead_create(request):
+    form = LeadModelForm()
+    if request.method == "POST":
+        form = LeadModelForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("/leads")
+    context = {"form": form}
+    return render(request, "leads/lead_create.html", context)
+
+class LeadUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
+    
+    template_name = "leads/lead_update.html"
+    form_class = LeadModelForm
+    
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_organisor:
+                queryset = Lead.objects.filter(organisation=user.userprofile)
+        else:
+            queryset = Lead.objects.filter(
+                organisation=user.agent.organisation
+                )
+            queryset = queryset.filter(agent__user=user)
+        return queryset
+
+    
+    def get_success_url(self):
+        return reverse("leads:lead-list")
+
+    def form_valid(self, form):
+        form.save()
+        messages.info(self.request, "You have successfully updated this lead")
+        return super(LeadUpdateView, self).form_valid(form)
+
+def lead_update(request, pk):
+    lead = Lead.objects.get(id=pk)
+    form = LeadModelForm(instance=lead)
+    if request.method == "POST":
+        form = LeadModelForm(request.POST, instance=lead)
+        if form.is_valid():
+            form.save()
+            return redirect("/leads")
+    context = {"form": form, "lead": lead}
+    return render(request, "leads/lead_update.html", context)
+
+class LeadDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
+    template_name = "leads/lead_delete.html"
+
+    def get_success_url(self):
+        return reverse("leads:lead-list")
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        return Lead.objects.filter(organisation=user.userprofile)
+
+
+def lead_delete(request, pk):
+    lead = Lead.objects.get(id=pk)
+    lead.delete()
+    return redirect("/leads")
+
+class AssignAgentView(OrganisorAndLoginRequiredMixin, generic.FormView):
+    template_name = "leads/assign_agent.html"
+    form_class = AssignAgentForm
+
+    def get_form_kwargs(self, **kwargs):
+        kwargs = super(AssignAgentView, self).get_form_kwargs(**kwargs)
+        kwargs.update({"request": self.request})
+        return kwargs
+
+    def get_success_url(self):
+        return reverse("leads:lead-list")
+
+    def form_valid(self, form):
+        agent = form.cleaned_data["agent"]
+        lead = Lead.objects.get(id=self.kwargs["pk"])
+        lead.agent = agent
+        lead.save()
+        return super(AssignAgentView, self).form_valid(form)
+
+class CategoryListView(LoginRequiredMixin, generic.ListView):
+    template_name = "leads/category_list.html"
+    context_object_name = "category_list"
+
+    def get_context_data(self, **kwargs):
+        context = super(CategoryListView, self).get_context_data(**kwargs)
+        user = self.request.user
+
+        if user.is_organisor:
+            queryset = Lead.objects.filter(organisation=user.userprofile)
+        else:
+            queryset = Lead.objects.filter(organisation=user.agent.organisation)
+
+        context.update(
+            {"unassigned_lead_count": queryset.filter(category__isnull=True).count()}
+        )
+        return context
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Category.objects.filter(organisation=user.userprofile)
+        else:
+            queryset = Category.objects.filter(organisation=user.agent.organisation)
+        return queryset
+
+class CategoryDetailView(LoginRequiredMixin, generic.DetailView):
+    template_name = "leads/category_detail.html"
+    context_object_name = "category"
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Category.objects.filter(organisation=user.userprofile)
+        else:
+            queryset = Category.objects.filter(organisation=user.agent.organisation)
+        return queryset
+
+class CategoryCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
+    template_name = "leads/category_create.html"
+    form_class = CategoryModelForm
+
+    def get_success_url(self):
+        return reverse("leads:category-list")
+
+    def form_valid(self, form):
+        category = form.save(commit=False)
+        category.organisation = self.request.user.userprofile
+        category.save()
+        return super(CategoryCreateView, self).form_valid(form)
+
+class CategoryUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
+    template_name = "leads/category_update.html"
+    form_class = CategoryModelForm
+
+    def get_success_url(self):
+        return reverse("leads:category-list")
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Category.objects.filter(organisation=user.userprofile)
+        else:
+            queryset = Category.objects.filter(organisation=user.agent.organisation)
+        return queryset
+
+class CategoryDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
+    template_name = "leads/category_delete.html"
+
+    def get_success_url(self):
+        return reverse("leads:category-list")
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Category.objects.filter(organisation=user.userprofile)
+        else:
+            queryset = Category.objects.filter(organisation=user.agent.organisation)
+        return queryset
+
+class LeadCategoryUpdateView(LoginRequiredMixin, generic.UpdateView):
+    template_name = "leads/lead_category_update.html"
+    form_class = LeadCategoryUpdateForm
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Lead.objects.filter(organisation=user.userprofile)
+        else:
+            queryset = Lead.objects.filter(organisation=user.agent.organisation)
+            # filter for the agent that is logged in
+            queryset = queryset.filter(agent__user=user)
+        return queryset
+
+    def get_success_url(self):
+        return reverse("leads:lead-detail", kwargs={"pk": self.get_object().id})
+
+    def form_valid(self, form):
+        lead_before_update = self.get_object()
+        instance = form.save(commit=False)
+        converted_category = Category.objects.get(name="Converted")
+        if form.cleaned_data["category"] == converted_category:
+            # update the date at which this lead was converted
+            if lead_before_update.category != converted_category:
+                # this lead has now been converted
+                instance.converted_date = datetime.datetime.now()
+        instance.save()
+        return super(LeadCategoryUpdateView, self).form_valid(form)
+
+class FollowUpCreateView(LoginRequiredMixin, generic.CreateView):
+    template_name = "leads/followup_create.html"
+    form_class = FollowUpModelForm
+
+    def get_success_url(self):
+        return reverse("leads:lead-detail", kwargs={"pk": self.kwargs["pk"]})
+
+    def get_context_data(self, **kwargs):
+        context = super(FollowUpCreateView, self).get_context_data(**kwargs)
+        context.update({"lead": Lead.objects.get(pk=self.kwargs["pk"])})
+        return context
+
+    def form_valid(self, form):
+        lead = Lead.objects.get(pk=self.kwargs["pk"])
+        followup = form.save(commit=False)
+        followup.lead = lead
+        followup.save()
+        return super(FollowUpCreateView, self).form_valid(form)
+
+class FollowUpUpdateView(LoginRequiredMixin, generic.UpdateView):
+    template_name = "leads/followup_update.html"
+    form_class = FollowUpModelForm
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = FollowUp.objects.filter(lead__organisation=user.userprofile)
+        else:
+            queryset = FollowUp.objects.filter(
+                lead__organisation=user.agent.organisation
+            )
+            # filter for the agent that is logged in
+            queryset = queryset.filter(lead__agent__user=user)
+        return queryset
+
+    def get_success_url(self):
+        return reverse("leads:lead-detail", kwargs={"pk": self.get_object().lead.id})
+
+class FollowUpDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
+    template_name = "leads/followup_delete.html"
+
+    def get_success_url(self):
+        followup = FollowUp.objects.get(id=self.kwargs["pk"])
+        return reverse("leads:lead-detail", kwargs={"pk": followup.lead.pk})
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = FollowUp.objects.filter(lead__organisation=user.userprofile)
+        else:
+            queryset = FollowUp.objects.filter(
+                lead__organisation=user.agent.organisation
+            )
+            # filter for the agent that is logged in
+            queryset = queryset.filter(lead__agent__user=user)
+        return queryset
+
+class LeadJsonView(generic.View):
+    def get(self, request, *args, **kwargs):
+        qs = list(Lead.objects.all().values("first_name", "last_name", "age"))
+
+        return JsonResponse(
+            {
+                "qs": qs,
+            }
+        )
+
+class LeadExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.FormView):
+    template_name = "leads/lead_export.html"
+    context_object_name = "leads"
+    model = Lead
+    form_class = FormatForm
+
+    def post(self, request, **kwargs):
+        user = self.request.user
+        leads = Lead.objects.filter(organisation=user.userprofile)
+        qs = self.get_queryset()
+        dataset = LeadResource().export(qs)
+
+        format = request.POST.get("format")
+
+        if format == "xls":
+            ds = dataset.xls
+
+        elif format == "csv":
+            ds = dataset.csv
+
+        else:
+            ds = dataset.json
+
+        response = HttpResponse(ds, content_type=f"{format}")
+        response["Content-Disposition"] = f"attachment; filename=leads.{format}"
+        return response
+
+    def get_success_url(self):
+        return reverse("leads:lead-list")
+
+class BankExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.FormView):
+    template_name = "leads/bank_export.html"
+    
+    context_object_name = "bank_numbers"
+    model = BankNumbers
+    form_class = FormatForm
+
+    def post(self, request, **kwargs):
+        user = self.request.user
+        leads = BankNumbers.objects.filter(organisation=user.userprofile)
+        qs = self.get_queryset()
+        dataset = BankResource().export(qs)
+
+        format = request.POST.get("format")
+
+        if format == "xls":
+            ds = dataset.xls
+
+        elif format == "csv":
+            ds = dataset.csv
+
+        else:
+            ds = dataset.json
+
+        response = HttpResponse(ds, content_type=f"{format}")
+        response["Content-Disposition"] = f"attachment; filename=leads.{format}"
+        return response
+
+    def get_success_url(self):
+        return reverse("leads:lead-list")
+
+def run_async(func, *args, **kwargs):
+    new_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(new_loop)
+    try:
+        return new_loop.run_until_complete(func(*args, **kwargs))
+    finally:
+        new_loop.close()
+
+class LeadImportView(OrganisorAndLoginRequiredMixin, View):
+    template_name = 'leads/lead_import.html'
+
+    def get(self, request):
+       
+        form = LeadImportForm()
+        return render(request, self.template_name, {'form': form})
+
+    def lead_preprocess(self, csv_file):
+        # Convert the CSV reader to a list
+        all_numbers = csv_file
+        all_numbers = [item[0] for item in all_numbers if len(item) > 0]
+        
+        for number in all_numbers:
+            number.replace(' ', '')
+            number.replace('+', '00')
+            number.replace('(', '')
+            number.replace(')', '')
+
+        # Remove duplicates
+        all_numbers = list(set(all_numbers))  
+
+
+        return all_numbers
+
+    def post(self, request):
+        form = LeadImportForm(request.POST, request.FILES)
+        user = self.request.user
+
+        if form.is_valid():
+            csv_file = form.cleaned_data['csv_file']
+            source = form.cleaned_data['source']
+            try:
+                csv_file = pd.read_csv(csv_file, header=None, dtype=str).values.tolist()
+                total_leads = 0
+                duplicates = 0
+                added_leads = 0
+                foreign_added = 0
+                all_numbers = self.lead_preprocess(csv_file)
+                for number in all_numbers:
+                    total_leads += 1
+                    category = form.cleaned_data['category']
+                    if BankNumbers.objects.filter(organisation=user.userprofile, number=number).exists():
+                        duplicates += 1
+                        bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=number)
+                        DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
+                    elif Lead.objects.filter(organisation=user.userprofile, phone_number=number).exists():
+                        duplicates += 1
+                        lead = Lead.objects.get(organisation=user.userprofile, phone_number=number)
+                        DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=lead.agent)
+                    else:
+                        if len(number) == 11:
+                            added_leads += 1
+                            Lead.objects.create(phone_number=number, category=category, source=source, organisation=user.userprofile)
+                        else:
+                            foreign_added += 1
+                            category, created = Category.objects.get_or_create(name='خارجی', organisation=user.userprofile)
+                            Lead.objects.create(phone_number=number, category=category, source=source, organisation=user.userprofile)
+
+                    
+
+                # Send a message to Telegram
+                TOKEN = settings.TELEGRAM_TOKEN
+                chat_id = "-1001707390535"
+                message = f'''
+                منبع: {source}\n
+                تعداد شماره‌های ورودی: {total_leads}\n
+                تعداد شماره‌های تکراری: {duplicates}\n
+                تعداد شماره‌های خالص خارجی: {foreign_added}\n
+                تعدادشماره‌‌های خالص ایرانی: {added_leads}\n\n\n'''
+
+                bot = Bot(TOKEN)
+                result = run_async(bot.send_message, chat_id=chat_id, text=message)
+
+                return redirect("leads:lead-list")
+            except Exception as e:
+                print(e)
+                # Catch any error related to file processing and display a message to the user
+                messages.error(request, f'''An error occurred while processing the file. Review the file and upload again.
+                                            THE FILE SHOULD HAVE ONE COLUMN OF ONLY NUMBERS!''')
+
+        return render(request, self.template_name, {'form': form})
+
+class BankImportView(OrganisorAndLoginRequiredMixin, View):
+    template_name = 'leads/bank_import.html'
+
+    def get(self, request):
+        form = BankImportForm()
+        return render(request, self.template_name, {'form': form})
+        
+
+    def post(self, request):
+        form = BankImportForm(request.POST, request.FILES)
+        user = request.user.userprofile.id
+        
+
+        if form.is_valid():
+            csv_file = form.cleaned_data['csv_file']
+            agent = form.cleaned_data['agent']
+            decoded_file = csv_file.read().decode('utf-8').splitlines()
+
+            # Convert the CSV reader to a list
+            all_numbers = list(csv.reader(decoded_file))
+
+            # Flatten the list if your CSV has a single column, otherwise adjust accordingly
+            all_numbers = [item[0] for item in all_numbers]
+
+            # Apply the preprocessing
+            all_numbers = [string.replace(' ', '') for string in all_numbers]
+            all_numbers = [string.replace('+', '00') for string in all_numbers]
+            all_numbers = [string.replace('(', '') for string in all_numbers]
+            all_numbers = [string.replace(')', '') for string in all_numbers]
+
+            # Remove duplicates
+            all_numbers = list(set(all_numbers))
+
+            # Update phone numbers
+            updated_phone_numbers = []
+            for num in all_numbers:
+                if num[0] == '0':
+                    updated_phone_numbers.append(num)
+                elif num[0] == '9' and len(num) == 10:
+                    updated_phone_numbers.append('0' + num)
+                else:
+                    updated_phone_numbers.append('00' + num)
+            
+            all_numbers = updated_phone_numbers
+
+            for number in all_numbers:
+                if BankNumbers.objects.filter(number=number).exists():
+                    continue
+                else:
+                    BankNumbers.objects.create(number=number, organisation_id=user, agent = agent)
+            
+            return redirect("leads:bank-list")
+
+        return render(request, self.template_name, {'form': form})    
+
+FORMS = [
+    ("category", CategorySelectionForm),
+    ("distribution_info", DistributionForm),
+    ("confirm", ConfirmationForm),  # No form for confirmation, just an action button.
+]
+
+@background(schedule=5)
+def notify_background(df=None):
+    asyncio.run(notify_agents_via_telegram(df))
+
+async def notify_agents_via_telegram(df):
+        
+        TOKEN = settings.TELEGRAM_TOKEN
+        bot = Bot(TOKEN)
+
+        # Initialize the limiter: 5 messages every 30 seconds
+        limiter = AsyncLimiter(5, 30)
+        data_list = json.loads(df)
+
+        @sync_to_async
+        def get_agent_by_alt_name(name):
+            return User.objects.get(alt_name=name)
+        
+        for agent_name, phone_data in data_list.items():
+            if phone_data == {}:
+                continue
+            else:
+                agent = await get_agent_by_alt_name(agent_name)
+                today = jdatetime.datetime.now().strftime('%Y/%m/%d')
+                rank = agent.rank
+                chat_id = '-1001707390535'# agent.chat_id
+                if not chat_id:
+                    print(f"No chat_id found for agent: {agent_name}")
+                    continue
+                
+                # Acquire a token. If rate limit is exceeded, this will wait until it's possible to proceed.
+                await limiter.acquire()
+
+                # message = f"Hello, here are your new leads for {agent_name} Rank {rank}:\n\n"
+                if rank == 1:
+                    message = f'''
+                        🥇
+                        {today} 
+
+                        {agent_name}
+                        رنک : {rank}
+                        ارجاع : {len(phone_data.values())}\n\n'''
+                    
+                    # Iterate over the phone data and add each phone number to the message.
+                    for i, lead_details in enumerate(phone_data.values()):
+                        message += f"{i + 1}. {lead_details['phone_number']} \n"
+                elif rank == 2:
+                    message = f'''
+                        🥈
+                        {today} 
+
+                        {agent_name}
+                        رنک : {rank}
+                        ارجاع : {len(phone_data.values())}\n\n'''
+                    
+                    # Iterate over the phone data and add each phone number to the message.
+                    for i, lead_details in enumerate(phone_data.values()):
+                        message += f"{i + 1}. {lead_details['phone_number']} \n"
+                
+                elif rank == 3:
+                    message = f'''
+                        🥉
+                        {today} 
+
+                        {agent_name}
+                        رنک : {rank}
+                        ارجاع : {len(phone_data.values())}\n\n'''
+                    
+                    # Iterate over the phone data and add each phone number to the message.
+                    for i, lead_details in enumerate(phone_data.values()):
+                        message += f"{i + 1}. {lead_details['phone_number']} \n"
+
+                elif rank == 4:
+                    message = f'''
+                        🏅
+                        {today} 
+
+                        {agent_name}
+                        رنک : آموزش
+                        ارجاع : {len(phone_data.values())}\n\n'''
+                    
+                    # Iterate over the phone data and add each phone number to the message.
+                    for i, lead_details in enumerate(phone_data.values()):
+                        message += f"{i + 1}. {lead_details['phone_number']} \n"
+
+                await bot.send_message(chat_id=chat_id, text=message)
+
+class LeadDistributionWizard(SessionWizardView):
+    form_list = FORMS
+    template_name = 'leads/wizard.html'
+
+    
+
+    def get_form(self, step=None, data=None, files=None):
+        form = super().get_form(step, data, files)
+        
+        # Handle the data passing for the form. For example, if you need the category ID for the 'distribution_info' form
+        if step == 'distribution_info' and data:
+            try:
+                category = Category.objects.get(pk=data.get('category'))
+                form.initial = {'category': category}
+            except (MultiValueDictKeyError, Category.DoesNotExist):
+                pass
+        
+        return form
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form=form, **kwargs)
+        
+        if self.steps.current == 'distribution_info':
+            category_data = self.get_cleaned_data_for_step('category')
+            
+            if category_data:
+                category = category_data['category']
+
+                # Calculate lead details
+                context.update(self.calculate_lead_details(category))
+            
+        elif self.steps.current == 'confirm':
+            # Set up data for confirmation
+            context = self.setup_confirmation_data(context)
+
+        return context
+
+    def calculate_lead_details(self, category):
+        category = self.get_cleaned_data_for_step('category')['category']
+        category_id = category.id
+
+        leads = Lead.objects.filter(category=category_id, agent__isnull=True)
+        new_leads = leads.exclude(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).count()
+        new_912_leads = leads.filter(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).count()
+        foreign_or_wrong_leads = leads.annotate(phone_length=Length('phone_number')).exclude(phone_length=11).count()
+
+        total_new_leads = new_leads + new_912_leads
+        active_agents_count = self.get_active_agents_count()
+
+        recommended_leads_per_agent = self.compute_initial_distribution(total_new_leads, active_agents_count, category)
+        self.request.session['total_new_leads'] = total_new_leads
+        return {
+            'total_new_leads': total_new_leads,
+            'new_912_leads': new_912_leads,
+            'foreign_or_wrong_leads': foreign_or_wrong_leads,
+            'active_agents': active_agents_count,
+            'recommended_leads_per_agent': recommended_leads_per_agent,
+            'display_data': True,
+        }
+    def assign_leads_to_agent(self, df):
+        if df is None: 
+            return
+
+        for col in df:
+            alt_name = df[col].name
+            numbers = df[col].values
+
+            try:
+                user = User.objects.get(alt_name=alt_name)
+                agent = Agent.objects.get(user=user)
+                for number in numbers:
+                    lead = Lead.objects.get(phone_number=number['phone_number'])
+                    lead.agent = agent
+                    lead.save()
+
+                    # Add the lead's number to BankNumbers if it doesn't exist
+                    bank_number, created = BankNumbers.objects.get_or_create(
+                        number=lead.phone_number, 
+                        defaults={'agent': agent, 'organisation': agent.organisation}
+                    )
+                    if not created:
+                        print(f"Number {lead.phone_number} already exists in BankNumbers.")
+            except User.DoesNotExist:
+                print(f"No user found with alt_name: {alt_name}")
+            except Agent.DoesNotExist:
+                print(f"No agent found for user with alt_name: {alt_name}")
+            except Lead.DoesNotExist:
+                print(f"No lead found with phone_number: {number}")
+
+    def done(self, form_list, **kwargs):
+        context = self.get_context_data(None)
+        df_rank1 = context.get('df_rank1')
+        df_rank2 = context.get('df_rank2')
+        df_rank3 = context.get('df_rank3')
+        df_rank4 = context.get('df_rank4')
+        df_rank1_json = df_rank1.to_json()
+        df_rank2_json = df_rank2.to_json()
+        df_rank3_json = df_rank3.to_json()
+        df_rank4_json = df_rank4.to_json()
+        
+        self.assign_leads_to_agent(df_rank1)
+        self.assign_leads_to_agent(df_rank2)
+        self.assign_leads_to_agent(df_rank3)
+        self.assign_leads_to_agent(df_rank4)
+
+        notify_background(df_rank1_json)
+        notify_background(df_rank2_json)
+        notify_background(df_rank3_json)
+        notify_background(df_rank4_json)
+        
+        
+        return redirect('leads:lead-list')
+    
+
+    def compute_initial_distribution(self, N, active_agents_count, category=None):
+        if category:
+            N = Lead.objects.filter(category=category, agent__isnull=True).count()
+        # Step 1: Assign numbers to each rank based on the percentages
+        rank1_numbers = N * 40 // 100
+        rank2_numbers = N * 30 // 100
+        rank3_numbers = N * 20 // 100
+        rank4_numbers = N * 10 // 100
+
+        # Step 2: Get initial each_rank values
+        each_rank1 = rank1_numbers // active_agents_count['rank_1']
+        each_rank2 = rank2_numbers // active_agents_count['rank_2']
+        each_rank3 = rank3_numbers // active_agents_count['rank_3']
+        each_rank4 = rank4_numbers // active_agents_count['rank_4']
+
+        # Step 3: Adjust each_rank values if necessary
+        total_numbers_assigned = (
+            each_rank1 * active_agents_count['rank_1']
+            + each_rank2 * active_agents_count['rank_2']
+            + each_rank3 * active_agents_count['rank_3']
+            + each_rank4 * active_agents_count['rank_4']
+        )
+        while total_numbers_assigned > N:
+            each_rank1 -= 1
+            each_rank2 = each_rank1 - 1
+            each_rank3 = each_rank2 - 1
+            each_rank4 = each_rank3
+            total_numbers_assigned = (
+                each_rank1 * active_agents_count['rank_1']
+                + each_rank2 * active_agents_count['rank_2']
+                + each_rank3 * active_agents_count['rank_3']
+                + each_rank4 * active_agents_count['rank_4']
+            )
+
+        # Step 4: Distribute remaining numbers equally among all agents
+        remaining_numbers = N - total_numbers_assigned
+        extra_numbers_per_agent = remaining_numbers // (
+            active_agents_count['rank_1']
+            + active_agents_count['rank_2']
+            + active_agents_count['rank_3']
+            + active_agents_count['rank_4']
+        )
+        each_rank1 += extra_numbers_per_agent
+        each_rank2 += extra_numbers_per_agent
+        each_rank3 += extra_numbers_per_agent
+        each_rank4 += extra_numbers_per_agent
+
+        return {
+            "rank1": each_rank1 if each_rank1 else 0,
+            "rank2": each_rank2 if each_rank2 else 0,
+            "rank3": each_rank3 if each_rank3 else 0,
+            "rank4": each_rank4 if each_rank4 else 0,
+            "remaining": N - total_numbers_assigned - extra_numbers_per_agent * (
+                active_agents_count['rank_1']
+                + active_agents_count['rank_2']
+                + active_agents_count['rank_3']
+                + active_agents_count['rank_4']
+            ),
+        }
+
+    def distribute_leads(self, unassigned_leads, unassigned_912_leads, recommended_leads_per_agent):
+        # This function will distribute the leads to the agents using pandas
+        # and return a dataframe with the distribution
+        active_agents_rank1 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=1, user__is_active=True).values('user__alt_name')]
+        active_agents_rank2 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=2, user__is_active=True).values('user__alt_name')]
+        active_agents_rank3 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=3, user__is_active=True).values('user__alt_name')]
+        active_agents_rank4 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=4, user__is_active=True).values('user__alt_name')]
+
+        random.shuffle(unassigned_leads)
+        random.shuffle(unassigned_912_leads)
+
+        dist_list = unassigned_912_leads + unassigned_leads
+        random.shuffle(dist_list)
+
+        df_rank1 = pd.DataFrame(columns=active_agents_rank1)
+        df_rank2 = pd.DataFrame(columns=active_agents_rank2)
+        df_rank3 = pd.DataFrame(columns=active_agents_rank3)
+        df_rank4 = pd.DataFrame(columns=active_agents_rank4)
+
+        for i in range(recommended_leads_per_agent["rank1"]):
+            df_rank1.loc[len(df_rank1)] = dist_list[:len(df_rank1.columns)]
+            dist_list = dist_list[len(df_rank1.columns):]
+
+        for i in range(recommended_leads_per_agent["rank2"]):
+            df_rank2.loc[len(df_rank2)] = dist_list[:len(df_rank2.columns)]
+            dist_list = dist_list[len(df_rank2.columns):]
+
+        for i in range(recommended_leads_per_agent["rank3"]):
+            df_rank3.loc[len(df_rank3)] = dist_list[:len(df_rank3.columns)]
+            dist_list = dist_list[len(df_rank3.columns):]
+
+        for i in range(recommended_leads_per_agent["rank4"]):
+            df_rank4.loc[len(df_rank4)] = dist_list[:len(df_rank4.columns)]
+            dist_list = dist_list[len(df_rank4.columns):]
+        
+        return df_rank1, df_rank2, df_rank3, df_rank4
+
+    def get_active_agents_count(self):
+        active_agents_count = {
+            'rank_1': Agent.objects.filter(user__rank=1, user__is_active=True).count(),
+            'rank_2': Agent.objects.filter(user__rank=2, user__is_active=True).count(),
+            'rank_3': Agent.objects.filter(user__rank=3, user__is_active=True).count(),
+            'rank_4': Agent.objects.filter(user__rank=4, user__is_active=True).count(),
+        }
+        return active_agents_count
+
+    def setup_confirmation_data(self, context):
+        distribution_data = self.get_cleaned_data_for_step('distribution_info')
+        
+        category = Category.objects.get(pk=self.get_cleaned_data_for_step('category')['category'].id)        
+    
+
+        unassigned_leads = list(Lead.objects.filter(agent__isnull=True, category=category).exclude(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
+        unassigned_912_leads = list(Lead.objects.filter(agent__isnull=True, category=category, phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
+
+        recommended_leads_per_agent = distribution_data
+
+        print(recommended_leads_per_agent)
+        df_rank1, df_rank2, df_rank3, df_rank4 = self.distribute_leads(unassigned_leads, unassigned_912_leads, recommended_leads_per_agent)
+        context.update({
+            'df_rank1': df_rank1,
+            'df_rank2': df_rank2,
+            'df_rank3': df_rank3,
+            'df_rank4': df_rank4,
+            'df_rank1_json': df_rank1.to_json(orient='records'),
+            'df_rank2_json': df_rank2.to_json(orient='records'),
+            'df_rank3_json': df_rank3.to_json(orient='records'),
+            'df_rank4_json': df_rank4.to_json(orient='records'),
+            'display_distribution': True,
+        })
+
+        return context
+
+class SearchLeadsView(View):
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get('q', '')
+        user = request.user
+        leads = Lead.objects.none()  # Default to no leads
+
+        if hasattr(user, 'is_organisor') and user.is_organisor:
+            leads = Lead.objects.filter(
+                organisation=user.userprofile.id, phone_number__icontains=query)
+        elif hasattr(user, 'is_agent') and user.is_agent:
+            leads = Lead.objects.filter(
+                agent__user=user, phone_number__icontains=query)
+        data = []
+        for lead in leads:
+            if lead.category:
+                data.append({'id': lead.id, 'phone_number': lead.phone_number, 'category': lead.category.name})
+
+            else:
+                data.append({'id': lead.id, 'phone_number': lead.phone_number})
+        
+        return JsonResponse(data, safe=False)
+    
+class SearchBankView(View):
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get('q', '')
+        user = request.user
+        numbers = BankNumbers.objects.none()  # Default to no leads
+        
+        if hasattr(user, 'is_organisor') and user.is_organisor:
+            numbers = BankNumbers.objects.filter(
+                organisation=user.userprofile.id, number__icontains=query)
+        data = []
+        for number in numbers:
+            if number.agent:
+                data.append({'id': number.id, 'number': number.number, 'agent': number.agent.user.alt_name})
+            else:
+                data.append({'id': number.id, 'number': number.number})
+
+        return JsonResponse(data, safe=False)
+    
+class MyDayView(LoginRequiredMixin, generic.ListView):
+    template_name = 'leads/my_day.html'
+    context_object_name = 'leads_today'
+
+    def fetch_unsplash_image(self):
+        url = "https://api.unsplash.com/photos/random"
+        headers = {
+            "Authorization": "Client-ID 0RZY8EPO_QZhkKRv7sI2Q4RfOZaimD8tQEnhPVRnTAM"  # Replace with your API key
+        }
+        params = {
+            "orientation": "landscape",
+            "query": "luxury",
+        }
+        response = requests.get(url, headers=headers, params=params)
+        data = response.json()
+        return data['urls']['full']
+
+    def get_queryset(self):
+        today = timezone.now().date()
+        # Note: You are subtracting 1 from user ID. Is this intentional?
+        return Lead.objects.filter(agent__user=self.request.user, date_assigned=today)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.now().date()
+        context['background_image'] = self.fetch_unsplash_image()
+        context['duplicates_to_follow'] = DuplicateToFollow.objects.filter(agent__user = self.request.user, date_added = today)
+
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if not hasattr(request.user, 'is_agent') or not request.user.is_agent:
+            return redirect('leads:lead-list') 
+        return super().dispatch(request, *args, **kwargs) 
+    
+class SaleCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
+    template_name = "leads/sales_create.html"
+    form_class = SaleModelForm
+
+    def get_success_url(self):
+        return reverse("leads:lead-detail", kwargs={"pk": self.kwargs["pk"]})
+
+    def get_context_data(self, **kwargs):
+        context = super(SaleCreateView, self).get_context_data(**kwargs)
+        context.update({"lead": Lead.objects.get(pk=self.kwargs["pk"])})
+        return context
+
+    def form_valid(self, form):
+        lead = Lead.objects.get(pk=self.kwargs["pk"])
+        sale = form.save(commit=False)
+        sale.lead = lead
+        sale.agent = sale.lead.agent  # Assuming the user is logged in and has an associated agent
+        sale.save()
+        return super(SaleCreateView, self).form_valid(form)
+
+class SaleUpdateView(LoginRequiredMixin, generic.UpdateView):
+    template_name = "leads/sales_update.html"
+    form_class = SaleModelForm
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Sale.objects.filter(organisation=user.userprofile, lead=self.kwargs['pk'])
+        else:
+            queryset = Sale.objects.filter(
+                lead__organisation=user.agent.organisation
+            )
+            # filter for the agent that is logged in
+            queryset = queryset.filter(lead=self.kwargs['pk'])
+        print(queryset)
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super(SaleUpdateView, self).get_context_data(**kwargs)
+        context.update({"lead": Lead.objects.get(pk=self.kwargs["pk"])})
+        return context
+
+    def get_success_url(self):
+        return reverse("leads:lead-detail", kwargs={"pk": self.get_object().lead.id})
+
+class LeadSalesEditView(OrganisorAndLoginRequiredMixin, generic.FormView):
+    template_name = 'leads/sales_update.html'
+    form_class = modelformset_factory(Sale, form=SaleModelForm, extra=0)
+
+    def get_success_url(self):
+        return reverse("leads:lead-detail", kwargs={"pk": self.kwargs['pk']})
+
+    def get_form_kwargs(self):
+        kwargs = super(LeadSalesEditView, self).get_form_kwargs()
+        sale_instances = Sale.objects.filter(lead_id=self.kwargs['pk'])
+        print(sale_instances)
+        kwargs.update({
+            'queryset': sale_instances,
+        })
+        return kwargs
+
+    def form_valid(self, formset):
+        instances = formset.save(commit=False)
+        for obj in instances:
+            obj.save()
+        return super(LeadSalesEditView, self).form_valid(formset)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        sale_instances = Sale.objects.filter(lead_id=self.kwargs['pk'])
+        context['formset'] = self.get_form()
+        context['lead'] = get_object_or_404(Lead, pk=self.kwargs['pk'])
+        context['sale_instances'] = sale_instances
+        return context    
+        
+class SaleDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
+    model = Sale
+    template_name = "leads/sales_delete.html"
+    
+    def get_success_url(self):
+        return reverse("leads:lead-detail", kwargs={"pk": self.object.lead.pk})
+
+    def get_object(self, queryset=None):
+        sale_pk = self.kwargs.get("pk")
+        sale = get_object_or_404(Sale, pk=sale_pk)
+        print(sale)
+        return sale
+    
+    def delete(self, request, *args, **kwargs):
+        # This will delete the object
+        response = super().delete(request, *args, **kwargs)
+        
+        # Check if it's an AJAX call
+        if request.is_ajax():
+            # Return a JSON response
+            return JsonResponse({"success": True})
+        
+        # Otherwise, return the normal response
+        return response
+    
+class SaleListView(OrganisorAndLoginRequiredMixin, generic.ListView):
+    template_name = "leads/sales_list.html"
+    context_object_name = "sales"
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Sale.objects.filter(lead__organisation=user.userprofile).order_by('date')
+        else:
+            queryset = Sale.objects.filter(
+                lead__organisation=user.agent.organisation
+            )
+            # filter for the agent that is logged in
+            queryset = queryset.filter(lead__agent__user=user)
+        return queryset
+
+def jalali_converter(date):
+    """Convert a Gregorian date to a Jalali date string."""
+    jalali_date = jdatetime.date.fromgregorian(date=date)
+    return jalali_date.strftime('%Y-%m-%d')
+
+def get_month_dates():
+    # Get the current Jalali date
+    jalali_today = jdatetime.date.today()
+
+    # Determine the start of the Jalali month
+    jalali_start_of_month = jdatetime.date(jalali_today.year, jalali_today.month, 1)
+
+    # Determine the end of the Jalali month (by getting the last day of the month)
+    if jalali_today.month in [1, 2, 3, 4, 5, 6]:
+        last_day = 31
+    elif jalali_today.month in [7, 8, 9, 10, 11]:
+        last_day = 30
+    else:  # Esfand
+        if jdatetime.date(jalali_today.year, 12, 29).isleap():
+            last_day = 30
+        else:
+            last_day = 29
+
+    jalali_end_of_month = jdatetime.date(jalali_today.year, jalali_today.month, last_day)
+
+    # Convert the start and end of the Jalali month to Gregorian
+    gregorian_start_of_month = jalali_start_of_month.togregorian()
+    gregorian_end_of_month = jalali_end_of_month.togregorian()
+
+    # Generate dates for the entire Jalali month
+    delta = gregorian_end_of_month - gregorian_start_of_month
+    return [gregorian_start_of_month + timedelta(days=i) for i in range(delta.days + 1)]
+
+def get_week_dates():
+    today = timezone.now().date()
+    days_since_saturday = (today.weekday() - 5) % 7
+    saturday = today - timedelta(days=days_since_saturday)
+    return [saturday + timedelta(days=i) for i in range(7)]
+
+def get_6_month_dates():
+    today = timezone.now().date()
+    jalali_today = jdatetime.date.fromgregorian(date=today)
+    jalali_month_starts = []
+    
+    for i in range(6):
+        day_of_month = jalali_today.day
+        # Subtract days to reach the first of the month
+        first_of_jalali_month = jalali_today - jdatetime.timedelta(days=day_of_month - 1)
+        jalali_month_starts.append(first_of_jalali_month)
+        # Move to the previous month
+        jalali_today = first_of_jalali_month - jdatetime.timedelta(days=1)
+    
+    return [start_date.togregorian() for start_date in jalali_month_starts][::-1]
+
+JALALI_MONTH_NAMES = {
+    1: "فروردین",
+    2: "اردیبهشت",
+    3: "خرداد",
+    4: "تیر",
+    5: "مرداد",
+    6: "شهریور",
+    7: "مهر",
+    8: "آبان",
+    9: "آذر",
+    10: "دی",
+    11: "بهمن",
+    12: "اسفند"
+}
+
+def get_year_dates():
+    today = timezone.now().date()
+    return [today.replace(year=today.year - i, month=1, day=1) for i in range(12)][::-1]
+
+class DailySalesChart(BaseLineChartView):
+
+    def __init__(self, request=None):
+        self.request = request
+        super().__init__()
+
+    def get_labels(self):
+        self.gregorian_dates = get_month_dates()
+        return [jalali_converter(date) for date in self.gregorian_dates]
+
+    def get_data(self):
+        user = self.request.user
+        daily_sales = []
+        for date in self.gregorian_dates:
+            if user.is_organisor:
+                sales_for_day = Sale.objects.filter(lead__organisation=user.userprofile, date__date=date).aggregate(Sum('amount'))['amount__sum'] or 0
+            else:
+                sales_for_day = Sale.objects.filter(lead__agent__user=user, date__date=date).aggregate(Sum('amount'))['amount__sum'] or 0
+            daily_sales.append(sales_for_day)
+        return [daily_sales]
+
+class WeeklySalesChart(BaseLineChartView):
+
+    def __init__(self, request=None):
+        self.request = request
+        super().__init__()
+        
+    def get_labels(self):
+        self.gregorian_dates = get_week_dates()
+        return [f"{date.strftime('%A')} ({jalali_converter(date)})" for date in self.gregorian_dates]
+
+    def get_data(self):
+        user = self.request.user
+        weekly_sales = []
+        for start_date in self.gregorian_dates:
+            end_date = start_date + timedelta(days=6)  # One day range for each day of the week
+            if user.is_organisor:
+                sales_for_week = Sale.objects.filter(lead__organisation=user.userprofile, date__date=(start_date)).aggregate(Sum('amount'))['amount__sum'] or 0
+            else:
+                sales_for_week = Sale.objects.filter(lead__agent__user=user, date__date=(start_date)).aggregate(Sum('amount'))['amount__sum'] or 0
+            weekly_sales.append(sales_for_week)
+        return [weekly_sales]
+
+class MonthlySalesChart(BaseLineChartView):
+
+    def __init__(self, request=None):
+        self.request = request
+        super().__init__()
+
+    def get_labels(self):
+        self.gregorian_dates = get_6_month_dates()
+        jalali_dates = [jdatetime.date.fromgregorian(date=greg_date) for greg_date in self.gregorian_dates]
+        return [JALALI_MONTH_NAMES[jalali_date.month] for jalali_date in jalali_dates]
+
+    def get_data(self):
+        user = self.request.user
+        monthly_sales = []
+        for start_date in self.gregorian_dates:
+            greg_end_date = start_date + relativedelta(months=1) - timedelta(days=1)
+            if user.is_organisor:
+                sales_for_month = Sale.objects.filter(lead__organisation=user.userprofile, date__date__range=(start_date, greg_end_date)).aggregate(Sum('amount'))['amount__sum'] or 0
+            else:
+                sales_for_month = Sale.objects.filter(lead__agent__user=user, date__date__range=(start_date, greg_end_date)).aggregate(Sum('amount'))['amount__sum'] or 0
+            monthly_sales.append(sales_for_month)
+        return [monthly_sales]
+    
+class YearlySalesChart(BaseLineChartView):
+
+    def __init__(self, request=None):
+        self.request = request
+        super().__init__()
+
+    def get_labels(self):
+        self.gregorian_dates = get_year_dates()
+        return [jalali_converter(date).split('-')[0] for date in self.gregorian_dates]  # Only show the year
+
+    def get_data(self):
+        user = self.request.user
+        yearly_sales = []
+        for start_date in self.gregorian_dates:
+            end_date = start_date.replace(year=start_date.year + 1) - timedelta(days=1)
+            if user.is_organisor:
+                sales_for_year = Sale.objects.filter(lead__organisation=user.userprofile, date__date__range=(start_date, end_date)).aggregate(Sum('amount'))['amount__sum'] or 0
+            else:
+                sales_for_year = Sale.objects.filter(lead__agent__user=user, date__date__range=(start_date, end_date)).aggregate(Sum('amount'))['amount__sum'] or 0
+            yearly_sales.append(sales_for_year)
+        return [yearly_sales]
+
+class SourceListView(OrganisorAndLoginRequiredMixin, generic.ListView):
+    template_name = "leads/source_list.html"
+    context_object_name = "source_list"
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        
+        queryset = Source.objects.filter(organisation=user.userprofile)
+        queryset.values('pk', 'name').annotate(lead_count=Count('leads'))
+        return queryset
+
+class SourceDetailView(OrganisorAndLoginRequiredMixin, generic.DetailView):
+    template_name = "leads/source_detail.html"
+    context_object_name = "source"
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        queryset = Source.objects.filter(organisation=user.userprofile)
+        
+        return queryset
+
+class SourceCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
+    template_name = "leads/source_create.html"
+    form_class = SourceModelForm
+
+    def get_success_url(self):
+        return reverse("leads:source-list")
+
+    def form_valid(self, form):
+        source = form.save(commit=False)
+        source.organisation = self.request.user.userprofile
+        source.save()
+        return super(SourceCreateView, self).form_valid(form)
+
+class SourceUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
+    template_name = "leads/source_update.html"
+    form_class = SourceModelForm
+
+    def get_success_url(self):
+        return reverse("leads:source-list")
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        queryset = Source.objects.filter(organisation=user.userprofile)
+        
+        return queryset
+
+class SourceDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
+    template_name = "leads/source_delete.html"
+
+    def get_success_url(self):
+        return reverse("leads:source-list")
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        queryset = Source.objects.filter(organisation=user.userprofile)
+       
+        return queryset
+
+class TeamCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
+    model = Team
+    form_class = TeamModelForm
+    template_name = 'leads/team_create.html'
+
+    def get_success_url(self):
+        return reverse("leads:team-list")
+    
+    def get_form_kwargs(self):
+        kwargs = super(TeamCreateView, self).get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+class TeamUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
+    model = Team
+    form_class = TeamModelForm
+    template_name = 'leads/team_update.html'
+
+    def get_success_url(self):
+        return reverse("leads:team-list")
+    
+    def get_form_kwargs(self):
+        kwargs = super(TeamUpdateView, self).get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+class TeamDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
+    model = Team
+    template_name = 'leads/team_delete.html'
+    def get_success_url(self):
+        return reverse("leads:team-list")
+
+class TeamDetailView(OrganisorAndLoginRequiredMixin, generic.DetailView):
+    model = Team
+    template_name = 'leads/team_detail.html'  
+
+class TeamListView(LoginRequiredMixin, generic.ListView):
+    template_name = "leads/team_list.html"
+    context_object_name = "team_list"
+    queryset = Team.objects.all()
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_organisor:
+            return Team.objects.filter(organisation=user.userprofile).annotate(member_count=Count('members'))
+        
+        else:
+            return Team.objects.filter(leaders=user).annotate(member_count=Count('members'))
+
+        
+###TODO --->   912 logic - Foreign Logic -  deploy the website...
+

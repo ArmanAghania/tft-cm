@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load tailwind_filters %}
+{% load i18n %}
+
+{% block head %}
+{{ wizard.form.media }}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container mx-auto my-6">
+    <div class="mb-6">
+        <p class="text-lg font-bold">Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+        <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-list' %}">
+            Back to leads
+        </a>
+    </div>
+
+    {% if display_data %}
+    <div class="bg-gray-100 p-5 rounded shadow-md">
+        <h2 class="text-xl mb-4 font-semibold">Lead Information</h2>
+        <h3 class="mb-3 text-md font-semibold">Total Unassigned Leads: <span class="font-medium text-blue-600">{{ total_new_leads }}</span></h3>
+        <h3 class="mb-3 text-md font-semibold">Unassigned 912 Leads: <span class="font-medium text-blue-600">{{ new_912_leads }}</span></h3>
+        <h3 class="mb-3 text-md font-semibold">Foreign or Wrong Leads: <span class="font-medium text-blue-600">{{ foreign_or_wrong_leads }}</span></h3>
+        <h3 class="mb-3 text-md font-semibold">Active Agents:</h3>
+        <ul class="list"> 
+            <li class="pl-4"> Rank 1:<span class="font-medium text-blue-600">   {{ active_agents.rank_1 }}</span></li>  
+            <li class="pl-4"> Rank 2:<span class="font-medium text-blue-600">   {{ active_agents.rank_2 }}</span></li>  
+            <li class="pl-4"> Rank 3:<span class="font-medium text-blue-600">   {{ active_agents.rank_3 }}</span></li>  
+            <li class="pl-4"> Rank 4:<span class="font-medium text-blue-600">   {{ active_agents.rank_4 }}</span></li>
+        </ul> 
+    </br>
+        <h3 class="mb-3 text-md font-semibold">Recommended Leads Per Agent: </h3>
+        <ul class="list">
+            <li class="pl-4">Rank 1:<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank1 }}</span></li> 
+            <li class="pl-4">Rank 2:<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank2 }}</span></li> 
+            <li class="pl-4">Rank 3:<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank3 }}</span></li>
+            <li class="pl-4">Rank 4:<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank4 }}</span></li>
+        </ul>
+    </br>
+        <h3 class="mb-3 text-md font-semibold">Remaining Numbers: <span id="remaining-numbers" class="text-green-500 font-bold">{{ recommended_leads_per_agent.remaining }}</span></h3>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const rank1Input = document.getElementById("id_distribution_info-rank1");
+            const rank2Input = document.getElementById("id_distribution_info-rank2");
+            const rank3Input = document.getElementById("id_distribution_info-rank3");
+            const rank4Input = document.getElementById("id_distribution_info-rank4");
+            const remainingDisplay = document.getElementById("remaining-numbers");
+            const nextButton = document.getElementById("next-button");
+        
+            function updateRemaining() {
+                const total = {{ total_new_leads }};
+                const rank1 = parseInt(rank1Input.value);
+                const rank2 = parseInt(rank2Input.value);
+                const rank3 = parseInt(rank3Input.value);
+                const rank4 = parseInt(rank4Input.value);
+                const rank1_pop = {{ active_agents.rank_1 }}
+                const rank2_pop = {{ active_agents.rank_2 }}
+                const rank3_pop = {{ active_agents.rank_3 }}
+                const rank4_pop = {{ active_agents.rank_4 }}
+    
+        
+                const remaining = total - (rank1*rank1_pop + rank2*rank2_pop + rank3*rank3_pop + rank4*rank4_pop);
+                remainingDisplay.textContent = remaining.toString();
+        
+                // Change colors based on conditions
+                if (remaining < 0) {
+                    nextButton.disabled = true;
+                    nextButton.classList.remove("bg-green-500", "hover:bg-green-700");
+                    nextButton.classList.add("bg-red-500", "hover:bg-red-700");
+                    remainingDisplay.classList.add("text-red-500");
+                    remainingDisplay.classList.remove("text-green-500");
+    
+                    
+                } else {
+                    nextButton.disabled = false;
+                    nextButton.classList.add("bg-green-500", "hover:bg-green-700");
+                    nextButton.classList.remove("bg-red-500", "hover:bg-red-700");
+                    remainingDisplay.classList.remove("text-red-500");
+                    remainingDisplay.classList.add("text-green-500");
+                    remainingDisplay.classList.remove("text-red-500");
+                }
+            }
+        
+            // Event listeners for input change
+            rank1Input.addEventListener("input", updateRemaining);
+            rank2Input.addEventListener("input", updateRemaining);
+            rank3Input.addEventListener("input", updateRemaining);
+            rank4Input.addEventListener("input", updateRemaining);
+        
+            // Initial calculation
+            updateRemaining();
+        });
+    </script>
+    {% endif %}
+
+    <form action="" method="post" class="mt-6">
+        {% csrf_token %}
+        
+        {{ wizard.management_form }}
+        {% if wizard.form.forms %}
+            {{ wizard.form.management_form }}
+            {% for form in wizard.form.forms %}
+            <div class="mb-3">
+                <div class="mb-3">
+                    <input id="rank1-input" type="number" value="{{ recommended_leads_per_agent.rank1 }}" />
+                </div>
+                <div class="mb-3">
+                    <input id="rank2-input" type="number" value="{{ recommended_leads_per_agent.rank2 }}" />
+                </div>
+                <div class="mb-3">
+                    <input id="rank3-input" type="number" value="{{ recommended_leads_per_agent.rank3 }}" />
+                </div>
+                <div class="mb-3">
+                    <input id="rank4-input" type="number" value="{{ recommended_leads_per_agent.rank4 }}" />
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            {{ wizard.form|crispy }}
+        {% endif %}
+
+        {% if wizard.steps.current == 'confirm' %}
+        <div class=" relative overflow-x-auto shadow-md sm:rounded-lg">
+            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">Rank 1 </h3>
+            <table id="df_rank1_table" class="display w-full text-sm text-left text-gray-500 dark:text-gray-400"></table>
+        </div>
+        </br>
+        <div class=" relative overflow-x-auto shadow-md sm:rounded-lg">
+            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">Rank 2 </h3>
+            <table id="df_rank2_table" class="display w-full text-sm text-left text-gray-500 dark:text-gray-400"></table>
+        </div>
+        </br>
+        <div class=" relative overflow-x-auto shadow-md sm:rounded-lg">
+            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">Rank 3 </h3>
+            <table id="df_rank3_table" class="display w-full text-sm text-left text-gray-500 dark:text-gray-400"></table>
+        </div>
+        </br>
+        <div class=" relative overflow-x-auto shadow-md sm:rounded-lg">
+            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">Rank 4 </h3>
+            <table id="df_rank4_table" class="display w-full text-sm text-left text-gray-500 dark:text-gray-400"></table>
+        </div>
+        
+        {% endif %}
+
+        <div class="mt-6">
+            {% if wizard.steps.prev %}
+            <button name="wizard_goto_step" class="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700" type="submit" value="{{ wizard.steps.first }}">First Step</button>
+            <button name="wizard_goto_step" class="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700" type="submit" value="{{ wizard.steps.prev }}">Previous Step</button>
+            {% endif %}
+
+            <input id="next-button" type="submit" class="focus:outline-none text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-green-400 dark:hover:bg-green-700 dark:focus:ring-green-800" value="Continue"/>
+        </div>
+    </form>
+</div>
+
+
+
+<script>
+    // Render table for df_rank1
+    function renderTable(data, tableId) {
+        const table = document.getElementById(tableId);
+        // If the data is empty or the first item is not an object, hide the table and return
+        if (!data.length || typeof data[0] !== 'object') {
+            table.style.display = 'none'; // Hide the table
+            return;
+        } else {
+            table.style.display = ''; // Show the table if it was previously hidden
+        }
+        // Clear existing content of the table
+        table.innerHTML = '';
+    
+        // Create the table head and body
+        const thead = document.createElement('thead');
+        thead.classList.add('text-xs', 'text-gray-700', 'uppercase', 'bg-gray-50', 'dark:bg-gray-700', 'dark:text-gray-400');
+        table.appendChild(thead);
+        
+        const tbody = document.createElement('tbody');
+        table.appendChild(tbody);
+        
+        // Extract names from the first item in data for headers
+        const names = Object.keys(data[0]);
+        
+        // Add table headers
+        const trHead = document.createElement('tr');
+        trHead.classList.add('bg-white', 'border-b', 'dark:bg-gray-900', 'dark:border-gray-700');
+        const thIndex = document.createElement('th');
+        thIndex.textContent = "Phone #";
+        thIndex.classList.add('px-6', 'py-4', 'font-medium', 'text-gray-900', 'whitespace-nowrap', 'dark:text-white');
+        trHead.appendChild(thIndex);
+    
+        names.forEach(name => {
+            const thName = document.createElement('th');
+            thName.textContent = name;
+            thName.classList.add('px-6', 'py-4', 'font-medium', 'text-gray-900', 'whitespace-nowrap', 'dark:text-white');
+            trHead.appendChild(thName);
+        });
+        thead.appendChild(trHead);
+    
+        // Populate the table body based on the length of the data
+        for (let i = 0; i < data.length; i++) {
+            const tr = document.createElement('tr');
+            const tdIndex = document.createElement('td');
+            tdIndex.textContent = i + 1; // Phone #1, Phone #2, etc.
+            tdIndex.classList.add('px-6', 'py-4');
+            tr.appendChild(tdIndex);
+    
+            names.forEach(name => {
+                const tdPhone = document.createElement('td');
+                tdPhone.textContent = data[i][name] && data[i][name].phone_number;
+                tdPhone.classList.add('px-6', 'py-4');
+                tr.appendChild(tdPhone);
+            });
+            
+            tbody.appendChild(tr);
+        }
+    }
+
+    const df_rank1_data = JSON.parse('{{ df_rank1_json|escapejs }}'.replace(/&quot;/g,'"'));
+    const df_rank2_data = JSON.parse('{{ df_rank2_json|escapejs }}'.replace(/&quot;/g,'"'));
+    const df_rank3_data = JSON.parse('{{ df_rank3_json|escapejs }}'.replace(/&quot;/g,'"'));
+    const df_rank4_data = JSON.parse('{{ df_rank4_json|escapejs }}'.replace(/&quot;/g,'"'));
+
+    renderTable(df_rank1_data, 'df_rank1_table');
+    renderTable(df_rank2_data, 'df_rank2_table');
+    renderTable(df_rank3_data, 'df_rank3_table');
+    renderTable(df_rank4_data, 'df_rank4_table');
+
+    </script>
+{% endblock %}

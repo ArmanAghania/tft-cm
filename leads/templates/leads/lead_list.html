@@ -1,0 +1,537 @@
+{% extends "base.html" %}
+{% load tailwind_filters %}
+{% load crispy_forms_tags %}
+{% load widget_tweaks %}
+{% load humanize %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+<section class="text-gray-700 body-font">
+    <style>
+        th {
+            cursor: pointer
+        }
+    </style>
+<hr>
+</br>
+</br>
+</br>
+    <div class="text-right">
+         {% if request.user.is_agent %}
+         
+            {% if request.user.rank == 1 %}
+            <section class="text-gray-600 body-font items-center">
+                <div class="container px-5 py-24 mx-auto">
+                        <div class="text-center mb-20 flex justify-center">
+                            <div class="p-4 md:w-1/3 flex flex-col text-center items-center">
+                                <img class="lg:w-2/6 rounded mt-5 align-right" alt="hero" src="{% static 'images\first-icon.svg' %}">
+                        <br/>
+                        <div class="flex-grow">
+                            <h2 class="text-gray-900 text-4xl title-font font-medium mb-3">{{request.user.first_name}} {{request.user.last_name}}</h2>
+                            <br/>
+                        </div>
+                        </div>
+                  </div>
+                </div>
+              </section>
+            {% endif %}
+            {% if request.user.rank == 2 %}
+            <section class="text-gray-600 body-font items-center">
+                <div class="container px-5 py-24 mx-auto">
+                        <div class="text-center mb-20 flex justify-center">
+                            <div class="p-4 md:w-1/3 flex flex-col text-center items-center">
+                                <img class="lg:w-2/6 rounded mt-5 align-right" alt="hero" src="{% static 'images\second-icon.svg' %}">
+                        <br/>
+                        <div class="flex-grow">
+                            <h2 class="text-gray-900 text-4xl title-font font-medium mb-3">{{request.user.first_name}} {{request.user.last_name}}</h2>
+                            <br/>
+                        </div>
+                        </div>
+                  </div>
+                </div>
+              </section>
+            {% endif %}
+            {% if request.user.rank == 3 %}
+            <section class="text-gray-600 body-font items-center">
+                <div class="container px-5 py-24 mx-auto">
+                        <div class="text-center mb-20 flex justify-center">
+                            <div class="p-4 md:w-1/3 flex flex-col text-center items-center">
+                                <img class="lg:w-2/6 rounded mt-5 align-right" alt="hero" src="{% static 'images\third-icon.svg' %}">
+                        <br/>
+                        <div class="flex-grow">
+                            <h2 class="text-gray-900 text-4xl title-font font-medium mb-3">{{request.user.first_name}} {{request.user.last_name}}</h2>
+                            <br/>
+                        </div>
+                    </div>
+                </div>
+                </div>
+              </section>
+            {% endif %}
+            {% endif %} 
+            
+                    <div class="flex flex-wrap -m-4 text-center">
+                        <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
+                            <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">
+                                <button class="btn btn-primary" id="showDailyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">  <path stroke="none" d="M0 0h24v24H0z"/>  <rect x="4" y="5" width="16" height="16" rx="2" />  <line x1="16" y1="3" x2="16" y2="7" />  <line x1="8" y1="3" x2="8" y2="7" />  <line x1="4" y1="11" x2="20" y2="11" />  <rect x="8" y="15" width="2" height="2" /></svg></button>
+                              <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.daily_sales|intcomma }}</h2>
+                              <p class="leading-relaxed">Daily Sales</p>
+                              <!-- Overlay with 75% opacity -->
+                              <div class="fixed inset-0 bg-black opacity-75 hidden" id="modalOverlay"></div>
+                          
+                              <!-- Modal with full opacity -->
+                              <div class="fixed inset-0 flex items-center justify-center z-50 hidden" id="chartModal">
+                                  <div class="bg-white w-3/4 h-4/5 m-6 p-6 rounded shadow-lg overflow-auto relative">
+                                    <h5 class="text-xl mb-4" id="chartTitle">Daily Sales Chart</h5>
+                                      <canvas class="m-6" id="myChart"></canvas>
+                                      <button class="mt-4 text-red-500" id="closeModal">Close</button>
+                                  </div>
+                              </div>
+                            </div>
+                            </div>
+                            <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
+                                <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">
+                                    <button class="btn btn-primary" id="showWeeklyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg></button>
+                                    <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.weekly_sales|intcomma }} </h2>
+                                    <p class="leading-relaxed">Weekly Sales</p>
+                            </div>
+                        </div>
+                          <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
+                            <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">
+                                <button class="btn btn-primary" id="showMonthlyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">  <path stroke="none" d="M0 0h24v24H0z"/>  <polyline points="3 17 9 11 13 15 21 7" />  <polyline points="14 7 21 7 21 14" /></svg></button>
+                              <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.monthly_sales|intcomma }}</h2>
+                              <p class="leading-relaxed">Monthly Sales</p>
+                            </div>
+                        </div>
+                        <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
+                            <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">                                
+                                <button class="btn btn-primary" id="showYearlyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">
+                                    <line x1="18" y1="20" x2="18" y2="10" /> <line x1="12" y1="20" x2="12" y2="4" />  <line x1="6" y1="20" x2="6" y2="14" /></svg></button> 
+                                    <h2 class="title-font font-medium text-3xl text-gray-900">{{  sales_data.total_sales|intcomma }}</h2>
+                                    <p class="leading-relaxed">Yearly Sales</p>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+                <br/>
+                <hr/>
+                <div class="mx-6 my-6">
+                    {% if request.user.is_organisor %}
+                        <h2 class="text-xl font-bold mb-3">Monthly Sale Performance</h2>
+                    {% elif request.user.is_agent %}
+                        <h2 class="text-xl font-bold mb-3">Monthly Agent Performance</h2>
+                    {% endif %}
+                    <div class="relative pt-1">
+                        <div class="flex mb-2 items-center justify-between">
+                            <div>
+                                <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                                    {{ agents_data.percentage|floatformat:2 }}%
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-semibold inline-block text-blue-600">
+                                    {{ agents_data.converted_leads }} / {{ agents_data.total_leads }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="w-full h-2 bg-gray-300 rounded-full"> <!-- The overall bar with a gray background -->
+                            <div style="width:{{ agents_data.percentage|default:0 }}%" class="h-full text-center text-xs text-white bg-blue-600 rounded-full p-1"> 
+                                <!-- The filled part of the bar with a blue background. The width is set dynamically based on the percentage. -->
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <hr/>
+                <div class="mx-6 my-6">
+                    {% if request.user.is_organisor %}
+                        <h2 class="text-xl font-bold mb-3">Overall Sale Performance</h2>
+                    {% elif request.user.is_agent %}
+                        <h2 class="text-xl font-bold mb-3">Overall Agent Performance</h2>
+                    {% endif %}
+                    <div class="relative pt-1">
+                        <div class="flex mb-2 items-center justify-between">
+                            <div>
+                                <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-yellow-500 bg-yellow-200">
+                                    {{ agents_data.percentage_overall|floatformat:2 }}%
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-semibold inline-block text-yellow-500">
+                                    {{ agents_data.converted_leads_overall }} / {{ agents_data.total_leads_overall }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="w-full h-2 bg-gray-300 rounded-full"> <!-- The overall bar with a gray background -->
+                            <div style="width:{{ agents_data.percentage_overall|default:0 }}%" class="h-full text-center text-xs text-white bg-yellow-500 rounded-full p-1"> 
+                                <!-- The filled part of the bar with a blue background. The width is set dynamically based on the percentage_overall. -->
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr/>
+    <div class="container px-5 py-5 mx-auto flex flex-wrap">
+        {% if request.user.is_organisor %}
+        <a id="openModalButton" href="{% url 'leads:dist_view' %}"  class="px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-full">Start Distribution</a>
+    </div>
+        
+        {% endif %}
+    <div class="w-full justify-center">
+        <!-- Search Input -->
+    <input type="text" id="searchInput" placeholder="Search leads..." class="p-2 border rounded w-full" onkeyup="searchLeads()">
+
+    <!-- Search Results Container (initially empty) -->
+    <div id="searchResults" class="w-full mt-2 border-t border-gray-200 bg-white shadow-lg max-h-64 overflow-auto z-10"></div>
+
+
+    </div>
+        <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
+            <div>
+                <h1 class="text-4xl text-gray-800">Leads</h1>
+                {% if request.user.is_organisor %}
+                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:category-list' %}">
+                        View categories
+                    </a>
+                </br>
+                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:source-list' %}">
+                        View sources
+                    </a>
+                    <h1 class=" text-l text-gray-400">There are {{bank_numbers.bank_total}} Leads in the Bank</h1>
+                {% endif %}
+            </div>
+            {% if request.user.is_organisor %}
+            <div>
+                <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-create' %}">
+                    Create a new lead
+                </a>
+                    
+                    <br/>
+                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-import' %}">
+                        Import
+                    </a>
+                    <br/>
+                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-export' %}">
+                        Export
+                    </a>
+               
+
+            <div x-data="{ open: false }" class="py-3 relative  text-left">
+                <div>
+                    <button @click="open = !open" type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Filter Options
+                        <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            
+                <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                    <div class="py-1" role="none">
+                        <!-- Dropdown items (filters) -->
+                        <form method="GET" action="{% url 'leads:lead-list' %}" role="none">
+                            {% for field in filter_form %}
+                                <label for="{{ field.id_for_label }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
+                                    {{ field.label }}:
+                                    {% render_field field class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %}
+                                </label>
+                            {% endfor %}
+                            <div class="px-4 py-1">
+                                <button type="submit" class="w-full text-sm text-left text-white bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1">Apply Filter</button>
+                            </div>
+                            <div class="px-4 py-1">
+                            <a href="{% url 'leads:lead-list' %}" class="flex items-center w-full text-sm text-left text-white bg-yellow-600 hover:bg-yellow-500 rounded px-3 py-1" >Clear Filters</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            </div>
+            {% endif %}
+        </div>
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+
+        <div class="flex flex-col w-full">
+            <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200" id="lead-table">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Cell Phone Number
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Category
+                            </th>
+                            {% if request.user.is_organisor %}
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Source
+                            </th>
+                            {% endif %}
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Agent
+                                </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Feedback
+                                </th>
+
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Sales
+                                </th>
+                                {% if request.user.is_organisor %}
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date Added
+                                </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date Modified
+                                </th>
+                                {% endif %}
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date Assigned
+                                </th>
+                            <th scope="col" class="relative px-6 py-3">
+                                <span class="sr-only">Edit</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lead in page_obj %}
+                            <tr class="bg-white border-b">
+                                <form method="post" action="{% url 'leads:lead-update' lead.id%}">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                    {{ lead.phone_number }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                    {{ lead.category }}
+                                </td>
+                                {% if request.user.is_organisor %}
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                    {{ lead.source }}
+                                </td>
+                                {% endif %}
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if lead.agent %}
+                                        {% if lead.agent.user.rank == 1 %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            {{ lead.agent }}
+                                        </span>
+                                        {% elif lead.agent.user.rank == 2 %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                {{ lead.agent }}
+                                            </span>
+                                        {% elif lead.agent.user.rank == 3 %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                            {{ lead.agent }}
+                                        </span>
+                                        {% elif lead.agent.user.rank == 4 %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                            {{ lead.agent }}
+                                        </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                            Unassigned
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ lead.followups.last.notes }}
+                                </td>
+
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ lead.total_sale|intcomma }} ریال
+                                    
+                                </td>
+                                {% if request.user.is_organisor %}
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ lead.date_added_jalali }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ lead.date_modified_jalali }}
+                                </td>
+                                {% endif %}
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ lead.date_assigned|to_jalali }}
+                                </td>
+                                {% if request.user.is_organisor %}
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="{% url 'leads:lead-update' lead.pk %}" class="text-indigo-600 hover:text-indigo-900">
+                                            Edit
+                                        </a>
+                                    </td>
+                                {% elif request.user.is_agent %}
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="{% url 'leads:lead-followup-create' lead.pk %}" class="text-indigo-600 hover:text-indigo-900">
+                                            Add Followup
+                                        </a>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="{% url 'leads:lead-update' lead.pk %}" class="text-indigo-600 hover:text-indigo-900">
+                                            Add Details
+                                        </a>
+                                    </td>
+                                    
+                                {% endif %}
+                            </form>
+                            </tr> 
+                        {% empty %}
+                        {% if request.user.is_organisor %}
+                        <p>There are currently no leads</p>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                    {% if new_leads.new_leads_total != 0 and request.user.is_organisor%}
+                    <p>There are currently {{new_leads.new_leads_total}} New Leads</p>
+                    {% endif %}
+                </table>
+                <div class="pagination flex justify-center">
+                    <span class="step-links">
+                        {% with request.GET.copy as get_params %}
+                            {% if get_params.page %}
+                                {{ get_params.pop.page }}
+                            {% endif %}
+                            {% if page_obj.has_previous %}
+                                <a href="?{{ get_params.urlencode }}&page=1" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">&laquo; First Page</a>
+                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.previous_page_number }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">Previous Page</a>
+                            {% endif %}
+                
+                            <span class="current">
+                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                            </span>
+                
+                            {% if page_obj.has_next %}
+                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.next_page_number }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">Next Page</a>
+                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.paginator.num_pages }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">Last Page &raquo;</a>
+                            {% endif %}
+                        {% endwith %}
+                    </span>
+                </div>
+                <script>
+                     function sortTable(colIndex) {
+                        var table, rows, switching, i, x, y, shouldSwitch;
+                        table = document.getElementById("lead-table");
+                        switching = true;
+            
+                        while (switching) {
+                            switching = false;
+                            rows = table.rows;
+            
+                            for (i = 1; i < (rows.length - 1); i++) {
+                                shouldSwitch = false;
+                                x = rows[i].getElementsByTagName("TD")[colIndex];
+                                y = rows[i + 1].getElementsByTagName("TD")[colIndex];
+            
+                                if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                                    shouldSwitch = true;
+                                    break;
+                                }
+                            }
+            
+                            if (shouldSwitch) {
+                                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                                switching = true;
+                            }
+                        }
+                    } 
+
+                   
+                    async function searchLeads() {
+                    const query = document.getElementById('searchInput').value;
+                    const resultsContainer = document.getElementById('searchResults');
+            
+                    if (query.length >= 3) {  // Adjust this if you want to start searching after a different number of characters.
+                        const response = await fetch(`search/?q=${query}`);
+                        const results = await response.json();
+            
+                        resultsContainer.innerHTML = '';  // Clear previous results
+            
+                        results.forEach(lead => {
+                            const leadDiv = document.createElement('div');
+                            leadDiv.innerHTML = lead.category ?
+                            `
+                                <div class="border-b border-gray-200 p-2 hover:bg-gray-100">
+                                    ${lead.phone_number} - ${lead.category} 
+                                    <a href="/leads/${lead.id}" class="text-blue-500 hover:text-blue-700 ml-2">Edit</a>
+                                </div>
+                            `:
+                            `
+                                <div class="border-b border-gray-200 p-2 hover:bg-gray-100">
+                                    ${lead.phone_number}
+                                    <a href="/leads/${lead.id}" class="text-blue-500 hover:text-blue-700 ml-2">Edit</a>
+                                </div>
+                            `;
+                            resultsContainer.appendChild(leadDiv);
+                        });
+                    } else {
+                        resultsContainer.innerHTML = '';  // Clear the results if query is too short
+                    }
+                }
+
+
+                const closeModalBtn = document.getElementById('closeModal');
+                const modal = document.getElementById('chartModal');
+                const overlay = document.getElementById('modalOverlay');
+                const chartTitle = document.getElementById('chartTitle');
+                let currentChart;  // to store the current chart instance
+
+                // Event listeners for showing modals
+                document.getElementById('showDailyModal').addEventListener('click', () => openModal('Daily Sales', 'daily_sales_chart/data/'));
+                document.getElementById('showWeeklyModal').addEventListener('click', () => openModal('Weekly Sales', 'weekly_sales_chart/data/'));
+                document.getElementById('showMonthlyModal').addEventListener('click', () => openModal('Monthly Sales', 'monthly_sales_chart/data/'));
+                document.getElementById('showYearlyModal').addEventListener('click', () => openModal('Yearly Sales', 'yearly_sales_chart/data/'));
+
+                // Event listeners for closing modals
+                closeModalBtn.addEventListener('click', closeAllModals);
+                overlay.addEventListener('click', closeAllModals);
+
+                function openModal(title, fetchUrl) {
+                    chartTitle.textContent = title + ' Chart';  // set the modal title
+                    modal.classList.remove('hidden');
+                    overlay.classList.remove('hidden');
+                    loadChart(fetchUrl);  // pass in the fetch URL for the respective chart
+                }
+
+                function closeAllModals() {
+                    modal.classList.add('hidden');
+                    overlay.classList.add('hidden');
+                    if (currentChart) {
+                        currentChart.destroy();  // destroy the current chart instance to make room for a new one
+                    }
+                }
+
+                function loadChart(fetchUrl) {
+                    fetch(fetchUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            currentChart = new Chart(document.getElementById("myChart"), {
+                                type: 'line',
+                                data: {
+                                    labels: data.labels,
+                                    datasets: [{
+                                        label: chartTitle.textContent,
+                                        data: data.datasets[0].data,
+                                        borderColor: 'rgba(99, 102, 241,0.8)',
+                                        backgroundColor: 'rgba(99, 102, 241,0.8)'
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false
+                                }
+                            });
+                        });
+                }
+                    
+                </script>
+                
+                </div>
+            </div>
+            </div>
+        </div>
+
+        
+        
+    </div>
+</section>
+{% endblock content %}

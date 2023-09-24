@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    .blur-bg {
+        backdrop-filter: blur(10px);
+    }
+
+    .rounded-xl {
+        border-radius: 1rem;
+    }
+
+    .main-container {
+        padding: 1rem 2.5rem;
+    }
+</style>
+
+<div class="min-h-screen bg-cover bg-center relative" style="background-image: url('{{ background_image }}');">
+
+    <div class="absolute inset-0 bg-black opacity-40"></div>
+
+    <div class="main-container relative z-10 flex flex-wrap justify-center items-center min-h-screen">
+        <div class="m-5 bg-white p-8 rounded-xl shadow-lg w-full md:w-96 blur-bg bg-opacity-75">
+            <h2 class="text-2xl font-bold mb-6 text-center">My Numbers</h2>
+            <ul>
+                {% for lead in leads_today %}
+                    <li class="flex justify-between border-b py-2">
+                        <a class="text-blue-800 font-bold" href='{% url 'leads:lead-update' lead.pk %}'>{{ lead.phone_number }}</a>
+                        <span class="text-gray-800">{{ lead.category.name }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="m-5 bg-white p-8 rounded-xl shadow-lg w-full md:w-96 blur-bg bg-opacity-75">
+            <h2 class="text-2xl font-bold mb-6 text-center">My Followup Numbers</h2>
+            <ul>
+                {% for duplicate in duplicates_to_follow %}
+                    <li class="border-b py-2 font-bold text-blue-800 text-center">{{ duplicate.number }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% comment %} <script>
+        // Daily Sales Chart
+        var ctx = document.getElementById('dailyChart').getContext('2d');
+        var dailyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ daily_labels|safe }},
+                datasets: [{
+                    data: {{ daily_data|safe }},
+                    label: 'Daily Sales',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)'
+                }]
+            }
+        });
+
+        var weeklyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ weekly_labels|safe }},
+                datasets: [{
+                    data: {{ weekly_data|safe }},
+                    label: 'Weekly Sales',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)'
+                }]
+            }
+        });
+
+        var monthlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ monthly_labels|safe }},
+                datasets: [{
+                    data: {{ monthly_data|safe }},
+                    label: 'Monthly Sales',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)'
+                }]
+            }
+        });
+
+        var yearlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ yearly_labels|safe }},
+                datasets: [{
+                    data: {{ yearly_data|safe }},
+                    label: 'Yearly Sales',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)'
+                }]
+            }
+        });
+
+    </script> {% endcomment %}
+</div>
+
+{% endblock %}

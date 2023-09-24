@@ -1,0 +1,45 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<style>
+    @font-face {
+        font-family: 'Lalezar-Regular';
+        src: url('../../static/fonts/Lalezar-Regular.ttf') format('truetype');
+      }
+</style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJCRM</title>
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    {% comment %} <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> {% endcomment %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+    
+    
+
+    {% comment %} <link href="{% static 'font/Lalezar-Regular.ttf' %}" rel="stylesheet"> {% endcomment %}
+
+</head>
+<body>
+    <style>
+        .persian-text {
+          font-family: 'Lalezar-Regular', sans-serif;
+        }
+      </style>
+    <div class="max-w-7xl mx-auto">
+        {% include 'navbar.html' %}
+        {% include 'messages.html' %}
+        {% block content %}
+        {% endblock content %}
+    </div>
+    {% include "scripts.html" %}
+</body>
+</html>
