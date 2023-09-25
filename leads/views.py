@@ -728,13 +728,28 @@ class BankExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.F
     def get_success_url(self):
         return reverse("leads:lead-list")
 
-def run_async(func, *args, **kwargs):
-    new_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(new_loop)
+@background(schedule=5)
+def notify_background_messages(chat_id, message):
+    asyncio.run(send_telegram_message(chat_id, message))
+
+
+async def send_telegram_message(chat_id, message):
+    limiter = AsyncLimiter(5, 30)
+    TOKEN = settings.TELEGRAM_TOKEN
+    bot = Bot(TOKEN)
+    
     try:
-        return new_loop.run_until_complete(func(*args, **kwargs))
-    finally:
-        new_loop.close()
+        await limiter.acquire()
+        await bot.send_message(chat_id=chat_id, text=message)
+    except Exception as e:
+        print(f"Error sending Telegram message: {e}")
+# def run_async(func, *args, **kwargs):
+#     new_loop = asyncio.new_event_loop()
+#     asyncio.set_event_loop(new_loop)
+#     try:
+#         return new_loop.run_until_complete(func(*args, **kwargs))
+#     finally:
+#         new_loop.close()
 
 class LeadImportView(OrganisorAndLoginRequiredMixin, View):
     template_name = 'leads/lead_import.html'
@@ -764,7 +779,8 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
     def post(self, request):
         form = LeadImportForm(request.POST, request.FILES)
         user = self.request.user
-
+        TOKEN = settings.TELEGRAM_TOKEN
+        bot = Bot(TOKEN)
         if form.is_valid():
             csv_file = form.cleaned_data['csv_file']
             source = form.cleaned_data['source']
@@ -782,10 +798,16 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                         duplicates += 1
                         bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=number)
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
+                        # chat_id = lead.agent.chat_id
+                        message = f'تماس {number} {bank_number.agent}'
+                        notify_background_messages(chat_id="-1001707390535", message=message)
                     elif Lead.objects.filter(organisation=user.userprofile, phone_number=number).exists():
                         duplicates += 1
                         lead = Lead.objects.get(organisation=user.userprofile, phone_number=number)
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=lead.agent)
+                        # chat_id = lead.agent.chat_id
+                        message = f'تماس {number} {lead.agent}'
+                        notify_background_messages(chat_id="-1001707390535", message=message)
                     else:
                         if len(number) == 11 and number[0] == 0 and number[1] == 9:
                             added_leads += 1
@@ -798,7 +820,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                     
 
                 # Send a message to Telegram
-                TOKEN = settings.TELEGRAM_TOKEN
+                
                 chat_id = "-1001707390535"
                 message = f'''
                 منبع: {source}\n
@@ -807,8 +829,8 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 تعداد شماره‌های خالص خارجی: {foreign_added}\n
                 تعدادشماره‌‌های خالص ایرانی: {added_leads}\n\n\n'''
 
-                bot = Bot(TOKEN)
-                result = run_async(bot.send_message, chat_id=chat_id, text=message)
+                
+                notify_background_messages(chat_id="-1001707390535", message=message)
 
                 return redirect("leads:lead-list")
             except Exception as e:
@@ -904,7 +926,7 @@ async def notify_agents_via_telegram(df):
                 agent = await get_agent_by_alt_name(agent_name)
                 today = jdatetime.datetime.now().strftime('%Y/%m/%d')
                 rank = agent.rank
-                chat_id = '-1001707390535'# agent.chat_id
+                chat_id = '-1001707390535' #agent.agent.chat_id
                 if not chat_id:
                     print(f"No chat_id found for agent: {agent_name}")
                     continue
