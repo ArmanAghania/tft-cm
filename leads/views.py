@@ -799,16 +799,16 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                         duplicates += 1
                         bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=number)
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
-                        # chat_id = lead.agent.chat_id
+                        chat_id = lead.agent.chat_id
                         message = f'تماس {number} {bank_number.agent}'
-                        notify_background_messages(chat_id="-1001707390535", message=message)
+                        notify_background_messages(chat_id=chat_id, message=message)
                     elif Lead.objects.filter(organisation=user.userprofile, phone_number=number).exists():
                         duplicates += 1
                         lead = Lead.objects.get(organisation=user.userprofile, phone_number=number)
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=lead.agent)
-                        # chat_id = lead.agent.chat_id
+                        chat_id = lead.agent.chat_id
                         message = f'تماس {number} {lead.agent}'
-                        notify_background_messages(chat_id="-1001707390535", message=message)
+                        notify_background_messages(chat_id=chat_id, message=message)
                     else:
                         if len(number) == 11 and number[0] == 0 and number[1] == 9:
                             added_leads += 1
@@ -822,7 +822,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
 
                 # Send a message to Telegram
                 
-                chat_id = "-1001707390535"
+                chat_id = "-1001838419145"
                 message = f'''
                 منبع: {source}\n
                 تعداد شماره‌های ورودی: {total_leads}\n
@@ -924,10 +924,10 @@ async def notify_agents_via_telegram(df):
             if phone_data == {}:
                 continue
             else:
-                agent = await get_agent_by_alt_name(agent_name)
+                user = await get_agent_by_alt_name(agent_name)
                 today = jdatetime.datetime.now().strftime('%Y/%m/%d')
-                rank = agent.rank
-                chat_id = '-1001707390535' #agent.agent.chat_id
+                rank = user.rank
+                chat_id = user.agent.chat_id
                 if not chat_id:
                     print(f"No chat_id found for agent: {agent_name}")
                     continue
