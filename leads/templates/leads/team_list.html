@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
 
 <section class="text-gray-700 body-font">
@@ -19,18 +19,18 @@
               <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200 rounded-tl rounded-bl">Name</th>
               <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200">Member Count</th>
               <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200">Leaders</th>
-              {% comment %} <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200">Total Sales</th> {% endcomment %}
+              <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200 rounded-tr rounded-br">Total Monthly Sales</th>
 
               
             </tr>
           </thead>
           <tbody>
-            {% for team in team_list %}
+            {% for team, total_sale in team_sales %}
                 <tr>
                     <td class="px-4 py-3">
                       <a class="hover:text-blue-500" href="{% url 'leads:team-detail' team.pk %}">{{ team.name }}</a>
                     </td>
-                    <td class="px-4 py-3">{{ team.member_count }}</td>
+                    <td class="px-4 py-3 text-center">{{ team.member_count }}</td>
                     <td class="px-4 py-3">
                       {% for leader in team.leaders.all %}
                         {{ leader.first_name }}
@@ -40,7 +40,7 @@
                       {% endfor %}
                       
                     </td>
-                    <td class="px-4 py-3">{{ team.member_count }}</td>
+                    <td class="px-4 py-3">{{ total_sale|intcomma }}</td>
 
 
                 </tr>

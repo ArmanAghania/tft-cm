@@ -62,6 +62,7 @@ import json
 import requests
 from django.conf import settings
 from asgiref.sync import sync_to_async
+from persiantools.jdatetime import JalaliDate
 
 logger = logging.getLogger(__name__)
 
@@ -253,25 +254,25 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
 
        # Calculate agent sales data
         agent = self.request.user.id
-        today = date.today()
-        print(today)
-        # Calculate date range for weekly and monthly sales
-        one_week_ago = today - timedelta(days=7)
-        one_month_ago = today - timedelta(days=30)
+        today = JalaliDate.today()  # Use JalaliDate from persiantools
+        
+        # Calculate the start of the week (Saturday) and month (first day of the month)
+        start_of_week = today.replace(day=1) if today.day <= 6 else today.replace(day=today.day - today.weekday() + 7)
+        start_of_month = today.replace(day=1)
 
         base_filter_args = {}
         if user.is_organisor:
             # Aggregate sales
-            daily_sales = Sale.objects.filter(organisation=user.userprofile, date__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
-            weekly_sales = Sale.objects.filter(organisation=user.userprofile, date__date__range=(one_week_ago, today)).aggregate(Sum('amount'))['amount__sum'] or 0
-            monthly_sales = Sale.objects.filter(organisation=user.userprofile, date__date__range=(one_month_ago, today)).aggregate(Sum('amount'))['amount__sum'] or 0
-            total_sales = Sale.objects.filter(organisation=user.userprofile, ).aggregate(Sum('amount'))['amount__sum'] or 0
+            daily_sales = Sale.objects.filter(organisation=user.userprofile, date__date=today.to_gregorian()).aggregate(Sum('amount'))['amount__sum'] or 0
+            weekly_sales = Sale.objects.filter(organisation=user.userprofile, date__date__range=(start_of_week.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
+            monthly_sales = Sale.objects.filter(organisation=user.userprofile, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
+            total_sales = Sale.objects.filter(organisation=user.userprofile).aggregate(Sum('amount'))['amount__sum'] or 0
         elif user.is_agent:
             # Aggregate sales
-            daily_sales = Sale.objects.filter(organisation=user.agent.organisation,agent = user.agent, date__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
-            weekly_sales = Sale.objects.filter(organisation=user.agent.organisation,agent = user.agent, date__date__range=(one_week_ago, today)).aggregate(Sum('amount'))['amount__sum'] or 0
-            monthly_sales = Sale.objects.filter(organisation=user.agent.organisation,agent = user.agent, date__date__range=(one_month_ago, today)).aggregate(Sum('amount'))['amount__sum'] or 0
-            total_sales = Sale.objects.filter(organisation=user.agent.organisation, agent = user.agent ).aggregate(Sum('amount'))['amount__sum'] or 0
+            daily_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent, date__date=today.to_gregorian()).aggregate(Sum('amount'))['amount__sum'] or 0
+            weekly_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent, date__date__range=(start_of_week.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
+            monthly_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
+            total_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent).aggregate(Sum('amount'))['amount__sum'] or 0
 
         context["sales_data"] = {
             'daily_sales': daily_sales,
@@ -280,24 +281,14 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
             'total_sales': total_sales,
         }
 
-        # Convert today's Gregorian date to Jalali
-        today_jalali = jdatetime.date.fromgregorian(date=datetime.today())
-
-        # Calculate the start of the Jalali month
-        start_date_jalali = jdatetime.date(today_jalali.year, today_jalali.month, 1)
-
-        # Convert the start and end Jalali dates back to Gregorian
-        start_date = start_date_jalali.togregorian()
-        end_date = datetime.today()
-
         if user.is_organisor:
             # Filter leads for the organisation in the last month
-            total_leads = Lead.objects.filter(organisation=user.userprofile, date_assigned__range=(start_date, end_date)).count()
+            total_leads = Lead.objects.filter(organisation=user.userprofile, date_assigned__range=(start_of_week.to_gregorian(), today.to_gregorian())).count()
             total_leads_overall = Lead.objects.filter(organisation=user.userprofile).count()
 
             print(total_leads)
             # Filter sales made by the organisation in the last month
-            converted_leads = Sale.objects.filter(organisation=user.userprofile, date__range=(start_date, end_date)).values('lead').distinct().count()
+            converted_leads = Sale.objects.filter(organisation=user.userprofile, date__range=(start_of_week.to_gregorian(), today.to_gregorian())).values('lead').distinct().count()
             converted_leads_overall = Sale.objects.filter(organisation=user.userprofile).values('lead').distinct().count()
 
             print(converted_leads)
@@ -322,11 +313,11 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
 
         else:
             # Filter leads for the agent in the last month
-            total_leads = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user, date_assigned__range=(start_date, end_date)).count()
+            total_leads = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user, date_assigned__range=(start_of_week.to_gregorian(), today.to_gregorian())).count()
             total_leads_overall = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user).count()
 
             # Filter sales made by the agent in the last month
-            converted_leads = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user, date__range=(start_date, end_date)).values('lead').distinct().count()
+            converted_leads = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user, date__range=(start_of_week.to_gregorian(), today.to_gregorian())).values('lead').distinct().count()
             converted_leads_overall = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user).values('lead').distinct().count()
 
             if total_leads == 0:
@@ -796,7 +787,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                         lead = Lead.objects.get(organisation=user.userprofile, phone_number=number)
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=lead.agent)
                     else:
-                        if len(number) == 11:
+                        if len(number) == 11 and number[0] == 0 and number[1] == 9:
                             added_leads += 1
                             Lead.objects.create(phone_number=number, category=category, source=source, organisation=user.userprofile)
                         else:
@@ -1311,6 +1302,12 @@ class SaleCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
 
     def form_valid(self, form):
         lead = Lead.objects.get(pk=self.kwargs["pk"])
+
+        # Check if there is an agent assigned to the lead
+        if not lead.agent:
+            messages.error(self.request, "You cannot create a sale for a lead without an assigned agent.")
+            return self.form_invalid(form)
+
         sale = form.save(commit=False)
         sale.lead = lead
         sale.agent = sale.lead.agent  # Assuming the user is logged in and has an associated agent
@@ -1675,6 +1672,26 @@ class TeamDetailView(OrganisorAndLoginRequiredMixin, generic.DetailView):
     model = Team
     template_name = 'leads/team_detail.html'  
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        team = self.object
+
+        # Calculate the start and end dates for the Jalali month
+        today = JalaliDate.today()  # Use JalaliDate from persiantools
+        
+        # Calculate the start of the week (Saturday) and month (first day of the month)
+        
+        start_of_month = today.replace(day=1)
+
+        # Calculate monthly sales for each member
+        member_sales = []
+        for member in team.members.all():
+            total_monthly_sale = Sale.objects.filter(agent=member, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
+            member_sales.append((member, total_monthly_sale))
+
+        context['member_sales'] = member_sales
+        return context
+
 class TeamListView(LoginRequiredMixin, generic.ListView):
     template_name = "leads/team_list.html"
     context_object_name = "team_list"
@@ -1687,7 +1704,32 @@ class TeamListView(LoginRequiredMixin, generic.ListView):
         
         else:
             return Team.objects.filter(leaders=user).annotate(member_count=Count('members'))
+        
 
         
-###TODO --->   912 logic - Foreign Logic -  deploy the website...
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        user = self.request.user
+        if user.is_organisor:
+            teams = Team.objects.filter(organisation=user.userprofile).annotate(member_count=Count('members'))
+        else:
+            teams = Team.objects.filter(leaders=user).annotate(member_count=Count('members'))
+
+        # Calculate total team sales and add it to the context
+        today = JalaliDate.today()  # Use JalaliDate from persiantools
+        
+        # Calculate the start of the week (Saturday) and month (first day of the month)
+        
+        start_of_month = today.replace(day=1)
+        team_sales = []
+        for team in teams:
+            total_team_sale = Sale.objects.filter(agent__in=team.members.all(), date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
+            team_sales.append((team, total_team_sale))
+
+
+        context['team_sales'] = team_sales
+        return context
+
+        
+###TODO --->   912 logic - Email - Management Distribution Report deploy the website...
 
