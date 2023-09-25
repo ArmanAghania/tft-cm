@@ -12,7 +12,15 @@
     <h1 class="text-4xl text-gray-800">Create a new agent</h1>
     <form method="post">
         {% csrf_token %}
-        {{ form|crispy }}
+        {{ form.first_name|as_crispy_field }}
+        {{ form.last_name|as_crispy_field }}
+        {{ form.email|as_crispy_field }}
+        {{ form.rank|as_crispy_field }}
+        {{ form.chat_id|as_crispy_field }}
+        {{ form.is_active|as_crispy_field }}
+        {{ form.alt_name|as_crispy_field }}
+        {{ form.teams }}
+        {{ form.is_team_leader|as_crispy_field }}
         <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">Submit</button>
     </form>
 

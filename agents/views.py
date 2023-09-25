@@ -94,7 +94,7 @@ class AgentCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
         user.username = f'{first_name}{last_name.replace(" ", "")}{random.randint(0, 1000)}'
         user.is_agent = True
         user.is_organisor = False
-        user.set_password(f"123")
+        user.set_password(f"{user.username}")
         user.save()
         Agent.objects.create(user=user, organisation=self.request.user.userprofile)
         send_mail(
@@ -202,7 +202,7 @@ class AgentImportView(generic.View):
                     )
 
                     if created:
-                        user.set_password(f"123")
+                        user.set_password(f"{user.username}")
                         user.save()
                         Agent.objects.create(user=user, organisation=request.user.userprofile)
 
