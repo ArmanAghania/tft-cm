@@ -63,6 +63,7 @@ import requests
 from django.conf import settings
 from asgiref.sync import sync_to_async
 from persiantools.jdatetime import JalaliDate
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -1279,6 +1280,23 @@ class MyDayView(LoginRequiredMixin, generic.ListView):
     template_name = 'leads/my_day.html'
     context_object_name = 'leads_today'
 
+    def get_random_static_image(self):
+        # Define the path to your static images folder
+        static_image_dir = os.path.join(settings.BASE_DIR, 'static', 'images', 'background')
+
+        # List all files in the static images folder
+        image_files = [f for f in os.listdir(static_image_dir) if os.path.isfile(os.path.join(static_image_dir, f))]
+
+        if image_files:
+            # Select a random image file path
+            random_image = random.choice(image_files)
+            # Construct the full URL for the selected image
+            random_image_url = os.path.join(settings.STATIC_URL, 'images', 'background', f'/{random_image}')
+            return random_image_url
+        else:
+            # Return a default image URL or handle the case when no images are found
+            return os.path.join(settings.STATIC_URL, 'images', 'default-image.jpg')
+
     def fetch_unsplash_image(self):
         url = "https://api.unsplash.com/photos/random"
         headers = {
@@ -1288,10 +1306,37 @@ class MyDayView(LoginRequiredMixin, generic.ListView):
             "orientation": "landscape",
             "query": "luxury",
         }
-        response = requests.get(url, headers=headers, params=params)
-        data = response.json()
-        return data['urls']['full']
+        try:
+            response = requests.get(url, headers=headers, params=params)
+            response.raise_for_status()  # Raise an exception for HTTP errors
+            data = response.json()
+            return data['urls']['full']
+        except requests.exceptions.RequestException as e:
+            # Handle the error, and provide a default image URL
+            print(f"Error fetching image from Unsplash API: {e}")
+            return self.get_random_static_image()
+        
+    predefined_quotes = [
+        "Success is not final, failure is not fatal: It is the courage to continue that counts. - Winston Churchill",
+        "The only limit to our realization of tomorrow will be our doubts of today. - Franklin D. Roosevelt",
+        "Your time is limited, don't waste it living someone else's life. - Steve Jobs",
+        "Every moment is a fresh beginning." ,
+        "Play by the rules, but be ferocious." ,
+        "Fall seven times and stand up eight. Japanese Proverb.",
+        "Avoiding mistakes costs more than making them." ,
+        "The road to success and the road to failure are almost exactly the same. Colin R."
+        ]
 
+    # Define the fetch_quotes function to fetch a random quote from the API or the predefined list
+    def fetch_quotes(self):
+        url = "https://api.quotable.io/random?tags=success,growth"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            return data.get("content", random.choice(self.predefined_quotes))  # Use a random predefined quote if API fetch fails
+        else:
+            return random.choice(self.predefined_quotes) 
+        
     def get_queryset(self):
         today = timezone.now().date()
         # Note: You are subtracting 1 from user ID. Is this intentional?
@@ -1300,8 +1345,11 @@ class MyDayView(LoginRequiredMixin, generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.now().date()
+        user = self.request.user
+        context['daily_numbers'] = Lead.objects.filter(organisation=user.agent.organisation, agent__user=user, date_assigned__date=today)
         context['background_image'] = self.fetch_unsplash_image()
         context['duplicates_to_follow'] = DuplicateToFollow.objects.filter(agent__user = self.request.user, date_added = today)
+        context['random_quote'] = self.fetch_quotes() 
 
         return context
 
@@ -1753,5 +1801,5 @@ class TeamListView(LoginRequiredMixin, generic.ListView):
         return context
 
         
-###TODO --->   912 logic - Email - Management Distribution Report deploy the website...
+###TODO --->   912 logic - Email - Management Distribution Report deploy the website
 

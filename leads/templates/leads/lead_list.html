@@ -18,57 +18,33 @@
 </br>
 </br>
     <div class="text-right">
-         {% if request.user.is_agent %}
-         
-            {% if request.user.rank == 1 %}
+        {% if request.user.is_agent %}
             <section class="text-gray-600 body-font items-center">
-                <div class="container px-5 py-24 mx-auto">
-                        <div class="text-center mb-20 flex justify-center">
-                            <div class="p-4 md:w-1/3 flex flex-col text-center items-center">
-                                <img class="lg:w-2/6 rounded mt-5 align-right" alt="hero" src="{% static 'images\first-icon.svg' %}">
-                        <br/>
-                        <div class="flex-grow">
-                            <h2 class="text-gray-900 text-4xl title-font font-medium mb-3">{{request.user.first_name}} {{request.user.last_name}}</h2>
-                            <br/>
+                <div class="container px-5 py-5 mx-auto">
+                        <div class="text-center flex justify-center">
+                            <div class="p-2 md:w-1/3 flex flex-col text-center items-center">
+                                {% if request.user.rank == 1 %}
+                                    <img class="w-20 h-20 rounded-full mx-auto" alt="hero" src="{% static 'images\first-icon.svg' %}">
+                                    <p class="text-gray-600 text-lg mb-4 font-serif">Rank: {{ request.user.rank }}</p>
+                                {% elif request.user.rank == 2 %}
+                                    <img class="lg:w-2/6 rounded mt-5 align-right" alt="hero" src="{% static 'images\second-icon.svg' %}">
+                                {% elif request.user.rank == 3 %}
+                                    <img class="lg:w-2/6 rounded mt-5 align-right" alt="hero" src="{% static 'images\third-icon.svg' %}">
+                                {% elif request.user.rank == 4 %}
+                                    <img class="lg:w-2/6 rounded mt-5 align-right" alt="hero" src="{% static 'images\third-icon.svg' %}">
+                                {% endif %}
+                                <h2 class="text-gray-900 text-4xl title-font font-medium font-serif mb-4 ">
+                            
+                                {{ request.user.first_name }} {{ request.user.last_name }} 
+                                </h2>
+                                {% if request.user.alt_name %}
+                                    <h2 class="-gray-900 text-4xl title-font font-medium mb-4 persian-text">{{ request.user.alt_name }}</h2>
+                                {% endif %} 
+                            </div>
                         </div>
-                        </div>
-                  </div>
                 </div>
-              </section>
-            {% endif %}
-            {% if request.user.rank == 2 %}
-            <section class="text-gray-600 body-font items-center">
-                <div class="container px-5 py-24 mx-auto">
-                        <div class="text-center mb-20 flex justify-center">
-                            <div class="p-4 md:w-1/3 flex flex-col text-center items-center">
-                                <img class="lg:w-2/6 rounded mt-5 align-right" alt="hero" src="{% static 'images\second-icon.svg' %}">
-                        <br/>
-                        <div class="flex-grow">
-                            <h2 class="text-gray-900 text-4xl title-font font-medium mb-3">{{request.user.first_name}} {{request.user.last_name}}</h2>
-                            <br/>
-                        </div>
-                        </div>
-                  </div>
-                </div>
-              </section>
-            {% endif %}
-            {% if request.user.rank == 3 %}
-            <section class="text-gray-600 body-font items-center">
-                <div class="container px-5 py-24 mx-auto">
-                        <div class="text-center mb-20 flex justify-center">
-                            <div class="p-4 md:w-1/3 flex flex-col text-center items-center">
-                                <img class="lg:w-2/6 rounded mt-5 align-right" alt="hero" src="{% static 'images\third-icon.svg' %}">
-                        <br/>
-                        <div class="flex-grow">
-                            <h2 class="text-gray-900 text-4xl title-font font-medium mb-3">{{request.user.first_name}} {{request.user.last_name}}</h2>
-                            <br/>
-                        </div>
-                    </div>
-                </div>
-                </div>
-              </section>
-            {% endif %}
-            {% endif %} 
+            </section>
+        {% endif %} 
             
                     <div class="flex flex-wrap -m-4 text-center">
                         <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
