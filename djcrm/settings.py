@@ -6,7 +6,7 @@ import dj_database_url
 from dotenv import load_dotenv
 import locale
 
-locale.setlocale(locale.LC_ALL, "fa_IR.UTF-8")
+locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 load_dotenv()
 
