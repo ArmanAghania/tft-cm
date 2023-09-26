@@ -210,6 +210,7 @@ class AgentImportView(generic.View):
             
             except Exception as e:
                 # Catch any error related to file processing and display a message to the user
+                print(e)
                 messages.error(request, f'''An error occurred while processing the file. Review the file and upload again.''')
 
         return render(request, self.template_name, {'form': form})
