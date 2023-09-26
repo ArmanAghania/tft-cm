@@ -112,7 +112,7 @@ class Agent(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     is_team_leader = models.BooleanField(default=False)
-    chat_id = models.IntegerField(unique=True, null=True, blank=True)
+    chat_id = models.CharField(unique=True, null=True, blank=True)
     
 
 
