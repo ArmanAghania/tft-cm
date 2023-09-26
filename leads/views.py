@@ -67,9 +67,7 @@ import os
 
 logger = logging.getLogger(__name__)
 
-
 # CRUD+L - Create, Retrieve, Update and Delete + List
-
 
 class SignupView(generic.CreateView):
     template_name = "registration/signup.html"
@@ -459,7 +457,6 @@ class LeadDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
         user = self.request.user
         # initial queryset of leads for the entire organisation
         return Lead.objects.filter(organisation=user.userprofile)
-
 
 def lead_delete(request, pk):
     lead = Lead.objects.get(id=pk)
@@ -1800,6 +1797,5 @@ class TeamListView(LoginRequiredMixin, generic.ListView):
         context['team_sales'] = team_sales
         return context
 
-        
 ###TODO --->   912 logic - Email - Management Distribution Report deploy the website
 
