@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.http.response import JsonResponse
 from django.shortcuts import render, redirect, reverse, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.views import generic, View
 from agents.mixins import OrganisorAndLoginRequiredMixin
 from .models import (Lead, 
@@ -64,6 +64,8 @@ from django.conf import settings
 from asgiref.sync import sync_to_async
 from persiantools.jdatetime import JalaliDate
 import os
+import uuid
+
 
 logger = logging.getLogger(__name__)
 
@@ -741,13 +743,7 @@ async def send_telegram_message(chat_id, message):
         await bot.send_message(chat_id=chat_id, text=message)
     except Exception as e:
         print(f"Error sending Telegram message: {e}")
-# def run_async(func, *args, **kwargs):
-#     new_loop = asyncio.new_event_loop()
-#     asyncio.set_event_loop(new_loop)
-#     try:
-#         return new_loop.run_until_complete(func(*args, **kwargs))
-#     finally:
-#         new_loop.close()
+
 
 class LeadImportView(OrganisorAndLoginRequiredMixin, View):
     template_name = 'leads/lead_import.html'
@@ -986,6 +982,10 @@ async def notify_agents_via_telegram(df):
 
                 await bot.send_message(chat_id=chat_id, text=message)
 
+def download_excel_page(request):
+    excel_file_path = request.session.get('excel_file_path')
+    return render(request, 'leads/download_excel_page.html', {'excel_file_path': excel_file_path})
+
 class LeadDistributionWizard(SessionWizardView):
     form_list = FORMS
     template_name = 'leads/wizard.html'
@@ -1076,6 +1076,8 @@ class LeadDistributionWizard(SessionWizardView):
                 print(f"No lead found with phone_number: {number}")
 
     def done(self, form_list, **kwargs):
+        self.request.session['current_wizard_step'] = self.steps.current
+        
         context = self.get_context_data(None)
         df_rank1 = context.get('df_rank1')
         df_rank2 = context.get('df_rank2')
@@ -1095,9 +1097,41 @@ class LeadDistributionWizard(SessionWizardView):
         notify_background(df_rank2_json)
         notify_background(df_rank3_json)
         notify_background(df_rank4_json)
-        
-        
-        return redirect('leads:lead-list')
+
+        new_df_rank1, new_df_rank2, new_df_rank3, new_df_rank4 = self.generate_excel_dataframes(df_rank1, df_rank2, df_rank3, df_rank4)
+
+         # Generate a unique file name
+        file_name = f"output_{uuid.uuid4().hex}.xlsx"
+
+        # Assuming MEDIA_URL and MEDIA_ROOT are correctly set up in your Django settings
+        excel_file_path = os.path.join(settings.MEDIA_ROOT, file_name)
+
+        with pd.ExcelWriter(excel_file_path) as writer:
+            new_df_rank1.to_excel(writer, sheet_name="rank 1", index=False)
+            new_df_rank2.to_excel(writer, sheet_name="rank 2", index=False)
+            new_df_rank3.to_excel(writer, sheet_name="rank 3", index=False)
+            new_df_rank4.to_excel(writer, sheet_name="rank 4", index=False)
+
+        # Store the file path in the session so it can be accessed in the next view
+        self.request.session['excel_file_path'] = os.path.join(settings.MEDIA_URL, file_name)
+
+        return redirect('leads:download_excel_page')
+    
+    def generate_excel_dataframes(self, df_rank1, df_rank2, df_rank3, df_rank4):
+        df_rank1 = self.create_dataframe_with_phone_numbers(df_rank1)
+        df_rank2 = self.create_dataframe_with_phone_numbers(df_rank2)
+        df_rank3 = self.create_dataframe_with_phone_numbers(df_rank3)
+        df_rank4 = self.create_dataframe_with_phone_numbers(df_rank4)
+
+        return df_rank1, df_rank2, df_rank3, df_rank4
+    
+    def create_dataframe_with_phone_numbers(self, dataframe):
+        new_dataframe = dataframe.copy()  # Create a copy to avoid modifying the original DataFrame
+
+        for column in new_dataframe.columns:
+            new_dataframe[column] = new_dataframe[column].apply(lambda x: x['phone_number'] if isinstance(x, dict) else x)
+
+        return new_dataframe
     
 
     def compute_initial_distribution(self, N, active_agents_count, category=None):

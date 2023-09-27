@@ -16,7 +16,8 @@ from .views import (
     SaleListView, SaleCreateView, SaleDeleteView, LeadSalesEditView,
     DailySalesChart, WeeklySalesChart, MonthlySalesChart, YearlySalesChart, 
     SourceListView, SourceDetailView, SourceCreateView, SourceUpdateView, SourceDeleteView,
-    TeamCreateView, TeamDetailView, TeamUpdateView, TeamDeleteView, TeamListView
+    TeamCreateView, TeamDetailView, TeamUpdateView, TeamDeleteView, TeamListView,
+    download_excel_page
 )
 
 app_name = "leads"
@@ -70,4 +71,5 @@ urlpatterns = [
     path('teams/<int:pk>/update/', TeamUpdateView.as_view(), name='team-update'),
     path('teams/<int:pk>/delete/', TeamDeleteView.as_view(), name='team-delete'),
     path('create-team/', TeamCreateView.as_view(), name='team-create'),
+    path('download-excel/', download_excel_page, name='download_excel_page'),
 ]
