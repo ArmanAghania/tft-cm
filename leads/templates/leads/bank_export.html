@@ -10,10 +10,10 @@
     <div class="container px-5 py-24 mx-auto flex flex-wrap">
         <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
             <div>
-                <h1 class="text-4xl text-gray-800">بانک شماره‌ها</h1>
+                <h1 class="text-4xl text-gray-800">Bank Numbers</h1>
                 <br/>
                 <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:bank-list' %}">
-                    بازگشت
+                    Back to Bank
                 </a>
             </div>
             {% if request.user.is_organisor %}
@@ -23,7 +23,7 @@
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">:دانلود بانک</h5>
+                                <h5 class="modal-title">Export</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="close"></button>
                             </div>
                             <div class="modal-body">

@@ -1831,5 +1831,4 @@ class TeamListView(LoginRequiredMixin, generic.ListView):
         context['team_sales'] = team_sales
         return context
 
-###TODO --->   912 logic - Email - Management Distribution Report deploy the website
-
+###TODO --->   
