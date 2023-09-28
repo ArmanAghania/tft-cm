@@ -65,7 +65,7 @@ from asgiref.sync import sync_to_async
 from persiantools.jdatetime import JalaliDate
 import os
 import uuid
-
+import khayyam
 
 logger = logging.getLogger(__name__)
 
@@ -1497,21 +1497,26 @@ class SaleDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
         return response
     
 class SaleListView(OrganisorAndLoginRequiredMixin, generic.ListView):
+    model = Sale
     template_name = "leads/sales_list.html"
     context_object_name = "sales"
 
-    def get_queryset(self):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         user = self.request.user
-        # initial queryset of leads for the entire organisation
+        
+        # For all sales
         if user.is_organisor:
-            queryset = Sale.objects.filter(lead__organisation=user.userprofile).order_by('date')
+            context["all_sales"] = Sale.objects.filter(lead__organisation=user.userprofile).order_by('date')
         else:
-            queryset = Sale.objects.filter(
-                lead__organisation=user.agent.organisation
-            )
-            # filter for the agent that is logged in
-            queryset = queryset.filter(lead__agent__user=user)
-        return queryset
+            context["all_sales"] = Sale.objects.filter(lead__organisation=user.agent.organisation, lead__agent__user=user)
+        
+        # For monthly sales
+        jalali_today = khayyam.JalaliDate.today()
+        first_day_of_month = khayyam.JalaliDate(jalali_today.year, jalali_today.month, 1).todate()
+        context["monthly_sales"] = context["all_sales"].filter(date__gte=first_day_of_month)
+        
+        return context
 
 def jalali_converter(date):
     """Convert a Gregorian date to a Jalali date string."""
@@ -1831,4 +1836,4 @@ class TeamListView(LoginRequiredMixin, generic.ListView):
         context['team_sales'] = team_sales
         return context
 
-###TODO --->   
+###TODO --->   Monthly Sales and Total Sales
