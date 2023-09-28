@@ -1836,4 +1836,4 @@ class TeamListView(LoginRequiredMixin, generic.ListView):
         context['team_sales'] = team_sales
         return context
 
-###TODO --->   Monthly Sales and Total Sales
+###TODO --->   Add Persian Language Switcher - Add an Static Photo to My Day
