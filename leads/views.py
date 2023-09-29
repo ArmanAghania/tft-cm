@@ -802,6 +802,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                     category = form.cleaned_data['category']
                     if BankNumbers.objects.filter(organisation=user.userprofile, number=number).exists():
                         duplicates += 1
+                        lead = Lead.objects.get(organisation=user.userprofile, phone_number=number)
                         bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=number)
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
                         chat_id = lead.agent.chat_id
