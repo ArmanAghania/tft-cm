@@ -1,17 +1,18 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
 
 <div class="min-h-screen bg-gray-100 flex flex-col justify-center items-center">
     <div class="bg-white p-8 rounded-lg shadow-md w-96">
-        <h2 class="text-2xl mb-4 text-center font-bold text-gray-700">Download Excel</h2>
+        <h2 class="text-2xl mb-4 text-center font-bold text-gray-700">{% trans "Download Excel" %}</h2>
 
         <div class="mb-4">
-            <a href="{{ excel_file_path }}" download class="block w-full text-center py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition duration-200 ease-in">Download your Excel file</a>
+            <a href="{{ excel_file_path }}" download class="block w-full text-center py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition duration-200 ease-in">{% trans "Download your Excel file" %}</a>
         </div>
 
         <div>
-            <a href="{% url 'leads:lead-list' %}" class="block w-full text-center py-2 px-4 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition duration-200 ease-in">Proceed to lead list</a>
+            <a href="{% url 'leads:lead-list' %}" class="block w-full text-center py-2 px-4 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition duration-200 ease-in">{% trans "Proceed to lead list" %}</a>
         </div>
     </div>
 </div>

@@ -16,6 +16,7 @@ from django.db.models import Sum
 import jdatetime
 from django.utils import timezone
 from chartjs.views.lines import BaseLineChartView
+from django.utils.translation import gettext as _
 
 
 class AgentListView(OrganisorAndLoginRequiredMixin, generic.ListView):
@@ -75,10 +76,6 @@ class AgentListView(OrganisorAndLoginRequiredMixin, generic.ListView):
         
         context["agents_sales_data"] = agents_sales_data
         return context
-    
-    
-
-
 
 class AgentCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
     template_name = "agents/agent_create.html"
@@ -105,7 +102,6 @@ class AgentCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
         )
         return super(AgentCreateView, self).form_valid(form)
 
-
 class AgentDetailView(OrganisorAndLoginRequiredMixin, generic.DetailView):
     template_name = "agents/agent_detail.html"
     context_object_name = "agent"
@@ -113,7 +109,6 @@ class AgentDetailView(OrganisorAndLoginRequiredMixin, generic.DetailView):
     def get_queryset(self):
         organisation = self.request.user.userprofile
         return Agent.objects.filter(organisation=organisation)
-
 
 class AgentUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
     template_name = "agents/agent_update.html"
@@ -151,7 +146,6 @@ class AgentUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
                 team.leaders.remove(agent.user)
 
         return response
-
 
 class AgentDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
     template_name = "agents/agent_delete.html"
@@ -211,6 +205,6 @@ class AgentImportView(generic.View):
             except Exception as e:
                 # Catch any error related to file processing and display a message to the user
                 print(e)
-                messages.error(request, f'''An error occurred while processing the file. Review the file and upload again.''')
+                messages.error(request, _(f'''An error occurred while processing the file. Review the file and upload again.'''))
 
         return render(request, self.template_name, {'form': form})

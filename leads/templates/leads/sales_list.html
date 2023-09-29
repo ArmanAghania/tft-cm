@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 {% load humanize %}
+{% load i18n %}
+
 {% load custom_filters %}
 {% block content %}
-<h1 class="text-4xl text-gray-800">Sales</h1>
+<h1 class="text-4xl text-gray-800">{% trans "Sales" %}</h1>
 </br>
 <div class="flex flex-col w-full">
     <div class="flex mb-4">
-        <button class="tab-selector w-1/2 py-2" data-target="allSalesContent">All Sales</button>
-        <button class="tab-selector w-1/2 py-2" data-target="monthlySalesContent">Monthly Sales</button>
+        <button class="tab-selector w-1/2 py-2" data-target="allSalesContent">{% trans "All Sales" %}</button>
+        <button class="tab-selector w-1/2 py-2" data-target="monthlySalesContent">{% trans "Monthly Sales" %}</button>
     </div>
     <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
     <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
@@ -16,10 +18,10 @@
     <table id="allSalesTable" class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Phone Number" %}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Agent" %}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Amount" %}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Date" %}</th>
                 <th scope="col" class="relative px-6 py-3"></th>
             </tr>
         </thead>
@@ -42,10 +44,10 @@
     <table id="monthlySalesTable" class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Phone Number" %}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Agent" %}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Amount" %}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Date" %}</th>
                 <th scope="col" class="relative px-6 py-3"></th>
             </tr>
         </thead>
@@ -57,7 +59,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.amount|intcomma }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.date|to_jalali }}</td>
                     <td class=" py-2 px-4 text-center">
-                        <a href="{% url 'leads:lead-sales-update' sale.lead.pk %}" class="text-blue-600 hover:text-blue-800">Edit</a>
+                        <a href="{% url 'leads:lead-sales-update' sale.lead.pk %}" class="text-blue-600 hover:text-blue-800">{% trans "Edit" %}</a>
                     </td>
                 </tr>
             {% endfor %}

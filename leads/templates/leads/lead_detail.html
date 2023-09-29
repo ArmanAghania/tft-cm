@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% load humanize %}
 {% block content %}
 
@@ -6,83 +7,83 @@
     <div class="container px-5 py-24 mx-auto">
       <div class="lg:w-4/5 mx-auto flex flex-wrap">
         <div class="w-full lg:pr-10 lg:py-6 mb-6 lg:mb-0">
-            <h2 class="text-sm title-font text-gray-500 tracking-widest">Lead</h2>
+            <h2 class="text-sm title-font text-gray-500 tracking-widest">{% trans "Lead" %}</h2>
             <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-list' %}">
-                Back to leads
+                {% trans "Back to leads" %}
             </a>
             <h1 class="text-gray-900 text-3xl title-font font-medium mb-4">{{ lead.phone_number }}</h1>
             <div class="flex mb-4">
                 <a href="{% url 'leads:lead-detail' lead.pk %}" class="flex-grow text-indigo-500 border-b-2 border-indigo-500 py-2 text-lg px-1">
-                    Overview
+                    {% trans "Overview" %}
                 </a>
                 {% if request.user.is_organisor %}
                 <a href="{% url 'leads:lead-category-update' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
-                    Category
+                    {% trans "Category" %}
                 </a>
                 {% endif %}
                 <a href="{% url 'leads:lead-update' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
-                    Update Details
+                    {% trans "Update Details" %}
                 </a>
                 {% if request.user.is_organisor %}
                 <a href="{% url 'leads:lead-sales-create' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
-                    Add Sales
+                    {% trans "Add Sales" %}
                 </a> 
                 <a href="{% url 'leads:lead-sales-update' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
-                    Update Sales
+                    {% trans "Update Sales" %}
                 </a>  
                 {% endif %}
             </div>
                 <div class="flex border-t border-gray-300 py-2">
-                    <span class="text-gray-500">First Name</span>
+                    <span class="text-gray-500">{% trans "First Name" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.first_name }}</span>
                 </div>
                 <div class="flex border-t border-gray-300 py-2">
-                    <span class="text-gray-500">Last Name</span>
+                    <span class="text-gray-500">{% trans "Last Name" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.last_name }}</span>
                 </div>
                 <div class="flex border-t border-gray-300 py-2">
-                    <span class="text-gray-500">Job</span>
+                    <span class="text-gray-500">{% trans "Job" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.job }}</span>
                 </div>
                 <div class="flex border-t border-gray-300 py-2">
-                    <span class="text-gray-500">Coty</span>
+                    <span class="text-gray-500">{% trans "City" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.city }}</span>
                 </div>
                 <div class="flex border-t border-gray-300 py-2">
-                    <span class="text-gray-500">State</span>
+                    <span class="text-gray-500">{% trans "State" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.state }}</span>
                 </div>
                 <div class="flex border-t border-gray-300 py-2">
-                    <span class="text-gray-500">Country</span>
+                    <span class="text-gray-500">{% trans "Country" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.country }}</span>
                 </div>
                 <div class="flex border-t border-gray-300 py-2">
-                    <span class="text-gray-500">Age</span>
+                    <span class="text-gray-500">{% trans "Age" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.age }}</span>
                 </div>
                 <div class="flex border-t border-gray-300 py-2">
-                    <span class="text-gray-500">Birthday</span>
+                    <span class="text-gray-500">{% trans "Birthday" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.birthday }}</span>
                 </div>
                 <div class="flex border-t border-gray-300 py-2">
-                    <span class="text-gray-500">Phone Number</span>
+                    <span class="text-gray-500">{% trans "Phone Number" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.phone_number }}</span>
                 </div>
                 <div class="flex border-t border-gray-300 py-2">
-                    <span class="text-gray-500">Total Sales</span>
+                    <span class="text-gray-500">{% trans "Total Sales" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.total_sale|intcomma }}</span>
                 </div>
                 <div class="flex border-t border-gray-300 py-2">
-                    <span class="text-gray-500">Agent</span>
+                    <span class="text-gray-500">{% trans "Agent" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.agent.user.first_name }} {{ lead.agent.user.last_name }} || {{ lead.agent.user.alt_name }}</span>
                 </div>
                 <div class="flex border-t border-b border-gray-300 py-2">
-                    <span class="text-gray-500">Date Assigned</span>
+                    <span class="text-gray-500">{% trans "Date Assigned" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.date_assigned }}</span>
                 </div>
             </div>
 
-        <a href="{% url 'leads:lead-followup-create' lead.pk %}" class="text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">Add a followup</a>
+        <a href="{% url 'leads:lead-followup-create' lead.pk %}" class="text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">{% trans "Add a Followup" %}</a>
 
         </div>
 
@@ -90,7 +91,7 @@
             <div class="mt-5 shadow px-4 sm:px-6">
                 <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
                     <dt class="text-sm font-medium text-gray-500">
-                    Notes (<a href="{% url 'leads:lead-followup-update' followup.pk %}" class="text-blue-500 hover:text-blue-700">update</a>)
+                        {% trans "Notes" %} (<a href="{% url 'leads:lead-followup-update' followup.pk %}" class="text-blue-500 hover:text-blue-700">{% trans "Update" %}</a>)
                     </dt>
                     <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                     {{ followup.notes }}
@@ -99,7 +100,7 @@
                 {% if followup.file %}
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
                         <dt class="text-sm font-medium text-gray-500">
-                        Attachments
+                            {% trans "Attachment" %}
                         </dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         <ul class="border border-gray-200 rounded-md divide-y divide-gray-200">
@@ -115,7 +116,7 @@
                                 </div>
                                 <div class="ml-4 flex-shrink-0">
                                     <a href="{{ followup.file.url }}" download class="font-medium text-indigo-600 hover:text-indigo-500">
-                                    Download
+                                        {% trans "Download" %}
                                     </a>
                                 </div>
                             </li>

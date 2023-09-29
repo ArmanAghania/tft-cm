@@ -5,6 +5,7 @@
 {% load humanize %}
 {% load static %}
 {% load custom_filters %}
+{% load i18n %}
 {% block content %}
 
 <section class="text-gray-700 body-font">
@@ -51,16 +52,16 @@
                             <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">
                                 <button class="btn btn-primary" id="showDailyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">  <path stroke="none" d="M0 0h24v24H0z"/>  <rect x="4" y="5" width="16" height="16" rx="2" />  <line x1="16" y1="3" x2="16" y2="7" />  <line x1="8" y1="3" x2="8" y2="7" />  <line x1="4" y1="11" x2="20" y2="11" />  <rect x="8" y="15" width="2" height="2" /></svg></button>
                               <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.daily_sales|intcomma }}</h2>
-                              <p class="leading-relaxed">Daily Sales</p>
+                              <p class="leading-relaxed">{% trans "Daily Sales" %}</p>
                               <!-- Overlay with 75% opacity -->
                               <div class="fixed inset-0 bg-black opacity-75 hidden" id="modalOverlay"></div>
                           
                               <!-- Modal with full opacity -->
                               <div class="fixed inset-0 flex items-center justify-center z-50 hidden" id="chartModal">
                                   <div class="bg-white w-3/4 h-4/5 m-6 p-6 rounded shadow-lg overflow-auto relative">
-                                    <h5 class="text-xl mb-4" id="chartTitle">Daily Sales Chart</h5>
+                                    <h5 class="text-xl mb-4" id="chartTitle">{% trans "Daily Sales Chart" %}</h5>
                                       <canvas class="m-6" id="myChart"></canvas>
-                                      <button class="mt-4 text-red-500" id="closeModal">Close</button>
+                                      <button class="mt-4 text-red-500" id="closeModal">{% trans "Close" %}</button>
                                   </div>
                               </div>
                             </div>
@@ -69,14 +70,14 @@
                                 <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">
                                     <button class="btn btn-primary" id="showWeeklyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg></button>
                                     <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.weekly_sales|intcomma }} </h2>
-                                    <p class="leading-relaxed">Weekly Sales</p>
+                                    <p class="leading-relaxed">{% trans "Weekly Sales" %}</p>
                             </div>
                         </div>
                           <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
                             <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">
                                 <button class="btn btn-primary" id="showMonthlyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">  <path stroke="none" d="M0 0h24v24H0z"/>  <polyline points="3 17 9 11 13 15 21 7" />  <polyline points="14 7 21 7 21 14" /></svg></button>
                               <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.monthly_sales|intcomma }}</h2>
-                              <p class="leading-relaxed">Monthly Sales</p>
+                              <p class="leading-relaxed">{% trans "Monthly Sales" %}</p>
                             </div>
                         </div>
                         <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
@@ -84,7 +85,7 @@
                                 <button class="btn btn-primary" id="showYearlyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">
                                     <line x1="18" y1="20" x2="18" y2="10" /> <line x1="12" y1="20" x2="12" y2="4" />  <line x1="6" y1="20" x2="6" y2="14" /></svg></button> 
                                     <h2 class="title-font font-medium text-3xl text-gray-900">{{  sales_data.total_sales|intcomma }}</h2>
-                                    <p class="leading-relaxed">Yearly Sales</p>
+                                    <p class="leading-relaxed">{% trans "Yearly Sales" %}</p>
                                 </div>
                         </div>
                     </div>
@@ -93,15 +94,15 @@
                 <hr/>
                 <div class="mx-6 my-6">
                     {% if request.user.is_organisor %}
-                        <h2 class="text-xl font-bold mb-3">Monthly Sale Performance</h2>
+                        <h2 class="text-xl font-bold mb-3">{% trans "Monthly Sale Performance" %}</h2>
                     {% elif request.user.is_agent %}
-                        <h2 class="text-xl font-bold mb-3">Monthly Agent Performance</h2>
+                        <h2 class="text-xl font-bold mb-3">{% trans "Monthly Agent Performance" %}</h2>
                     {% endif %}
                     <div class="relative pt-1">
                         <div class="flex mb-2 items-center justify-between">
                             <div>
                                 <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
-                                    {{ agents_data.percentage|floatformat:2 }}%
+                                    {{ agents_data.percentage|floatformat:2 }} %
                                 </span>
                             </div>
                             <div class="text-right">
@@ -121,15 +122,15 @@
             <hr/>
                 <div class="mx-6 my-6">
                     {% if request.user.is_organisor %}
-                        <h2 class="text-xl font-bold mb-3">Overall Sale Performance</h2>
+                        <h2 class="text-xl font-bold mb-3">{% trans "Overall Sale Performance" %}</h2>
                     {% elif request.user.is_agent %}
-                        <h2 class="text-xl font-bold mb-3">Overall Agent Performance</h2>
+                        <h2 class="text-xl font-bold mb-3">{% trans "Overall Agent Performance" %}</h2>
                     {% endif %}
                     <div class="relative pt-1">
                         <div class="flex mb-2 items-center justify-between">
                             <div>
                                 <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-yellow-500 bg-yellow-200">
-                                    {{ agents_data.percentage_overall|floatformat:2 }}%
+                                    {{ agents_data.percentage_overall|floatformat:2 }} %
                                 </span>
                             </div>
                             <div class="text-right">
@@ -149,7 +150,7 @@
                 <hr/>
     <div class="container px-5 py-5 mx-auto flex flex-wrap">
         {% if request.user.is_organisor %}
-        <a id="openModalButton" href="{% url 'leads:dist_view' %}"  class="px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-full">Start Distribution</a>
+        <a id="openModalButton" href="{% url 'leads:dist_view' %}"  class="px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-full">{% trans "Start Distribution" %}</a>
     </div>
         
         {% endif %}
@@ -167,35 +168,35 @@
                 <h1 class="text-4xl text-gray-800">Leads</h1>
                 {% if request.user.is_organisor %}
                     <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:category-list' %}">
-                        View categories
+                        {% trans "View Categories" %}
                     </a>
                 </br>
                     <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:source-list' %}">
-                        View sources
+                        {% trans "View Sources" %}
                     </a>
-                    <h1 class=" text-l text-gray-400">There are {{bank_numbers.bank_total}} Leads in the Bank</h1>
+                    <h1 class=" text-l text-gray-400">{% trans "There Are" %} {{bank_numbers.bank_total}} {% trans "Leads in the Bank" %}</h1>
                 {% endif %}
             </div>
             {% if request.user.is_organisor %}
             <div>
                 <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-create' %}">
-                    Create a new lead
+                    {% trans "Create a New Lead" %}
                 </a>
                     
                     <br/>
                     <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-import' %}">
-                        Import
+                        {% trans "Import" %}
                     </a>
                     <br/>
                     <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-export' %}">
-                        Export
+                        {% trans "Export" %}
                     </a>
                
 
             <div x-data="{ open: false }" class="py-3 relative  text-left">
                 <div>
                     <button @click="open = !open" type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Filter Options
+                        {% trans "Filter Options" %}
                         <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
@@ -235,39 +236,39 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Cell Phone Number
+                                {% trans "Phone Number" %}
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Category
+                                {% trans "Category" %}
                             </th>
                             {% if request.user.is_organisor %}
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Source
+                                {% trans "Source" %}
                             </th>
                             {% endif %}
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Agent
+                                {% trans "Agent" %}
                                 </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Feedback
+                                {% trans "Feedback" %}
                                 </th>
 
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Sales
+                                {% trans "Sales" %}
                                 </th>
                                 {% if request.user.is_organisor %}
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Date Added
+                                {% trans "Date Added" %}
                                 </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Date Modified
+                                {% trans "Date Modified" %}
                                 </th>
                                 {% endif %}
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Date Assigned
+                                {% trans "Date Assigned" %}
                                 </th>
                             <th scope="col" class="relative px-6 py-3">
-                                <span class="sr-only">Edit</span>
+                                <span class="sr-only">{% trans "Edit" %}</span>
                             </th>
                         </tr>
                     </thead>
@@ -307,7 +308,7 @@
                                         {% endif %}
                                     {% else %}
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                            Unassigned
+                                            {% trans "Unassigned" %}
                                         </span>
                                     {% endif %}
                                 </td>
@@ -316,7 +317,7 @@
                                 </td>
 
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ lead.total_sale|intcomma }} ریال
+                                    {{ lead.total_sale|intcomma }} {% trans "Rials" %}
                                     
                                 </td>
                                 {% if request.user.is_organisor %}
@@ -333,18 +334,18 @@
                                 {% if request.user.is_organisor %}
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="{% url 'leads:lead-update' lead.pk %}" class="text-indigo-600 hover:text-indigo-900">
-                                            Edit
+                                            {% trans "Edit" %}
                                         </a>
                                     </td>
                                 {% elif request.user.is_agent %}
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="{% url 'leads:lead-followup-create' lead.pk %}" class="text-indigo-600 hover:text-indigo-900">
-                                            Add Followup
+                                            {% trans "Add Followup" %}
                                         </a>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="{% url 'leads:lead-update' lead.pk %}" class="text-indigo-600 hover:text-indigo-900">
-                                            Add Details
+                                            {% trans "Add Details" %}
                                         </a>
                                     </td>
                                     
@@ -353,12 +354,12 @@
                             </tr> 
                         {% empty %}
                         {% if request.user.is_organisor %}
-                        <p>There are currently no leads</p>
+                        <p>{% trans "There are currently No Leads" %}</p>
                         {% endif %}
                         {% endfor %}
                     </tbody>
                     {% if new_leads.new_leads_total != 0 and request.user.is_organisor%}
-                    <p>There are currently {{new_leads.new_leads_total}} New Leads</p>
+                    <p>{% trans "There are currently " %} {{new_leads.new_leads_total}} {% trans "New Leads" %}</p>
                     {% endif %}
                 </table>
                 <div class="pagination flex justify-center">
@@ -373,7 +374,7 @@
                             {% endif %}
                 
                             <span class="current">
-                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
                             </span>
                 
                             {% if page_obj.has_next %}

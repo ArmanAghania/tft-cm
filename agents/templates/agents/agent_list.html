@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 {% load humanize %}
-
+{% load i18n %}
 {% block content %}
     <section class="text-gray-700 body-font">
         <div class="container px-5 py-24 mx-auto flex flex-wrap">
             <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
                 <div>
-                    <h1 class="text-4xl text-gray-800">Agents</h1>
+                    <h1 class="text-4xl text-gray-800">{% trans "Agents" %}</h1>
                 </div>
                 <div>
-                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'agents:agent-create' %}">Create a new agent</a>
+                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'agents:agent-create' %}">{% trans "Create a New Agent" %}</a>
                     <br/>
-                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'agents:agent-import' %}">Import</a>
+                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'agents:agent-import' %}">{% trans "Import" %}</a>
 
                 </div>                
             </div>
@@ -24,49 +24,49 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th data-sort="name" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                Full Name
+                                    {% trans "Full Name" %}
                                 </th>
                                 <th data-sort="rank" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Rank
+                                    {% trans "Rank" %}
                                     </th>
                                 <th data-sort="username" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Username
+                                    {% trans "Username" %}
                                 </th>
                                 <th data-sort="username" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Chat ID
+                                    {% trans "Chat ID" %}
                                 </th>
                                 <th data-sort="username" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Team
+                                    {% trans "Team" %}
                                 </th>
                                 <th data-sort="daily_sales" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Daily Sales
+                                    {% trans "Daily Sales" %}
                                 </th>
                                 <th data-sort="monthly_sales" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Monthly Sales
+                                    {% trans "Monthly Sales" %}
                                 </th>
                                 <th data-sort="monthly_leads_given" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Monthly Leads Given
+                                    {% trans "Monthly Leads Given" %}
                                 </th>
                                 <th data-sort="monthly_leads_converted" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Monthly Leads Converted
+                                    {% trans "Monthly Leads Converted" %}
                                 </th>
                                 <th data-sort="monthly_conversion_rate" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Monthly Conversion Rate
+                                    {% trans "Monthly Conversion Rate" %}
                                 </th>
                                 <th data-sort="overall_leads_given" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Overall Leads Given
+                                    {% trans "Overall Leads Given" %}
                                 </th>
                                 <th data-sort="overall_leads_converted" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Overall Leads Converted
+                                    {% trans "Overall Leads Converted" %}
                                 </th>
                                 <th data-sort="overall_conversion_rate" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Overall Conversion Rate
+                                    {% trans "Overall Conversion Rate" %}
                                 </th>
                                 <th data-sort="status" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center cursor-pointer">
-                                    Status
+                                    {% trans "Status" %}
                                 </th>
                                 <th scope="col" class="relative px-6 py-3">
-                                <span class="sr-only">Edit</span>
+                                <span class="sr-only">{% trans "Edit" %}</span>
                                 </th>
                             </tr>
                         </thead>
@@ -120,12 +120,12 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="{% url 'agents:agent-update' agent_data.agent.pk %}" class="text-indigo-600 hover:text-indigo-900">
-                                            Edit
+                                            {% trans "Edit" %}
                                         </a>
                                     </td>
                                 </tr>
                             {% empty %}
-                                <p>There are currently no agents</p>
+                                <p>{% trans "There are Currently no Agents" %}</p>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -145,9 +145,7 @@
                        "<'row'<'col-sm-12'tr>>" +
                        "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>" +
                        "<'row'<'col-sm-12 col-md-6'B>>", // Add 'B' for buttons
-                buttons: [
-                    'copy', 'csv', 'excel', 'json' // Specify the buttons you want
-                ]
+                buttons: ['copyHtml5', 'excelHtml5', 'csvHtml5']
             });
         });
     </script>

@@ -1,19 +1,19 @@
 {% extends 'base.html' %}
 {% load tailwind_filters %}
+{% load i18n %}
 
 {% block content %}
 
 {% if user.is_authenticated %}
 
-
 <section class="text-gray-700 body-font">
     <div class="container px-5 py-24 mx-auto flex flex-wrap">
         <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
             <div>
-                <h1 class="text-4xl text-gray-800">Bank Numbers</h1>
+                <h1 class="text-4xl text-gray-800">{% trans "Bank Numbers" %}</h1>
                 <br/>
                 <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:bank-list' %}">
-                    Back to Bank
+                    {% trans "Back to Bank" %}
                 </a>
             </div>
             {% if request.user.is_organisor %}
@@ -23,14 +23,14 @@
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Export</h5>
+                                <h5 class="modal-title">{% trans "Export" %}</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="close"></button>
                             </div>
                             <div class="modal-body">
                                 <form action="" method="POST">
                                     {% csrf_token %}
                                     {{ form|crispy }}
-                                    <button type="submit" class="btn btn-primary">ذخیره</button>
+                                    <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
                                 </form>
                             </div>
                         </div>
@@ -48,19 +48,19 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onClick="sortTable(0)" >
-                                Cell Phone Number
+                                {% trans "Cell Phone Number" %}
                                 </th>
                                 
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onClick="sortTable(2)">
-                                    Agent
+                                    {% trans "Agent" %}
                                     </th>
                                
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onClick="sortTable(4)">
-                                    Date Added
+                                    {% trans "Date Added" %}
                                     </th>
                                 
                                 <th scope="col" class="relative px-6 py-3">
-                                <span class="sr-only">Edit</span>
+                                <span class="sr-only">{% trans "Edit" %}</span>
                                 </th>
                         </tr>
                     </thead>
@@ -78,7 +78,7 @@
                                         </span>
                                     {% else %}
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                            Unassigned
+                                            {% trans "Unassigned" %}
                                         </span>
                                     {% endif %}
                                 </td>
@@ -92,7 +92,7 @@
 
                         {% empty %}
 
-                        <p>There are currently no leads</p>
+                        <p>{% trans "There are currently no leads" %}</p>
 
                         {% endfor %}
                     </tbody>

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load i18n %}
 {% block content %}
 
 <style>
@@ -78,7 +78,7 @@
     <div class="main-container relative z-10">
         <div class="quote-and-numbers"> <!-- Center-align content -->
             <div class="m-5 bg-white p-8 rounded-xl w-full md:w-96 blur-bg bg-opacity-75">
-                <h2 class="text-2xl font-bold mb-6 text-center">Random Quote for Inspiration</h2>
+                <h2 class="text-2xl font-bold mb-6 text-center">{% trans "Random Qoute of Inspiration" %}</h2>
                 <div class="quote-container"> <!-- Add a container for the quote -->
                     <p class="text-gray-800 mb-2">{{ random_quote }}</p>
                 </div>
@@ -86,7 +86,7 @@
             
             <div class="numbers-container">
                 <div class="m-5 bg-white p-8 rounded-xl w-full md:w-96 bg-opacity-50 numbers-box">
-                    <h2 class="text-2xl font-bold mb-6 text-center">My Numbers</h2>
+                    <h2 class="text-2xl font-bold mb-6 text-center">{% trans "My Numbers" %}</h2>
                     <ul>
                         {% for lead in daily_numbers.all %}
                             <li class="flex justify-between border-b py-2">
@@ -98,7 +98,7 @@
                 </div>
 
                 <div class="m-5 bg-white p-8 rounded-xl w-full md:w-96 bg-opacity-50 numbers-box">
-                    <h2 class="text-2xl font-bold mb-6 text-center">My Followup Numbers</h2>
+                    <h2 class="text-2xl font-bold mb-6 text-center">{% trans "My Followup Numbers" %}</h2>
                     <ul>
                         {% for duplicate in duplicates_to_follow %}
                             <li class="border-b py-2 font-bold text-blue-800 text-center">{{ duplicate.number }}</li>

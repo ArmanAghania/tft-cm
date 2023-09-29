@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load tailwind_filters %}
+{% load i18n %}
 
 {% block content %}
 <section class="text-gray-700 body-font">
@@ -11,7 +12,7 @@
                         <form method="post">
                             {% csrf_token %}
                             {{ form|crispy }}
-                            <button type="submit" class="btn btn-primary mt-2">Add Sale</button>
+                            <button type="submit" class="btn btn-primary mt-2">{% trans "Add Sale" %}</button>
                         </form>
                     </div>
                 </div>

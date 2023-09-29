@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 import sys
 import dj_database_url
+from django.utils.translation import gettext_lazy as _
 
 from dotenv import load_dotenv
 import locale
@@ -80,6 +81,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    'django.middleware.locale.LocaleMiddleware',
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -222,3 +224,13 @@ IMPORT_EXPORT_USE_TRANSACTIONS = True
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10 * 1024 * 1024
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+USE_I18N = True
+USE_L10N = True
+LANGUAGES = [
+    ('en', _('English')),
+    ('fa', _('Persian')),
+]
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]

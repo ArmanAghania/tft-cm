@@ -66,6 +66,7 @@ from persiantools.jdatetime import JalaliDate
 import os
 import uuid
 import khayyam
+from django.utils.translation import gettext as _
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +145,7 @@ class BankListView(OrganisorAndLoginRequiredMixin, generic.ListView):
         bank_list = BankNumbers.objects.filter(organisation=user.userprofile).order_by('date_added')
         context["bank_numbers"] = {
             'bank_total': total_bank_numbers if total_bank_numbers else 0,
-            'bank_list': bank_list if bank_list else 'خالی'
+            'bank_list': bank_list if bank_list else _('Empty')
         }
 
         return context
@@ -170,10 +171,10 @@ class BankCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
             bank.organisation = self.request.user.userprofile
             bank.save()
             
-            messages.success(self.request, "شماره بانک جدید ایجاد شد.")
+            messages.success(self.request, _("New Bank Number Created"))
             return super(BankCreateView, self).form_valid(form)
         else: 
-            messages.error(self.request, "این شماره در بانک وجود دارد")
+            messages.error(self.request, _("Bank Number already exists"))
             return redirect("leads:bank-list")
 
 def bank_create(request):
@@ -235,7 +236,7 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
         if not user.is_organisor:
             base_filter_args["lead__agent__user"] = user
 
-       
+        
         total_bank_numbers = BankNumbers.objects.filter(organisation=user.userprofile).count()
 
         leads_not_in_bank_count = Lead.objects.filter(organisation=user.userprofile).exclude(phone_number__in=BankNumbers.objects.filter(organisation=user.userprofile).values('number')).count()
@@ -258,7 +259,17 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
         today = JalaliDate.today()  # Use JalaliDate from persiantools
         
         # Calculate the start of the week (Saturday) and month (first day of the month)
-        start_of_week = today.replace(day=1) if today.day <= 6 else today.replace(day=today.day - today.weekday() + 7)
+        # Convert JalaliDate to a Gregorian date
+        gregorian_today = today.to_gregorian()
+
+        # Find out how many days we are away from the last Saturday
+        days_since_last_saturday = gregorian_today.weekday() + 2  # +1 to shift from Monday-start to Sunday-start, another +1 to make Sunday = 1, Monday = 2, ..., Saturday = 7
+
+        # Subtract those days
+        start_of_week_gregorian = gregorian_today - timedelta(days=days_since_last_saturday % 7)  # % 7 makes sure that if today is Saturday, we subtract 0 days
+
+        # Convert back to JalaliDate
+        start_of_week = JalaliDate(start_of_week_gregorian)
         start_of_month = today.replace(day=1)
 
         base_filter_args = {}
@@ -384,7 +395,7 @@ class LeadCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
 
     def form_valid(self, form):
         user = self.request.user
-        if BankNumbers.objects.filter(organisation=user.userprofile, number=form.cleaned_data["phone_number"]).exists() == False:
+        if BankNumbers.objects.filter(organisation=user.userprofile, number=form.cleaned_data["phone_number"]).exists() == False or BankNumbers.objects.filter(organisation=user.userprofile, agent__user__first_name='Bank', number=form.cleaned_data["phone_number"]).exists() == False:
             lead = form.save(commit=False)
             lead.organisation = self.request.user.userprofile
             lead.save()
@@ -394,12 +405,13 @@ class LeadCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
                 from_email="test@test.com",
                 recipient_list=["test2@test.com"],
             )
-            messages.success(self.request, "You have successfully created a lead")
+            messages.success(self.request, _("You have successfully created a lead"))
             return super(LeadCreateView, self).form_valid(form)
+        
         else: 
             bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=form.cleaned_data["phone_number"])
             DuplicateToFollow.objects.get_or_create(user = self.request.user, number=form.cleaned_data["phone_number"], organisation_id=self.request.user.userprofile.id, agent=bank_number.agent)
-            messages.error(self.request, "Lead already exists!")
+            messages.error(self.request, _("Lead already exists!"))
             return redirect("leads:lead-list")
 
 def lead_create(request):
@@ -435,7 +447,7 @@ class LeadUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
 
     def form_valid(self, form):
         form.save()
-        messages.info(self.request, "You have successfully updated this lead")
+        messages.info(self.request, _("You have successfully updated this lead"))
         return super(LeadUpdateView, self).form_valid(form)
 
 def lead_update(request, pk):
@@ -498,7 +510,7 @@ class CategoryListView(LoginRequiredMixin, generic.ListView):
             queryset = Lead.objects.filter(organisation=user.agent.organisation)
 
         context.update(
-            {"unassigned_lead_count": queryset.filter(category__isnull=True).count()}
+            {"unassigned_lead_count": queryset.filter(agent__isnull=True).count()}
         )
         return context
 
@@ -824,7 +836,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 تعدادشماره‌‌های خالص ایرانی: {added_leads}\n\n\n'''
 
                 
-                notify_background_messages(chat_id="-1001707390535", message=message)
+                notify_background_messages(chat_id=chat_id, message=message)
 
                 return redirect("leads:lead-list")
             except Exception as e:
@@ -1836,4 +1848,4 @@ class TeamListView(LoginRequiredMixin, generic.ListView):
         context['team_sales'] = team_sales
         return context
 
-###TODO --->   Add Persian Language Switcher - Add an Static Photo to My Day
+###TODO --->   Add Persian Language Switcher - Add an Static Photo to My Day - Style Delete Button on Sale update - Duplicate Followup List

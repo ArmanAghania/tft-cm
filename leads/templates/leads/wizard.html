@@ -16,35 +16,35 @@
 
 <div class="container mx-auto my-6">
     <div class="mb-6">
-        <p class="text-lg font-bold">Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+        <p class="text-lg font-bold">{% trans "Step" %} {{ wizard.steps.step1 }} {% trans "of" %} {{ wizard.steps.count }}</p>
         <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-list' %}">
-            Back to leads
+            {% trans "Back to Leads" %}
         </a>
     </div>
 
     {% if display_data %}
     <div class="bg-gray-100 p-5 rounded shadow-md">
-        <h2 class="text-xl mb-4 font-semibold">Lead Information</h2>
-        <h3 class="mb-3 text-md font-semibold">Total Unassigned Leads: <span class="font-medium text-blue-600">{{ total_new_leads }}</span></h3>
-        <h3 class="mb-3 text-md font-semibold">Unassigned 912 Leads: <span class="font-medium text-blue-600">{{ new_912_leads }}</span></h3>
-        <h3 class="mb-3 text-md font-semibold">Foreign or Wrong Leads: <span class="font-medium text-blue-600">{{ foreign_or_wrong_leads }}</span></h3>
-        <h3 class="mb-3 text-md font-semibold">Active Agents:</h3>
+        <h2 class="text-xl mb-4 font-semibold">{% trans "Lead Information" %}</h2>
+        <h3 class="mb-3 text-md font-semibold">{% trans "Total Unassigned Leads:" %} <span class="font-medium text-blue-600">{{ total_new_leads }}</span></h3>
+        <h3 class="mb-3 text-md font-semibold">{% trans "Unassigned 912 Leads:" %} <span class="font-medium text-blue-600">{{ new_912_leads }}</span></h3>
+        <h3 class="mb-3 text-md font-semibold">{% trans "Foreign or Wrong Leads:" %} <span class="font-medium text-blue-600">{{ foreign_or_wrong_leads }}</span></h3>
+        <h3 class="mb-3 text-md font-semibold">{% trans "Active Agents:" %}</h3>
         <ul class="list"> 
-            <li class="pl-4"> Rank 1:<span class="font-medium text-blue-600">   {{ active_agents.rank_1 }}</span></li>  
-            <li class="pl-4"> Rank 2:<span class="font-medium text-blue-600">   {{ active_agents.rank_2 }}</span></li>  
-            <li class="pl-4"> Rank 3:<span class="font-medium text-blue-600">   {{ active_agents.rank_3 }}</span></li>  
-            <li class="pl-4"> Rank 4:<span class="font-medium text-blue-600">   {{ active_agents.rank_4 }}</span></li>
+            <li class="pl-4">{% trans "Rank 1:" %}<span class="font-medium text-blue-600">   {{ active_agents.rank_1 }}</span></li>  
+            <li class="pl-4">{% trans "Rank 2:" %}<span class="font-medium text-blue-600">   {{ active_agents.rank_2 }}</span></li>  
+            <li class="pl-4">{% trans "Rank 3:" %}<span class="font-medium text-blue-600">   {{ active_agents.rank_3 }}</span></li>  
+            <li class="pl-4">{% trans "Rank 4:" %}<span class="font-medium text-blue-600">   {{ active_agents.rank_4 }}</span></li>
         </ul> 
     </br>
-        <h3 class="mb-3 text-md font-semibold">Recommended Leads Per Agent: </h3>
+        <h3 class="mb-3 text-md font-semibold">{% trans "Recommended Leads Per Agent:" %}</h3>
         <ul class="list">
-            <li class="pl-4">Rank 1:<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank1 }}</span></li> 
-            <li class="pl-4">Rank 2:<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank2 }}</span></li> 
-            <li class="pl-4">Rank 3:<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank3 }}</span></li>
-            <li class="pl-4">Rank 4:<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank4 }}</span></li>
+            <li class="pl-4">{% trans "Rank 1:" %}<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank1 }}</span></li> 
+            <li class="pl-4">{% trans "Rank 2:" %}<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank2 }}</span></li> 
+            <li class="pl-4">{% trans "Rank 3:" %}<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank3 }}</span></li>
+            <li class="pl-4">{% trans "Rank 4:" %}<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank4 }}</span></li>
         </ul>
     </br>
-        <h3 class="mb-3 text-md font-semibold">Remaining Numbers: <span id="remaining-numbers" class="text-green-500 font-bold">{{ recommended_leads_per_agent.remaining }}</span></h3>
+        <h3 class="mb-3 text-md font-semibold">{% trans "Remaining Numbers: " %} <span id="remaining-numbers" class="text-green-500 font-bold">{{ recommended_leads_per_agent.remaining }}</span></h3>
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -129,22 +129,22 @@
 
         {% if wizard.steps.current == 'confirm' %}
         <div class=" relative overflow-x-auto shadow-md sm:rounded-lg">
-            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">Rank 1 </h3>
+            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">{% trans "Rank 1:" %}</h3>
             <table id="df_rank1_table" class="display w-full text-sm text-left text-gray-500 dark:text-gray-400"></table>
         </div>
         </br>
         <div class=" relative overflow-x-auto shadow-md sm:rounded-lg">
-            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">Rank 2 </h3>
+            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">{% trans "Rank 2:" %}</h3>
             <table id="df_rank2_table" class="display w-full text-sm text-left text-gray-500 dark:text-gray-400"></table>
         </div>
         </br>
         <div class=" relative overflow-x-auto shadow-md sm:rounded-lg">
-            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">Rank 3 </h3>
+            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">{% trans "Rank 3:" %}</h3>
             <table id="df_rank3_table" class="display w-full text-sm text-left text-gray-500 dark:text-gray-400"></table>
         </div>
         </br>
         <div class=" relative overflow-x-auto shadow-md sm:rounded-lg">
-            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">Rank 4 </h3>
+            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">{% trans "Rank 4:" %}</h3>
             <table id="df_rank4_table" class="display w-full text-sm text-left text-gray-500 dark:text-gray-400"></table>
         </div>
         
@@ -152,8 +152,8 @@
 
         <div class="mt-6">
             {% if wizard.steps.prev %}
-            <button name="wizard_goto_step" class="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700" type="submit" value="{{ wizard.steps.first }}">First Step</button>
-            <button name="wizard_goto_step" class="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700" type="submit" value="{{ wizard.steps.prev }}">Previous Step</button>
+            <button name="wizard_goto_step" class="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700" type="submit" value="{{ wizard.steps.first }}">{% trans "First Step" %}</button>
+            <button name="wizard_goto_step" class="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700" type="submit" value="{{ wizard.steps.prev }}">{% trans "Previous Step" %}</button>
             {% endif %}
 
             <input id="next-button" type="submit" class="focus:outline-none text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-green-400 dark:hover:bg-green-700 dark:focus:ring-green-800" value="Continue"/>

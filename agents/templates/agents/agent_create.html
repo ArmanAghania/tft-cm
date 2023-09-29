@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% load tailwind_filters %}
-
+{% load i18n %}
 {% block content %}
 
 <div class="max-w-lg mx-auto">
 
     <div class="py-5 border-b border-gray-200">
-        <a class="hover:text-blue-500" href="{% url 'agents:agent-list' %}">Go back to agents</a>
+        <a class="hover:text-blue-500" href="{% url 'agents:agent-list' %}">{% trans "Back to Agents" %}</a>
     </div>
 
-    <h1 class="text-4xl text-gray-800">Create a new agent</h1>
+    <h1 class="text-4xl text-gray-800">{% trans "Create a New Agent" %}</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.first_name|as_crispy_field }}
@@ -21,7 +21,7 @@
         {{ form.alt_name|as_crispy_field }}
         {{ form.teams }}
         {{ form.is_team_leader|as_crispy_field }}
-        <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">Submit</button>
+        <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">{% trans "Submit" %}</button>
     </form>
 
 </div>

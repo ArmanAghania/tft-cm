@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load i18n %}
 {% block content %}
 
 <section class="text-gray-700 body-font">
@@ -8,23 +8,23 @@
         <h1 class="sm:text-4xl text-3xl font-medium title-font mb-2 text-gray-900">
             {{ source.name }}
         </h1>
-        <a class="hover:text-blue-500" href="{% url 'leads:source-list' %}">Go back to Sources</a>
+        <a class="hover:text-blue-500" href="{% url 'leads:source-list' %}">{% trans "Back to Sources" %}</a>
         <p class="lg:w-2/3 mx-auto leading-relaxed text-base">
-            These are the leads under this source
+          {% trans "These are the leads from this Source" %}
         </p>
 
-        <a href="{% url 'leads:source-update' source.pk %}" class="hover:text-blue-500">Update</a>
-        <a href="{% url 'leads:source-delete' source.pk %}" class="hover:text-blue-500">Delete</a>
+        <a href="{% url 'leads:source-update' source.pk %}" class="hover:text-blue-500">{% trans "Update" %}</a>
+        <a href="{% url 'leads:source-delete' source.pk %}" class="hover:text-blue-500">{% trans "Delete" %}</a>
       </div>
       <div class="lg:w-2/3 w-full mx-auto overflow-auto">
         <table class="table-auto w-full text-left whitespace-no-wrap">
           <thead>
             <tr>
                 <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200 rounded-tl rounded-bl">
-                    First Name
+                  {% trans "First Name" %}
                 </th>
                 <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200">
-                    Last Name
+                  {% trans "Last Name" %}
                 </th>
             </tr>
           </thead>
@@ -34,7 +34,6 @@
                     <td class="px-4 py-3">
                       <a class="hover:text-blue-500" href="{% url 'leads:lead-detail' lead.pk %}">{{ lead.phone_number }}</a>
                     </td>
-                    {% comment %} <td class="px-4 py-3">{{ lead.last_name }}</td> {% endcomment %}
                 </tr>
             {% endfor %}
           </tbody>

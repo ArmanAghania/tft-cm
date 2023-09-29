@@ -1,33 +1,33 @@
 {% extends "base.html" %}
 {% load tailwind_filters %}
 {% load custom_filters  %}
-
+{% load i18n %}
 {% block content %}
 
 <section class="text-gray-700 body-font overflow-hidden">
     <div class="container px-5 py-24 mx-auto">
       <div class="lg:w-4/5 mx-auto flex flex-wrap">
         <div class="w-full lg:pr-10 lg:py-6 mb-6 lg:mb-0">
-            <h2 class="text-sm title-font text-gray-500 tracking-widest">Lead</h2>
+            <h2 class="text-sm title-font text-gray-500 tracking-widest">{% trans "Lead" %}</h2>
             <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-list' %}">
-                Back to leads
+                {% trans "Back to Leads" %}
             </a>
             <h1 class="text-gray-900 text-3xl title-font font-medium mb-4">{{ lead.phone_number }}</h1>
             <div class="flex mb-4">
                 <a href="{% url 'leads:lead-detail' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
-                    Overview
+                    {% trans "Overview" %}
                 </a>
                 <a href="{% url 'leads:lead-category-update' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
-                    Category
+                    {% trans "Category" %}
                 </a>
                 <a href="{% url 'leads:lead-update' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
-                    Update Details
+                    {% trans "Update Details" %}
                 </a>
                 <a href="{% url 'leads:lead-sales-create' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
-                    Add Sales
+                    {% trans "Add Sales" %}
                 </a> 
                 <a href="{% url 'leads:lead-sales-update' lead.pk %}" class="flex-grow text-indigo-500 border-b-2 border-indigo-500 py-2 text-lg px-1">
-                    Update Sales
+                    {% trans "Update Sales" %}
                 </a>  
             </div>
             <form method="post">
@@ -35,9 +35,12 @@
                 {{ formset.management_form }}
                 {% for form, sale in formset|zip_lists:sale_instances %}
                     {{ form|crispy }}
-                    <a href="{% url 'leads:lead-sales-delete' sale.pk %}">Delete</a>
+                    <a class="text-sm w-1/2 mt-2 text-white bg-indigo-500 border-0 py-1 px-6 focus:outline-none hover:bg-indigo-600 rounded" href="{% url 'leads:lead-sales-delete' sale.pk %}">{% trans "Delete" %}</a>
+            </br>
+        </br>
+
                 {% endfor %}
-                <input type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md" value="Update Sales">
+                <input type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md" value="{% trans "Update Sales" %}">
             </form>
 
 </div>
