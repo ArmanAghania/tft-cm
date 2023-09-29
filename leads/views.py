@@ -1424,6 +1424,7 @@ class SaleCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
 
         sale = form.save(commit=False)
         sale.lead = lead
+        sale.organisation = self.request.user.userprofile  # Assuming the user is logged in and has an associated organisation
         sale.agent = sale.lead.agent  # Assuming the user is logged in and has an associated agent
         sale.save()
         return super(SaleCreateView, self).form_valid(form)

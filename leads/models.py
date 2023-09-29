@@ -149,7 +149,7 @@ post_save.connect(post_user_created_signal, sender=User)
 class BankNumbers(models.Model):
     number = models.CharField(max_length=20, unique=True, verbose_name=_("Phone Number"))
     agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL, verbose_name=_("Agent"))
-    organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE, default='1', verbose_name=_("Organisation"))
+    organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name=_("Organisation"))
     date_added = models.DateTimeField(auto_now_add=True, verbose_name=_("Date Added"))
 
     class Meta:
@@ -179,7 +179,7 @@ class DuplicateToFollow(models.Model):
 class Sale(models.Model):
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, verbose_name=_('Lead'))
     agent = models.ForeignKey(Agent, on_delete=models.CASCADE, verbose_name=_('Agent'))
-    organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE, default='1', verbose_name=_('Organisation'))
+    organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name=_('Organisation'))
     date = models.DateTimeField(auto_now_add=True, verbose_name=_('Date Added'))
     amount = models.DecimalField(max_digits=10, decimal_places=0, default=Decimal('0.00'), verbose_name=_('Amount'))  # This will be the amount for the current transaction
     total = models.DecimalField(max_digits=10, decimal_places=0, default=Decimal('0.00'), verbose_name=_('Total'))  # This will be the total amount for the lead
