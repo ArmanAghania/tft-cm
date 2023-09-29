@@ -815,7 +815,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                         message = f'تماس {number} {lead.agent}'
                         notify_background_messages(chat_id=chat_id, message=message)
                     else:
-                        if len(number) == 11 and number[0] == 0 and number[1] == 9:
+                        if len(number) == 11:
                             added_leads += 1
                             Lead.objects.create(phone_number=number, category=category, source=source, organisation=user.userprofile)
                         else:
