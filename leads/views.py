@@ -861,8 +861,8 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
 
                 # Send a message to Telegram
                 
-                chat_id = '-1001707390535'
-                # chat_id = "-1001838419145"
+                # chat_id = '-1001707390535'
+                chat_id = "-1001838419145"
 
                 message = f'''
                 منبع: {source}\n
