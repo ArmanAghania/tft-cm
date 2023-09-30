@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load humanize %}
+{% load custom_filters %}
 {% block content %}
 
 <section class="text-gray-700 body-font overflow-hidden">
@@ -79,7 +80,7 @@
                 </div>
                 <div class="flex border-t border-b border-gray-300 py-2">
                     <span class="text-gray-500">{% trans "Date Assigned" %}</span>
-                    <span class="ml-auto text-gray-900">{{ lead.date_assigned }}</span>
+                    <span class="ml-auto text-gray-900">{{ lead.date_assigned|to_jalali }}</span>
                 </div>
             </div>
 

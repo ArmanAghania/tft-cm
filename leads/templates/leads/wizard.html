@@ -46,6 +46,11 @@
     </br>
         <h3 class="mb-3 text-md font-semibold">{% trans "Remaining Numbers: " %} <span id="remaining-numbers" class="text-green-500 font-bold">{{ recommended_leads_per_agent.remaining }}</span></h3>
     </div>
+    {% if wizard.steps.current == 'chat_override' %}
+    {# Render the override option #}
+    {{ wizard.form.override_chat_id.label }}: {{ wizard.form.override_chat_id }}
+    {{ wizard.form.chat_id.label }}: {{ wizard.form.chat_id }}
+{% endif %}
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const rank1Input = document.getElementById("id_distribution_info-rank1");

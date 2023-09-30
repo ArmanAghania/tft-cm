@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load tailwind_filters %}
+{% load i18n %}
+{% block content %}
+<form method="post" class="bg-white p-8 rounded shadow-md max-w-md mx-auto">
+    {% csrf_token %}
+    <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="choice">{% trans "Override chat ID for all notifications?" %}</label>
+        <div class="flex items-center space-x-4">
+            <label class="flex items-center">
+                <input type="radio" name="choice" value="Yes" class="form-radio text-indigo-600">
+                <span class="ml-2">{% trans "Yes" %}</span>
+            </label>
+            <label class="flex items-center">
+                <input type="radio" name="choice" value="No" checked class="form-radio text-indigo-600">
+                <span class="ml-2">{% trans "No" %}</span>
+            </label>
+        </div>
+    </div>
+    <div class="flex justify-end">
+        <input type="submit" value="Submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-500">
+    </div>
+</form>
+{% endblock content %}

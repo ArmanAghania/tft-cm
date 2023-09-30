@@ -23,6 +23,13 @@ class LeadFilter(django_filters.FilterSet):
         # You can customize the widget for this filter, for example:
         widget=django_filters.widgets.BooleanWidget(attrs={'class': 'custom-checkbox'}),
     )
+    not_starts_with_09 = django_filters.BooleanFilter(
+        method='filter_not_starts_with_09',  # Specify the custom filter method
+        label='Phone number does not start with 09',  # Label for the filter
+        
+        # Customize the widget for this filter if needed
+        widget=django_filters.widgets.BooleanWidget(attrs={'class': 'custom-checkbox'}),
+    )
 
     # Define the custom filter method
     def filter_has_agent(self, queryset, name, value):
@@ -32,6 +39,11 @@ class LeadFilter(django_filters.FilterSet):
         else:
             # Filter leads without agents (agents are None)
             return queryset.filter(agent=None)
+        
+    def filter_not_starts_with_09(self, queryset, name, value):
+        if value:  # If the checkbox is checked
+            return queryset.exclude(phone_number__startswith='09')
+        return queryset
 
     class Meta:
         model = Lead

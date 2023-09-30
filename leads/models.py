@@ -8,6 +8,8 @@ from simple_history.models import HistoricalRecords
 from decimal import Decimal
 from django_jalali.db import models as jmodels
 from django.utils.translation import gettext_lazy as _
+from asgiref.sync import sync_to_async
+
 
 RANK_CHOICES = (
     (1, _('1')),
@@ -233,3 +235,13 @@ class Team(models.Model):
     @property
     def team_leaders(self):
         return self.members.filter(is_team_leader=True)
+    
+
+class ChatSetting(models.Model):
+    override_chat_id = models.BooleanField(default=False)
+    chat_id = models.CharField(max_length=50, blank=True, null=True)
+
+    @classmethod
+    def load(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj

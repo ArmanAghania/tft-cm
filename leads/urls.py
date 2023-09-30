@@ -75,4 +75,5 @@ urlpatterns = [
     path('download-excel/', download_excel_page, name='download_excel_page'),
     path('run_background_tasks/', run_background_tasks, name='run_background_tasks'),
     path('stop_background_tasks/', stop_background_tasks, name='stop_background_tasks'),
+
 ]

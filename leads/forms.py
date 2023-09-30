@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UsernameField
-from .models import Lead, Agent, Category, FollowUp, BankNumbers, Sale, Source, Team
+from .models import Lead, Agent, Category, FollowUp, BankNumbers, Sale, Source, Team, ChatSetting
 from jalali_date.fields import JalaliDateField
 from jalali_date.widgets import AdminJalaliDateWidget
 User = get_user_model()
@@ -170,3 +170,7 @@ class TeamModelForm(forms.ModelForm):
         # Filter the agents based on the organization of the logged-in user
         self.fields['members'].queryset = Agent.objects.filter(organisation=user.userprofile)
 
+class ChatOverrideForm(forms.ModelForm):
+    class Meta:
+        model = ChatSetting
+        fields = ['override_chat_id', 'chat_id']

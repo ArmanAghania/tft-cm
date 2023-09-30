@@ -173,9 +173,9 @@
                         <a id="openModalButton" href="{% url 'leads:dist_view' %}"  class="px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-full">{% trans "Start Distribution" %}</a>
                     </div>
                     <div class="container px-5 pb-5 mx-auto flex justify-center">
-                        <button class="mx-2 px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-1/2" id="runTasksBtn">Run Background Tasks</button>
+                        <button class="mx-2 px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-1/2" id="runTasksBtn">{% trans "Run Background Tasks" %}</button>
                         <!-- Button to stop background tasks -->
-                        <button class="mx-2 px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-1/2" id="stopTasksBtn">Stop Tasks</button>
+                        <button class="mx-2 px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-1/2" id="stopTasksBtn">{% trans "Stop Tasks" %}</button>
                     </div>
 
                     <!-- Modal for logs -->
@@ -249,10 +249,10 @@
                                 </label>
                             {% endfor %}
                             <div class="px-4 py-1">
-                                <button type="submit" class="w-full text-sm text-left text-white bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1">Apply Filter</button>
+                                <button type="submit" class="w-full text-sm text-left text-white bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1">{% trans "Apply Filter" %}</button>
                             </div>
                             <div class="px-4 py-1">
-                            <a href="{% url 'leads:lead-list' %}" class="flex items-center w-full text-sm text-left text-white bg-yellow-600 hover:bg-yellow-500 rounded px-3 py-1" >Clear Filters</a>
+                            <a href="{% url 'leads:lead-list' %}" class="flex items-center w-full text-sm text-left text-white bg-yellow-600 hover:bg-yellow-500 rounded px-3 py-1" >{% trans "Clear Filters" %}</a>
                             </div>
                         </form>
                     </div>
@@ -404,8 +404,8 @@
                                 {{ get_params.pop.page }}
                             {% endif %}
                             {% if page_obj.has_previous %}
-                                <a href="?{{ get_params.urlencode }}&page=1" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">&laquo; First Page</a>
-                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.previous_page_number }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">Previous Page</a>
+                                <a href="?{{ get_params.urlencode }}&page=1" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">&laquo; {% trans "First Page" %}</a>
+                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.previous_page_number }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans "Previous Page" %}</a>
                             {% endif %}
                 
                             <span class="current">
@@ -413,8 +413,8 @@
                             </span>
                 
                             {% if page_obj.has_next %}
-                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.next_page_number }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">Next Page</a>
-                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.paginator.num_pages }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">Last Page &raquo;</a>
+                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.next_page_number }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans "Next Page" %}</a>
+                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.paginator.num_pages }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans "Last Page" %} &raquo;</a>
                             {% endif %}
                         {% endwith %}
                     </span>

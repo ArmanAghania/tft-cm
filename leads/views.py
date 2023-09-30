@@ -18,7 +18,8 @@ from .models import (Lead,
                      Sale,
                      DuplicateToFollow,
                      Source,
-                     Team)
+                     Team,
+                     ChatSetting)
 from .forms import (LeadModelForm,
                     CustomUserCreationForm,
                     AssignAgentForm,
@@ -36,6 +37,7 @@ from .forms import (LeadModelForm,
                     SaleModelForm,
                     SourceModelForm,
                     TeamModelForm,
+                    ChatOverrideForm,
 )
 from .resources import LeadResource, BankResource
 import csv
@@ -73,6 +75,9 @@ import sys
 import signal
 from django.core.cache import cache
 import telegram
+from django.template import RequestContext
+from concurrent.futures import ThreadPoolExecutor
+
 
 logger = logging.getLogger(__name__)
 
@@ -447,14 +452,35 @@ class LeadUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
             queryset = queryset.filter(agent__user=user)
         return queryset
 
+
     
     def get_success_url(self):
         return reverse("leads:lead-list")
 
     def form_valid(self, form):
-        form.save()
+        # Before saving, capture the original agent
+        original_agent = self.get_object().agent
+
+        # Save the updated lead instance
+        response = super(LeadUpdateView, self).form_valid(form)
+
+        # Check if agent has changed
+        if original_agent != self.object.agent:
+            new_agent = self.object.agent
+            print(f"Agent was changed to: {new_agent}")
+
+            # If the new agent has a chat_id, send a notification
+            if new_agent:
+                message = f"{self.object.phone_number}"
+                notify_background_messages(chat_id='-1001707390535', message=message)
+
         messages.info(self.request, _("You have successfully updated this lead"))
-        return super(LeadUpdateView, self).form_valid(form)
+
+        return response
+    # def form_valid(self, form):
+    #     form.save()
+    #     messages.info(self.request, _("You have successfully updated this lead"))
+    #     return super(LeadUpdateView, self).form_valid(form)
 
 def lead_update(request, pk):
     lead = Lead.objects.get(id=pk)
@@ -746,13 +772,13 @@ class BankExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.F
     def get_success_url(self):
         return reverse("leads:lead-list")
 
-@background(schedule=3)
+@background(schedule=1)
 def notify_background_messages(chat_id, message):
     asyncio.run(send_telegram_message(chat_id, message))
 
 
 async def send_telegram_message(chat_id, message):
-    limiter = AsyncLimiter(3, 30)
+    limiter = AsyncLimiter(1, 30)
     TOKEN = settings.TELEGRAM_TOKEN
     bot = Bot(TOKEN)
     
@@ -768,26 +794,14 @@ async def send_telegram_message(chat_id, message):
         except Exception as backup_error:
             print(f"Error sending Telegram message to backup chat: {backup_error}")
 
-# @shared_task
-# def notify_background_messages_celery(chat_id, message):
-#     asyncio.run(send_telegram_message(chat_id, message))
-
-# async def send_telegram_message(chat_id, message):
-#     limiter = AsyncLimiter(5, 30)
-#     TOKEN = settings.TELEGRAM_TOKEN
-#     bot = Bot(TOKEN)
-    
-#     try:
-#         await limiter.acquire()
-#         await bot.send_message(chat_id=chat_id, text=message)
-#     except Exception as e:
-#         print(f"Error sending Telegram message: {e}")
 
 
 class LeadImportView(OrganisorAndLoginRequiredMixin, View):
     template_name = 'leads/lead_import.html'
 
     def get(self, request):
+        if 'override_chat_id' not in request.session:
+            return render(request, 'leads/prompt_override_chat_id.html')
        
         form = LeadImportForm()
         return render(request, self.template_name, {'form': form})
@@ -810,6 +824,14 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
         return all_numbers
 
     def post(self, request):
+
+        if 'choice' in request.POST:
+            if request.POST['choice'] == "Yes":
+                request.session['override_chat_id'] = True
+            else:
+                request.session['override_chat_id'] = False
+            return redirect('leads:lead-import')
+
         form = LeadImportForm(request.POST, request.FILES)
         user = self.request.user
         TOKEN = settings.TELEGRAM_TOKEN
@@ -832,7 +854,10 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                         duplicates += 1
                         bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=number)
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
-                        chat_id = bank_number.agent.chat_id if bank_number.agent.chat_id else '-1001707390535'
+                        if request.session.get('override_chat_id', False):
+                            chat_id = '-1001707390535'
+                        else:
+                            chat_id = bank_number.agent.chat_id if bank_number.agent.chat_id else '-1001707390535'
                         message = f'تماس {number} {bank_number.agent}'
                         # notify_background_messages_celery.delay(chat_id=chat_id, message=message)
                         notify_background_messages(chat_id=chat_id, message=message)
@@ -841,7 +866,10 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                         lead = Lead.objects.get(organisation=user.userprofile, phone_number=number)
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=lead.agent)
                         if lead.agent:
-                            chat_id = lead.agent.chat_id if lead.agent.chat_id else '-1001707390535'
+                            if request.session.get('override_chat_id', False):
+                                chat_id = '-1001707390535'
+                            else:
+                                chat_id = lead.agent.chat_id if lead.agent.chat_id else '-1001707390535'
                             message = f'تماس {number} {lead.agent}'
                             # notify_background_messages_celery.delay(chat_id=chat_id, message=message)
                             notify_background_messages(chat_id=chat_id, message=message)
@@ -860,9 +888,11 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                     
 
                 # Send a message to Telegram
+                if request.session.get('override_chat_id', False):
+                    chat_id = '-1001707390535'
+                else:
+                    chat_id = "-1001838419145"
                 
-                # chat_id = '-1001707390535'
-                chat_id = "-1001838419145"
 
                 message = f'''
                 منبع: {source}\n
@@ -882,6 +912,9 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 # Catch any error related to file processing and display a message to the user
                 messages.error(request, f'''An error occurred while processing the file. Review the file and upload again.
                                             THE FILE SHOULD HAVE ONE COLUMN OF ONLY NUMBERS!''')
+                
+        if 'override_chat_id' in request.session:
+            del request.session['override_chat_id']
 
         return render(request, self.template_name, {'form': form})
 
@@ -940,13 +973,36 @@ class BankImportView(OrganisorAndLoginRequiredMixin, View):
 
         return render(request, self.template_name, {'form': form})    
 
+# def set_chat_id_override(request):
+#     if request.method == "POST":
+#         override_choice = request.POST.get('choice')
+#         chat_id_value = request.POST.get('chat_id')
+
+#         chat_settings = ChatSetting.load()
+#         if override_choice == "Yes" and chat_id_value:
+#             chat_settings.override_chat_id = True
+#             chat_settings.chat_id = chat_id_value
+#             chat_settings.save()
+#         else:
+#             chat_settings.override_chat_id = False
+#             chat_settings.chat_id = None
+#             chat_settings.save()
+
+#     return redirect('some_view_name')
+
 FORMS = [
+    ("chat_override", ChatOverrideForm),
     ("category", CategorySelectionForm),
     ("distribution_info", DistributionForm),
     ("confirm", ConfirmationForm),  # No form for confirmation, just an action button.
 ]
 
-@background(schedule=5)
+executor = ThreadPoolExecutor()
+async def load_chat_settings():
+            loop = asyncio.get_running_loop()
+            return await loop.run_in_executor(executor, ChatSetting.load)
+
+@background(schedule=2)
 def notify_background(df=None):
     asyncio.run(notify_agents_via_telegram(df))
 
@@ -955,8 +1011,8 @@ async def notify_agents_via_telegram(df):
         TOKEN = settings.TELEGRAM_TOKEN
         bot = Bot(TOKEN)
 
-        # Initialize the limiter: 5 messages every 30 seconds
-        limiter = AsyncLimiter(5, 30)
+        # Initialize the limiter: 3 messages every 30 seconds
+        limiter = AsyncLimiter(2, 30)
         data_list = json.loads(df)
 
         @sync_to_async
@@ -968,6 +1024,7 @@ async def notify_agents_via_telegram(df):
             return user.agent.chat_id
         
         
+        
         for agent_name, phone_data in data_list.items():
             if phone_data == {}:
                 continue
@@ -976,6 +1033,10 @@ async def notify_agents_via_telegram(df):
                 today = jdatetime.datetime.now().strftime('%Y/%m/%d')
                 rank = user.rank
                 chat_id = await get_agent_chat_id(user)
+
+                chat_settings = await load_chat_settings()
+                if chat_settings.override_chat_id and chat_settings.chat_id:
+                    chat_id = chat_settings.chat_id
 
                 if not chat_id:
                     chat_id = '-1001707390535'
@@ -1042,6 +1103,7 @@ async def notify_agents_via_telegram(df):
 
                 await bot.send_message(chat_id=chat_id, text=message)
 
+
 def download_excel_page(request):
     excel_file_path = request.session.get('excel_file_path')
     return render(request, 'leads/download_excel_page.html', {'excel_file_path': excel_file_path})
@@ -1062,6 +1124,9 @@ class LeadDistributionWizard(SessionWizardView):
                 form.initial = {'category': category}
             except (MultiValueDictKeyError, Category.DoesNotExist):
                 pass
+        if step == 'chat_override' and data:
+            chat_settings = ChatSetting.load()
+            form.initial = {'override_chat_id': chat_settings.override_chat_id, 'chat_id': chat_settings.chat_id}
         
         return form
 
@@ -1137,6 +1202,12 @@ class LeadDistributionWizard(SessionWizardView):
 
     def done(self, form_list, **kwargs):
         self.request.session['current_wizard_step'] = self.steps.current
+        chat_override_data = self.get_cleaned_data_for_step('chat_override')
+        if chat_override_data:
+            chat_settings = ChatSetting.load()
+            chat_settings.override_chat_id = chat_override_data['override_chat_id']
+            chat_settings.chat_id = chat_override_data['chat_id']
+            chat_settings.save()
         
         context = self.get_context_data(None)
         df_rank1 = context.get('df_rank1')
