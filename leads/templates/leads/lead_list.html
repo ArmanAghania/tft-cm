@@ -13,6 +13,26 @@
         th {
             cursor: pointer
         }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
     </style>
 <hr>
 </br>
@@ -148,12 +168,27 @@
                     </div>
                 </div>
                 <hr/>
-    <div class="container px-5 py-5 mx-auto flex flex-wrap">
-        {% if request.user.is_organisor %}
-        <a id="openModalButton" href="{% url 'leads:dist_view' %}"  class="px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-full">{% trans "Start Distribution" %}</a>
-    </div>
+                {% if request.user.is_organisor %}
+                    <div class="container px-5 py-5 mx-auto flex flex-wrap">
+                        <a id="openModalButton" href="{% url 'leads:dist_view' %}"  class="px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-full">{% trans "Start Distribution" %}</a>
+                    </div>
+                    <div class="container px-5 pb-5 mx-auto flex justify-center">
+                        <button class="mx-2 px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-1/2" id="runTasksBtn">Run Background Tasks</button>
+                        <!-- Button to stop background tasks -->
+                        <button class="mx-2 px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-1/2" id="stopTasksBtn">Stop Tasks</button>
+                    </div>
+
+                    <!-- Modal for logs -->
+                    <div id="logModal" class="modal">
+                        <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <pre id="logOutput"></pre> <!-- This is where logs will be appended -->
+                        </div>
+                    </div>
+                    
+                    
         
-        {% endif %}
+                {% endif %}
     <div class="w-full justify-center">
         <!-- Search Input -->
     <input type="text" id="searchInput" placeholder="Search leads..." class="p-2 border rounded w-full" onkeyup="searchLeads()">
@@ -498,8 +533,51 @@
                                 }
                             });
                         });
-                }
-                    
+                    }
+
+                    // Reference modal and elements
+                    var modal_log = document.getElementById("logModal");
+                    var span = document.getElementsByClassName("close")[0];
+                    var logOutput = document.getElementById("logOutput");
+
+                    // When the user clicks on the button, open the modal
+                    document.getElementById('runTasksBtn').addEventListener('click', function() {
+                        fetch('run_background_tasks/')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                modal_log.style.display = "block";
+                                logOutput.textContent += "Background tasks are running!\n";
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        });
+                    });
+
+                    // When the user clicks on the "Stop Tasks" button, stop the background tasks
+                    document.getElementById('stopTasksBtn').addEventListener('click', function() {
+                        fetch('stop_background_tasks/') // Endpoint to stop background tasks
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                logOutput.textContent += "Background tasks stopped!\n";
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        });
+                    });
+
+                    // When the user clicks on <span> (x), close the modal
+                    span.onclick = function() {
+                        modal_log.style.display = "none";
+                    }
+
+                    // When the user clicks anywhere outside of the modal, close it
+                    window.onclick = function(event) {
+                        if (event.target == modal) {
+                            modal_log.style.display = "none";
+                        }
+                    }
                 </script>
                 
                 </div>

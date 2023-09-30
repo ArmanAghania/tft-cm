@@ -67,6 +67,12 @@ import os
 import uuid
 import khayyam
 from django.utils.translation import gettext as _
+from celery import shared_task
+import subprocess
+import sys
+import signal
+from django.core.cache import cache
+import telegram
 
 logger = logging.getLogger(__name__)
 
@@ -740,21 +746,42 @@ class BankExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.F
     def get_success_url(self):
         return reverse("leads:lead-list")
 
-@background(schedule=5)
+@background(schedule=3)
 def notify_background_messages(chat_id, message):
     asyncio.run(send_telegram_message(chat_id, message))
 
 
 async def send_telegram_message(chat_id, message):
-    limiter = AsyncLimiter(5, 30)
+    limiter = AsyncLimiter(3, 30)
     TOKEN = settings.TELEGRAM_TOKEN
     bot = Bot(TOKEN)
     
     try:
         await limiter.acquire()
         await bot.send_message(chat_id=chat_id, text=message)
-    except Exception as e:
-        print(f"Error sending Telegram message: {e}")
+    except (telegram.error.BadRequest, Exception) as e:
+        print(f"Error sending Telegram message to {chat_id}: {e}")
+        
+        # Try sending to the backup chat_id
+        try:
+            await bot.send_message(chat_id='-1001707390535', text=message)
+        except Exception as backup_error:
+            print(f"Error sending Telegram message to backup chat: {backup_error}")
+
+# @shared_task
+# def notify_background_messages_celery(chat_id, message):
+#     asyncio.run(send_telegram_message(chat_id, message))
+
+# async def send_telegram_message(chat_id, message):
+#     limiter = AsyncLimiter(5, 30)
+#     TOKEN = settings.TELEGRAM_TOKEN
+#     bot = Bot(TOKEN)
+    
+#     try:
+#         await limiter.acquire()
+#         await bot.send_message(chat_id=chat_id, text=message)
+#     except Exception as e:
+#         print(f"Error sending Telegram message: {e}")
 
 
 class LeadImportView(OrganisorAndLoginRequiredMixin, View):
@@ -798,23 +825,29 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 foreign_added = 0
                 all_numbers = self.lead_preprocess(csv_file)
                 for number in all_numbers:
+                    print(number)
                     total_leads += 1
                     category = form.cleaned_data['category']
                     if BankNumbers.objects.filter(organisation=user.userprofile, number=number).exists():
                         duplicates += 1
-                        lead = Lead.objects.get(organisation=user.userprofile, phone_number=number)
                         bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=number)
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
-                        chat_id = lead.agent.chat_id
+                        chat_id = bank_number.agent.chat_id if bank_number.agent.chat_id else '-1001707390535'
                         message = f'تماس {number} {bank_number.agent}'
+                        # notify_background_messages_celery.delay(chat_id=chat_id, message=message)
                         notify_background_messages(chat_id=chat_id, message=message)
                     elif Lead.objects.filter(organisation=user.userprofile, phone_number=number).exists():
                         duplicates += 1
                         lead = Lead.objects.get(organisation=user.userprofile, phone_number=number)
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=lead.agent)
-                        chat_id = lead.agent.chat_id
-                        message = f'تماس {number} {lead.agent}'
-                        notify_background_messages(chat_id=chat_id, message=message)
+                        if lead.agent:
+                            chat_id = lead.agent.chat_id if lead.agent.chat_id else '-1001707390535'
+                            message = f'تماس {number} {lead.agent}'
+                            # notify_background_messages_celery.delay(chat_id=chat_id, message=message)
+                            notify_background_messages(chat_id=chat_id, message=message)
+                        else:
+                            message = f'شماره تکراری بدون کارشناس: {number}'
+                            notify_background_messages(chat_id='-1001707390535', message=message)
                     else:
                         if len(number) == 11:
                             added_leads += 1
@@ -828,7 +861,9 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
 
                 # Send a message to Telegram
                 
-                chat_id = "-1001838419145"
+                chat_id = '-1001707390535'
+                # chat_id = "-1001838419145"
+
                 message = f'''
                 منبع: {source}\n
                 تعداد شماره‌های ورودی: {total_leads}\n
@@ -837,7 +872,9 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 تعدادشماره‌‌های خالص ایرانی: {added_leads}\n\n\n'''
 
                 
+                # notify_background_messages_celery.delay(chat_id=chat_id, message=message)
                 notify_background_messages(chat_id=chat_id, message=message)
+
 
                 return redirect("leads:lead-list")
             except Exception as e:
@@ -926,6 +963,11 @@ async def notify_agents_via_telegram(df):
         def get_agent_by_alt_name(name):
             return User.objects.get(alt_name=name)
         
+        @sync_to_async
+        def get_agent_chat_id(user):
+            return user.agent.chat_id
+        
+        
         for agent_name, phone_data in data_list.items():
             if phone_data == {}:
                 continue
@@ -933,7 +975,12 @@ async def notify_agents_via_telegram(df):
                 user = await get_agent_by_alt_name(agent_name)
                 today = jdatetime.datetime.now().strftime('%Y/%m/%d')
                 rank = user.rank
-                chat_id = user.agent.chat_id
+                chat_id = await get_agent_chat_id(user)
+
+                if not chat_id:
+                    chat_id = '-1001707390535'
+
+                print(chat_id)
                 if not chat_id:
                     print(f"No chat_id found for agent: {agent_name}")
                     continue
@@ -1850,4 +1897,31 @@ class TeamListView(LoginRequiredMixin, generic.ListView):
         context['team_sales'] = team_sales
         return context
 
-###TODO --->   Add Persian Language Switcher - Add an Static Photo to My Day - Style Delete Button on Sale update - Duplicate Followup List
+
+def run_background_tasks(request):
+    if request.user.is_authenticated:
+        try:
+            process = subprocess.Popen([sys.executable, "manage.py", "process_tasks"])
+            # Store the PID in the cache
+            cache.set('background_task_pid', process.pid, 3600)  # 1 hour expiry for example
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'error': str(e)})
+    else:
+        return JsonResponse({'status': 'error', 'error': 'Not authenticated'})
+    
+def stop_background_tasks(request):
+    if request.user.is_authenticated:
+        try:
+            pid = cache.get('background_task_pid')
+            if pid:
+                os.kill(pid, signal.SIGTERM)  # send the SIGTERM signal to the process
+                return JsonResponse({'status': 'success'})
+            else:
+                return JsonResponse({'status': 'error', 'error': 'No background task is running.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'error': str(e)})
+    else:
+        return JsonResponse({'status': 'error', 'error': 'Not authenticated'})
+    
+###TODO --->  Add an Static Photo to My Day - Duplicate Followup List

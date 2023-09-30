@@ -934,52 +934,52 @@ msgstr "این شماره در بانک وجود دارد"
 
 #: .\leads\views.py:408
 msgid "You have successfully created a lead"
-msgstr ""
+msgstr "مشتری با موفقیت ایجاد شد"
 
 #: .\leads\views.py:414
 msgid "Lead already exists!"
-msgstr ""
+msgstr "این شماره در بانک شماره‌ها وجود دارد"
 
 #: .\leads\views.py:450
 msgid "You have successfully updated this lead"
-msgstr ""
+msgstr "جزئیات مشتری با موفقیت به روز رسانی شد"
 
 #: .\templates\dashboard.html:9
 msgid "Dashboard"
-msgstr ""
+msgstr "داشبورد"
 
 #: .\templates\dashboard.html:16
 msgid "Total Leads"
-msgstr ""
+msgstr "کل مشتریان"
 
 #: .\templates\dashboard.html:22
 msgid "Leads Added This Month"
-msgstr ""
+msgstr "مشتریان این ماه"
 
 #: .\templates\dashboard.html:28
 msgid "Converted Leads This Month "
-msgstr ""
+msgstr "مشتریان تبدیل شده"
 
 #: .\templates\landing.html:15
 msgid "This CRM will help you manage your Sales Teams, Leads, and Sales"
-msgstr ""
+msgstr "این سایت به شما کمک خواهد کرد تا مشتریان، فروش‌ها و تیم‌های فروش خود را مدیریت کنید"
 
 #: .\templates\landing.html:19
 msgid "Login To Get Started"
-msgstr ""
+msgstr "برای شروع وارد شوید"
 
 #: .\templates\navbar.html:14
 msgid "Sign Up"
-msgstr ""
+msgstr "ثبت‌نام"
 
 #: .\templates\navbar.html:39
 msgid "Bank of Numbers"
-msgstr ""
+msgstr "بانک شماره‌ها"
 
 #: .\templates\navbar.html:55
 msgid "Logout"
-msgstr ""
+msgstr "خروج"
 
 #: .\templates\navbar.html:62
 msgid "Login"
-msgstr ""
+msgstr "ورود"
