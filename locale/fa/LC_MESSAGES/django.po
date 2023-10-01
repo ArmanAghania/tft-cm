@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-10-01 20:03+0330\n"
+"POT-Creation-Date: 2023-10-01 20:59+0330\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -193,6 +193,7 @@ msgstr "کارشناسی برای نمایش وجود ندارد"
 
 #: .\agents\templates\agents\agent_update.html:42
 #: .\leads\templates\leads\bank_delete.html:11
+#: .\leads\templates\leads\bank_update.html:15
 #: .\leads\templates\leads\category_detail.html:16
 #: .\leads\templates\leads\followup_update.html:21
 #: .\leads\templates\leads\lead_update.html:59

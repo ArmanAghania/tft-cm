@@ -11,9 +11,8 @@
 <form method="post" class="">
     {% csrf_token %}
     {{ form|crispy }}
-    <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">{% trans "Update" %}</button>
-    <a href="{% url 'leads:bank-delete' object.pk %}" class="w-full text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-2 rounded-md">Delete</a>
+    <button type="submit" class="block w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">{% trans "Update" %}</button>
+    <a href="{% url 'leads:bank-delete' object.pk %}" class="block text-center w-full mt-2 text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-2 rounded-md">{% trans "Delete"%}</a>  
 </form>
-
 </div>
 {% endblock %}
