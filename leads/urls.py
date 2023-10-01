@@ -9,7 +9,7 @@ from .views import (
     FollowUpCreateView, FollowUpUpdateView, FollowUpDeleteView, 
     LeadExportView, BankExportView,
     LeadImportView, BankImportView, 
-    BankListView, BankCreateView,  
+    BankListView, BankCreateView, BankUpdateView, BankDeleteView,
     LeadDistributionWizard, FORMS, 
     SearchLeadsView,  SearchBankView, 
     MyDayView,
@@ -18,7 +18,8 @@ from .views import (
     SourceListView, SourceDetailView, SourceCreateView, SourceUpdateView, SourceDeleteView,
     TeamCreateView, TeamDetailView, TeamUpdateView, TeamDeleteView, TeamListView,
     download_excel_page,
-    run_background_tasks, stop_background_tasks
+    run_background_tasks, stop_background_tasks,
+    UserProfileUpdateView
 )
 
 app_name = "leads"
@@ -45,6 +46,8 @@ urlpatterns = [
     path('import_bank/', BankImportView.as_view(), name='bank-import'),
     path('bank/', BankListView.as_view(), name='bank-list'),
     path('bank_create/', BankCreateView.as_view(), name='bank-create'),
+    path('bank/update/<int:pk>/', BankUpdateView.as_view(), name='bank-update'),
+    path('bank/<int:pk>/delete/', BankDeleteView.as_view(), name='bank-delete'),
     path('bank_export/', BankExportView.as_view(), name='bank-export'),
     path('distribution_wizard/', LeadDistributionWizard.as_view(FORMS), name='dist_view'),
     path('search/', SearchLeadsView.as_view(), name='search_leads'),
@@ -75,5 +78,6 @@ urlpatterns = [
     path('download-excel/', download_excel_page, name='download_excel_page'),
     path('run_background_tasks/', run_background_tasks, name='run_background_tasks'),
     path('stop_background_tasks/', stop_background_tasks, name='stop_background_tasks'),
-
+    path('profile/update/', UserProfileUpdateView.as_view(), name='profile_update'),
 ]
+

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="py-5 border-b border-gray-200">
+        <a class="hover:text-blue-500" href="{% url 'leads:bank-list' %}">{% trans "Go back to Bank Numbers" %}</a>
+    </div>
+<h1 class="text-3xl text-gray-800">{% trans "Are you sure you want to delete this Number?" %}</h1>
+<form method="post" class="mt-5 ">
+    {% csrf_token %}
+    <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md mb-5">{% trans "Delete" %}</button>
+    <a href="{% url 'leads:bank-update' object.pk %}" class="w-full text-white bg-red-500 hover:bg-red-600 px-3 py-2 rounded-md my-5">{% trans "Cancel" %}</a>
+</form>
+{% endblock %}

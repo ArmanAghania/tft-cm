@@ -59,12 +59,14 @@
     </div>
       </nav>
       <div class="pl-5">
+        <a href="{% url "leads:profile_update" %}">
       {% if request.user.is_authenticated %}
         {% if request.user.is_agent %}
         {{ request.user.first_name }} {{ request.user.last_name }}
         {% elif request.user.is_organisor%}
           {{ request.user.username }}
         {% endif %}
+        </a>
       </div>
         <a href="{% url 'logout' %}" class="ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">
           {% trans "Logout" %}

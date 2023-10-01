@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-09-30 22:36+0330\n"
+"POT-Creation-Date: 2023-10-01 20:03+0330\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -58,6 +58,7 @@ msgid "Are you sure you want to delete this agent?"
 msgstr "آیا مطمئن هستید؟"
 
 #: .\agents\templates\agents\agent_delete.html:17
+#: .\leads\templates\leads\bank_delete.html:12
 msgid "Cancel"
 msgstr "لغو"
 
@@ -178,6 +179,7 @@ msgstr "وضعیت"
 #: .\agents\templates\agents\agent_list.html:123
 #: .\leads\templates\leads\bank_export.html:63
 #: .\leads\templates\leads\bank_list.html:53
+#: .\leads\templates\leads\bank_list.html:87
 #: .\leads\templates\leads\lead_export.html:106
 #: .\leads\templates\leads\lead_list.html:306
 #: .\leads\templates\leads\lead_list.html:372
@@ -190,6 +192,7 @@ msgid "There are Currently no Agents"
 msgstr "کارشناسی برای نمایش وجود ندارد"
 
 #: .\agents\templates\agents\agent_update.html:42
+#: .\leads\templates\leads\bank_delete.html:11
 #: .\leads\templates\leads\category_detail.html:16
 #: .\leads\templates\leads\followup_update.html:21
 #: .\leads\templates\leads\lead_update.html:59
@@ -462,12 +465,25 @@ msgstr "یک کارشناس برای این مشتری در نظر بگیر"
 
 #: .\leads\templates\leads\bank_create.html:8
 #: .\leads\templates\leads\bank_export.html:16
+#: .\leads\templates\leads\bank_update.html:8
 msgid "Back to Bank"
 msgstr "بازگشت به بانک شماره‌ها"
 
 #: .\leads\templates\leads\bank_create.html:11
 msgid "Create New Bank Number"
 msgstr "شماره بانک جدید بساز"
+
+#: .\leads\templates\leads\bank_delete.html:6
+#, fuzzy
+#| msgid "Import Bank Numbers"
+msgid "Go back to Bank Numbers"
+msgstr "بارگذاری شماره‌های بانک"
+
+#: .\leads\templates\leads\bank_delete.html:8
+#, fuzzy
+#| msgid "Are you sure you want to delete this lead?"
+msgid "Are you sure you want to delete this Number?"
+msgstr "آیا مطمئن هستید؟"
 
 #: .\leads\templates\leads\bank_export.html:13
 #: .\leads\templates\leads\bank_list.html:10
@@ -522,16 +538,32 @@ msgstr "بازگشت به مشتریان بالقوه"
 msgid "New Number"
 msgstr "شماره بانک جدید"
 
-#: .\leads\templates\leads\bank_list.html:104
+#: .\leads\templates\leads\bank_list.html:107
 #: .\leads\templates\leads\lead_list.html:412
 msgid "Page"
 msgstr "صفحه"
 
-#: .\leads\templates\leads\bank_list.html:104
+#: .\leads\templates\leads\bank_list.html:107
 #: .\leads\templates\leads\lead_list.html:412
 #: .\leads\templates\leads\wizard.html:19
 msgid "of"
 msgstr "از"
+
+#: .\leads\templates\leads\bank_update.html:6
+#, fuzzy
+#| msgid "Update Details"
+msgid "Update Agent"
+msgstr "تغییر جزئیات"
+
+#: .\leads\templates\leads\bank_update.html:14
+#: .\leads\templates\leads\category_detail.html:15
+#: .\leads\templates\leads\category_update.html:10
+#: .\leads\templates\leads\lead_detail.html:95
+#: .\leads\templates\leads\source_detail.html:16
+#: .\leads\templates\leads\team_detail.html:17
+#: .\leads\templates\leads\team_update.html:17
+msgid "Update"
+msgstr "به روزرسانی"
 
 #: .\leads\templates\leads\category_create.html:8
 #: .\leads\templates\leads\category_delete.html:8
@@ -550,15 +582,6 @@ msgstr "آیا مطمئن هستید؟"
 #: .\leads\templates\leads\category_detail.html:13
 msgid "These are the leads under this category"
 msgstr "شماره‌هایی که در این دسته‌بندی قرار دارند"
-
-#: .\leads\templates\leads\category_detail.html:15
-#: .\leads\templates\leads\category_update.html:10
-#: .\leads\templates\leads\lead_detail.html:95
-#: .\leads\templates\leads\source_detail.html:16
-#: .\leads\templates\leads\team_detail.html:17
-#: .\leads\templates\leads\team_update.html:17
-msgid "Update"
-msgstr "به روزرسانی"
 
 #: .\leads\templates\leads\category_list.html:9
 msgid "Categories"
@@ -824,6 +847,16 @@ msgstr "شماره‌های من"
 msgid "My Followup Numbers"
 msgstr "شماره‌های قابل پیگیری"
 
+#: .\leads\templates\leads\profile_update.html:10
+msgid "Change Password:"
+msgstr "تغییر رمز عبور:"
+
+#: .\leads\templates\leads\profile_update.html:14
+#, fuzzy
+#| msgid "Update Sales"
+msgid "Update Profile"
+msgstr "به روزرسانی فروش‌ها"
+
 #: .\leads\templates\leads\prompt_override_chat_id.html:8
 msgid "Override chat ID for all notifications?"
 msgstr "تغییر آیدی تلگرام برای ارسال نوتیفیکیشن"
@@ -973,29 +1006,53 @@ msgstr "مرحله اول"
 msgid "Previous Step"
 msgstr "مرحله قبل"
 
-#: .\leads\views.py:159
+#: .\leads\views.py:161
 msgid "Empty"
 msgstr "خالی"
 
-#: .\leads\views.py:185
+#: .\leads\views.py:187
 msgid "New Bank Number Created"
 msgstr "شماره بانک جدید ایجاد شد"
 
-#: .\leads\views.py:188
+#: .\leads\views.py:190
 msgid "Bank Number already exists"
 msgstr "این شماره در بانک وجود دارد"
 
-#: .\leads\views.py:419
+#: .\leads\views.py:421
 msgid "You have successfully created a lead"
 msgstr "مشتری با موفقیت ایجاد شد"
 
-#: .\leads\views.py:425
+#: .\leads\views.py:427
 msgid "Lead already exists!"
 msgstr "این شماره در بانک شماره‌ها وجود دارد"
 
-#: .\leads\views.py:477
+#: .\leads\views.py:479
 msgid "You have successfully updated this lead"
 msgstr "جزئیات مشتری با موفقیت به روز رسانی شد"
+
+#: .\leads\views.py:982
+#, fuzzy
+#| msgid "Bank Number already exists"
+msgid "Bank number updated successfully!"
+msgstr "این شماره در بانک وجود دارد"
+
+#: .\leads\views.py:986
+msgid "Error updating the bank number. Please check your details."
+msgstr "به روزرسانی این شماره با مشکل مواجه شد. لطفا دوباره تلاش کنید"
+
+#: .\leads\views.py:995
+#, fuzzy
+#| msgid "Bank Number already exists"
+msgid "Bank number deleted successfully!"
+msgstr "این شماره در بانک وجود دارد"
+
+#: .\leads\views.py:2020
+msgid "Your profile has been updated successfully!"
+msgstr "پروفایل شما با موفقیت به روزرسانی شد"
+
+#: .\leads\views.py:2025
+msgid "Your password has been updated successfully!"
+msgstr " رمز عبور شما با موفقیت تغییر کرد"
 
 #: .\templates\dashboard.html:9
 msgid "Dashboard"
@@ -1031,10 +1088,24 @@ msgstr "ثبت‌نام"
 msgid "Bank of Numbers"
 msgstr "بانک شماره‌ها"
 
-#: .\templates\navbar.html:71
+#: .\templates\navbar.html:73
 msgid "Logout"
 msgstr "خروج"
 
-#: .\templates\navbar.html:78
+#: .\templates\navbar.html:80 .\templates\registration\login.html:16
 msgid "Login"
 msgstr "ورود"
+
+#: .\templates\registration\login.html:9
+msgid "Don't have an account?"
+msgstr "حساب کاربری ندارید؟"
+
+#: .\templates\registration\signup.html:11
+#, fuzzy
+#| msgid "Sign Up"
+msgid "Signup"
+msgstr "ثبت‌نام"
+
+#: .\templates\registration\signup.html:15
+msgid "Already have an account?"
+msgstr "آیا قبلا ثبت‌نام کرده‌اید؟"

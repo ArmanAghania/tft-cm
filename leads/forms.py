@@ -5,10 +5,11 @@ from django.contrib.auth.forms import UserCreationForm, UsernameField
 from .models import Lead, Agent, Category, FollowUp, BankNumbers, Sale, Source, Team, ChatSetting
 from jalali_date.fields import JalaliDateField
 from jalali_date.widgets import AdminJalaliDateWidget
+from django.contrib.auth.forms import PasswordChangeForm as AuthPasswordChangeForm
+
 User = get_user_model()
 
 class LeadModelForm(forms.ModelForm):
-
 
     class Meta:
         model = Lead
@@ -98,8 +99,6 @@ class BankModelForm(forms.ModelForm):
         model = BankNumbers
         fields = (
             "agent",
-            "number",
-            
         )
 
     def __init__(self, *args, **kwargs):
@@ -156,7 +155,6 @@ class SourceModelForm(forms.ModelForm):
         model = Source
         fields = ("name",)
 
-
 class TeamModelForm(forms.ModelForm):
     class Meta:
         model = Team
@@ -174,3 +172,18 @@ class ChatOverrideForm(forms.ModelForm):
     class Meta:
         model = ChatSetting
         fields = ['override_chat_id', 'chat_id']
+
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['is_active', 'alt_name']
+
+class PasswordChangeForm(AuthPasswordChangeForm):
+    class Meta:
+        model = User
+        fields = ['old_password', 'new_password1', 'new_password2']
+
+    def __init__(self, *args, **kwargs):
+        super(PasswordChangeForm, self).__init__(*args, **kwargs)
+        for field_name in self.fields:
+            self.fields[field_name].help_text = None
