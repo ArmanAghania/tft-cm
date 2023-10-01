@@ -99,6 +99,7 @@ class BankModelForm(forms.ModelForm):
         model = BankNumbers
         fields = (
             "agent",
+            "number",  
         )
 
     def __init__(self, *args, **kwargs):
