@@ -212,8 +212,8 @@
                     <h1 class=" text-l text-gray-400">{% trans "There Are" %} {{bank_numbers.bank_total}} {% trans "Leads in the Bank" %}</h1>
                 {% endif %}
             </div>
-            {% if request.user.is_organisor %}
             <div>
+                {% if request.user.is_organisor %}
                 <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-create' %}">
                     {% trans "Create a New Lead" %}
                 </a>
@@ -227,17 +227,17 @@
                         {% trans "Export" %}
                     </a>
                
-
+                    {% endif %}
             <div x-data="{ open: false }" class="py-3 relative  text-left">
                 <div>
                     <button @click="open = !open" type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% trans "Filter Options" %}
+                {% trans "Filter Options" %}
                         <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
                     </button>
                 </div>
-            
+                
                 <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                     <div class="py-1" role="none">
                         <!-- Dropdown items (filters) -->
@@ -259,7 +259,7 @@
                 </div>
             </div>
             </div>
-            {% endif %}
+            
         </div>
         <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
 
@@ -272,6 +272,18 @@
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Phone Number" %}
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {% trans "First Name" %}
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {% trans "Last Name" %}
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {% trans "City" %}
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {% trans "Age" %}
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Category" %}
@@ -315,6 +327,18 @@
                                     {{ lead.phone_number }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                    {{ lead.first_name }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                    {{ lead.last_name }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                    {{ lead.city }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                    {{ lead.age }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
                                     {{ lead.category }}
                                 </td>
                                 {% if request.user.is_organisor %}
@@ -352,7 +376,7 @@
                                 </td>
 
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ lead.total_sale|intcomma }} {% trans "Rials" %}
+                                    {{ lead.total_sale|intcomma }} {% trans "Tomans" %}
                                     
                                 </td>
                                 {% if request.user.is_organisor %}

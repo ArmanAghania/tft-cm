@@ -1,6 +1,6 @@
 import django_filters
 from .models import Lead
-
+from django.utils.translation import gettext_lazy as _
 
 RANK_CHOICES = (
     (1, '1'),
@@ -11,6 +11,9 @@ RANK_CHOICES = (
 
 class LeadFilter(django_filters.FilterSet):
     phone_number = django_filters.CharFilter(lookup_expr='icontains')
+    first_name = django_filters.CharFilter(lookup_expr='icontains')
+    last_name = django_filters.CharFilter(lookup_expr='icontains')
+    city = django_filters.CharFilter(lookup_expr='icontains')
     agent_name = django_filters.CharFilter(field_name='agent__user__alt_name', lookup_expr='icontains')
     agent_rank = django_filters.ChoiceFilter(field_name='agent__user__rank', choices=RANK_CHOICES)
     category_name = django_filters.CharFilter(field_name='category__name', lookup_expr='icontains')

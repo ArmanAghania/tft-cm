@@ -30,13 +30,16 @@ class LeadModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # Get the user from the keyword arguments
         super(LeadModelForm, self).__init__(*args, **kwargs)
-        self.fields['birthday'] = JalaliDateField(widget=AdminJalaliDateWidget(), required=False, label='Birthday')
-
         if user:
             # Filter the category and source fields based on the user
             self.fields['category'].queryset = Category.objects.filter(organisation=user.userprofile)
             self.fields['source'].queryset = Source.objects.filter(organisation=user.userprofile)
-            self.fields['agent'].queryset = Agent.objects.filter(organisation=user.userprofile)
+            if user.is_organisor:
+                self.fields['agent'].queryset = Agent.objects.filter(organisation=user.userprofile)
+            else:
+                self.fields['agent'].queryset = Agent.objects.filter(organisation=user.agent.organisation)
+            
+        self.fields['birthday'] = JalaliDateField(widget=AdminJalaliDateWidget(), required=False, label='Birthday')
 
 class LeadForm(forms.Form):
     first_name = forms.CharField()
