@@ -473,13 +473,13 @@ class LeadUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
 
             # If the new agent has a chat_id, send a notification
             if new_agent:
-                message = f"{self.object.phone_number}"
+                message = f"{self.object.phone_number}, {self.object.category}"
                 if new_agent.chat_id:
                     chat_id = new_agent.chat_id
                 else:
                     chat_id = '-1001707390535'
-                    
-                notify_background_messages(chat_id=new_agent.chat_id, message=message)
+
+                notify_background_messages(chat_id=chat_id, message=message)
 
         messages.info(self.request, _("You have successfully updated this lead"))
 
