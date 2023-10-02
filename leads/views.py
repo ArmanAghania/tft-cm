@@ -333,11 +333,11 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
 
         else:
             # Filter leads for the agent in the last month
-            total_leads = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user, date_assigned__range=(start_of_week.to_gregorian(), today.to_gregorian())).count()
+            total_leads = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user, date_assigned__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).count()
             total_leads_overall = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user).count()
 
             # Filter sales made by the agent in the last month
-            converted_leads = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user, date__range=(start_of_week.to_gregorian(), today.to_gregorian())).values('lead').distinct().count()
+            converted_leads = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).values('lead').distinct().count()
             converted_leads_overall = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user).values('lead').distinct().count()
 
             if total_leads == 0:
@@ -1467,16 +1467,16 @@ class MyDayView(LoginRequiredMixin, generic.ListView):
 
         # List all files in the static images folder
         image_files = [f for f in os.listdir(static_image_dir) if os.path.isfile(os.path.join(static_image_dir, f))]
-
+        print(image_files)
         if image_files:
             # Select a random image file path
             random_image = random.choice(image_files)
             # Construct the full URL for the selected image
-            random_image_url = os.path.join(settings.STATIC_URL, 'images', 'background', f'/{random_image}')
+            random_image_url = f"{settings.STATIC_URL}images/background/{random_image}"
             return random_image_url
         else:
             # Return a default image URL or handle the case when no images are found
-            return os.path.join(settings.STATIC_URL, 'images', 'default-image.jpg')
+            return os.path.join(settings.STATIC_URL, 'images','background', 'pexels-bob-ward-3647693.jpg')
 
     def fetch_unsplash_image(self):
         url = "https://api.unsplash.com/photos/random"
@@ -2055,4 +2055,4 @@ class UserProfileUpdateView(View):
         })
 
 
-###TODO --->  Add an Static Photo to My Day - Duplicate Followup List 
+###TODO ---> Duplicate Followup List 
