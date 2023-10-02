@@ -1553,7 +1553,7 @@ class SaleCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
 
     def form_valid(self, form):
         lead = Lead.objects.get(pk=self.kwargs["pk"])
-
+        user = self.request.user
         # Check if there is an agent assigned to the lead
         if not lead.agent:
             messages.error(self.request, "You cannot create a sale for a lead without an assigned agent.")
@@ -1561,7 +1561,10 @@ class SaleCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
 
         sale = form.save(commit=False)
         sale.lead = lead
-        sale.organisation = self.request.user.userprofile  # Assuming the user is logged in and has an associated organisation
+        if user.is_organisor:
+            sale.organisation = self.request.user.userprofile  # Assuming the user is logged in and has an associated organisation
+        else:
+            sale.organisation = lead.organisation  # Assuming the user is logged in and has an associated organisation
         sale.agent = sale.lead.agent  # Assuming the user is logged in and has an associated agent
         sale.save()
         return super(SaleCreateView, self).form_valid(form)

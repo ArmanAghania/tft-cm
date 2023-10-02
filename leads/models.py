@@ -210,6 +210,16 @@ class Sale(models.Model):
         self.lead.total_sale = total_sales_for_lead
         self.lead.save()
 
+    def delete(self, *args, **kwargs):
+        lead_to_update = self.lead  # Store reference to the lead before deleting the sale
+        
+        super(Sale, self).delete(*args, **kwargs)  # Delete the sale instance first
+        
+        # Update the lead's total sale based on all remaining sales
+        total_sales_for_lead = Sale.objects.filter(lead=lead_to_update).aggregate(models.Sum('amount'))['amount__sum'] or 0
+        lead_to_update.total_sale = total_sales_for_lead
+        lead_to_update.save()
+
 class Source(models.Model):
     name = models.CharField(max_length=30, verbose_name=_("Source Name"))  # New, Contacted, Converted, Unconverted
     organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name=_("Organisation"))
