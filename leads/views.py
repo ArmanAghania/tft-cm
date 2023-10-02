@@ -905,7 +905,9 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 تعداد شماره‌های ورودی: {total_leads}\n
                 تعداد شماره‌های تکراری: {duplicates}\n
                 تعداد شماره‌های خالص خارجی: {foreign_added}\n
-                تعدادشماره‌‌های خالص ایرانی: {added_leads}\n\n\n'''
+                تعدادشماره‌‌های خالص ایرانی: {added_leads}\n\n\n
+
+'''
 
                 
                 # notify_background_messages_celery.delay(chat_id=chat_id, message=message)

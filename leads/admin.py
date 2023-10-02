@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import User, Lead, Agent, UserProfile, Category, FollowUp, BankNumbers, DuplicateToFollow, Sale, Source, Team
+from .models import User, Lead, Agent, UserProfile, Category, FollowUp, BankNumbers, DuplicateToFollow, Sale, Source, Team, ChatSetting
 from import_export.admin import ImportExportModelAdmin
 
 
@@ -27,6 +27,8 @@ admin.site.register(DuplicateToFollow)
 admin.site.register(Sale)
 admin.site.register(Source)
 admin.site.register(Team)
+admin.site.register(ChatSetting)
+
 
 
 
