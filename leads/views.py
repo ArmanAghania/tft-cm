@@ -474,7 +474,12 @@ class LeadUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
             # If the new agent has a chat_id, send a notification
             if new_agent:
                 message = f"{self.object.phone_number}"
-                notify_background_messages(chat_id='-1001707390535', message=message)
+                if new_agent.chat_id:
+                    chat_id = new_agent.chat_id
+                else:
+                    chat_id = '-1001707390535'
+                    
+                notify_background_messages(chat_id=new_agent.chat_id, message=message)
 
         messages.info(self.request, _("You have successfully updated this lead"))
 
@@ -766,9 +771,17 @@ class BankExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.F
         response = HttpResponse(ds, content_type=f"{format}")
         response["Content-Disposition"] = f"attachment; filename=leads.{format}"
         return response
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        if user.is_organisor:
+            queryset = BankNumbers.objects.filter(organisation=user.userprofile).order_by('date_added')
+
+        return queryset
 
     def get_success_url(self):
-        return reverse("leads:lead-list")
+        return reverse("leads:bank-list")
 
 @background(schedule=1)
 def notify_background_messages(chat_id, message):
@@ -1241,6 +1254,9 @@ class LeadDistributionWizard(SessionWizardView):
         # Assuming MEDIA_URL and MEDIA_ROOT are correctly set up in your Django settings
         excel_file_path = os.path.join(settings.MEDIA_ROOT, file_name)
 
+        if not os.path.exists(settings.MEDIA_ROOT):
+            os.makedirs(settings.MEDIA_ROOT)
+
         with pd.ExcelWriter(excel_file_path) as writer:
             new_df_rank1.to_excel(writer, sheet_name="rank 1", index=False)
             new_df_rank2.to_excel(writer, sheet_name="rank 2", index=False)
@@ -1248,6 +1264,7 @@ class LeadDistributionWizard(SessionWizardView):
             new_df_rank4.to_excel(writer, sheet_name="rank 4", index=False)
 
         # Store the file path in the session so it can be accessed in the next view
+
         self.request.session['excel_file_path'] = os.path.join(settings.MEDIA_URL, file_name)
 
         return redirect('leads:download_excel_page')
@@ -1506,11 +1523,11 @@ class MyDayView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         today = timezone.now().date()
         # Note: You are subtracting 1 from user ID. Is this intentional?
-        return Lead.objects.filter(agent__user=self.request.user, date_assigned=today)
+        return Lead.objects.filter(agent__user=self.request.user, date_assigned__date=today)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        today = timezone.now().date()
+        today = datetime.today().date()
         user = self.request.user
         context['daily_numbers'] = Lead.objects.filter(organisation=user.agent.organisation, agent__user=user, date_assigned__date=today)
         context['background_image'] = self.fetch_unsplash_image()
