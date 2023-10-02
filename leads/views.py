@@ -210,11 +210,11 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
         user = self.request.user
         # initial queryset of leads for the entire organisation
         if user.is_organisor:
-            queryset = Lead.objects.filter(organisation=user.userprofile).order_by('date_assigned')
+            queryset = Lead.objects.filter(organisation=user.userprofile)
         else:
             queryset = Lead.objects.filter(
                 organisation=user.agent.organisation, agent__isnull=False
-            ).order_by('date_assigned')
+            )
             # filter for the agent that is logged in
             queryset = queryset.filter(agent__user=user)
 
@@ -227,11 +227,6 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
     
         return self.filterset.qs
             
-    
-    
-    
-
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user

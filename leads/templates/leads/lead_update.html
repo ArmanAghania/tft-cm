@@ -45,6 +45,8 @@
                 {{ form.country|as_crispy_field }}
                 {{ form.age|as_crispy_field }}
                 {{ form.birthday|as_crispy_field }}
+                {{ form.proposed_price|as_crispy_field }}
+                {{ form.registered_price|as_crispy_field }}
                 {{ form.agent|as_crispy_field }}
                 {{ form.phone_number|as_crispy_field }}
                 {% if request.user.is_organisor %}

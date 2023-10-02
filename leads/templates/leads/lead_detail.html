@@ -71,6 +71,14 @@
                     <span class="ml-auto text-gray-900">{{ lead.phone_number }}</span>
                 </div>
                 <div class="flex border-t border-gray-300 py-2">
+                    <span class="text-gray-500">{% trans "Proposed Price" %}</span>
+                    <span class="ml-auto text-gray-900">{{ lead.proposed_price|intcomma }}</span>
+                </div>
+                <div class="flex border-t border-gray-300 py-2">
+                    <span class="text-gray-500">{% trans "Registered Price" %}</span>
+                    <span class="ml-auto text-gray-900">{{ lead.registered_price|intcomma }}</span>
+                </div>
+                <div class="flex border-t border-gray-300 py-2">
                     <span class="text-gray-500">{% trans "Total Sales" %}</span>
                     <span class="ml-auto text-gray-900">{{ lead.total_sale|intcomma }}</span>
                 </div>

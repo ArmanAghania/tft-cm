@@ -72,6 +72,8 @@ class Lead(models.Model):
         on_delete=models.SET_NULL,
         verbose_name=_("Source"),
     )
+    proposed_price = models.IntegerField(default=0, null=True, blank=True, verbose_name=_("Proposed Price"))
+    registered_price = models.IntegerField(default=0, null=True, blank=True, verbose_name=_("Registered Price"))
     
 
     class Meta:
