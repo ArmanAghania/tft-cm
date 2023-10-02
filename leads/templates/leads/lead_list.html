@@ -271,6 +271,9 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {% trans "Pesented" %}
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Phone Number" %}
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -299,7 +302,12 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Feedback" %}
                                 </th>
-
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    {% trans "Proposed Price" %}
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {% trans "Registered Price" %}
+                                        </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Sales" %}
                                 </th>
@@ -323,6 +331,13 @@
                         {% for lead in page_obj %}
                             <tr class="bg-white border-b">
                                 <form method="post" action="{% url 'leads:lead-update' lead.id%}">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center" >
+                                    {% if lead.is_presented %}
+                                        ✔️
+                                    {% else %}
+                                        ❌
+                                    {% endif %}
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
                                     {{ lead.phone_number }}
                                 </td>
@@ -374,10 +389,14 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ lead.followups.last.notes }}
                                 </td>
-
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ lead.proposed_sale|intcomma }} {% trans "Tomans" %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ lead.registered_sale|intcomma }} {% trans "Tomans" %}
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ lead.total_sale|intcomma }} {% trans "Tomans" %}
-                                    
                                 </td>
                                 {% if request.user.is_organisor %}
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

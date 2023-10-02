@@ -303,12 +303,12 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
 
         if user.is_organisor:
             # Filter leads for the organisation in the last month
-            total_leads = Lead.objects.filter(organisation=user.userprofile, date_assigned__range=(start_of_month.to_gregorian(), today.to_gregorian())).count()
+            total_leads = Lead.objects.filter(organisation=user.userprofile, date_assigned__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).count()
             total_leads_overall = Lead.objects.filter(organisation=user.userprofile).count()
 
             print(total_leads)
             # Filter sales made by the organisation in the last month
-            converted_leads = Sale.objects.filter(organisation=user.userprofile, date__range=(start_of_month.to_gregorian(), today.to_gregorian())).values('lead').distinct().count()
+            converted_leads = Sale.objects.filter(organisation=user.userprofile, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).values('lead').distinct().count()
             converted_leads_overall = Sale.objects.filter(organisation=user.userprofile).values('lead').distinct().count()
 
             print(converted_leads)

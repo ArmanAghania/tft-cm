@@ -26,14 +26,14 @@
                 <a href="{% url 'leads:lead-update' lead.pk %}" class="flex-grow text-indigo-500 border-b-2 border-indigo-500 py-2 text-lg px-1">
                     {% trans "Update Details" %}
                 </a>
-                {% if request.user.is_organisor %}
+                {% comment %} {% if request.user.is_organisor %} {% endcomment %}
                     <a href="{% url 'leads:lead-sales-create' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
                         {% trans "Add Sales" %}
                     </a> 
                     <a href="{% url 'leads:lead-sales-update' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
                         {% trans "Update Sales" %}
                     </a>
-                {% endif %}  
+                {% comment %} {% endif %}   {% endcomment %}
             </div>
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
@@ -44,6 +44,7 @@
                 {{ form.state|as_crispy_field }}
                 {{ form.country|as_crispy_field }}
                 {{ form.age|as_crispy_field }}
+                {{ form.is_presented|as_crispy_field }}
                 {{ form.birthday|as_crispy_field }}
                 {{ form.proposed_price|as_crispy_field }}
                 {{ form.registered_price|as_crispy_field }}

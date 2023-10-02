@@ -23,14 +23,14 @@
                 <a href="{% url 'leads:lead-update' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
                     {% trans "Update Details" %}
                 </a>
-                {% if request.user.is_organisor %}
+                {% comment %} {% if request.user.is_organisor %} {% endcomment %}
                 <a href="{% url 'leads:lead-sales-create' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
                     {% trans "Add Sales" %}
                 </a> 
                 <a href="{% url 'leads:lead-sales-update' lead.pk %}" class="flex-grow border-b-2 border-gray-300 py-2 text-lg px-1">
                     {% trans "Update Sales" %}
                 </a> 
-                {% endif %} 
+                {% comment %} {% endif %}  {% endcomment %}
             </div>
             <form form method="post">
                 {% csrf_token %}
