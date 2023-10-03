@@ -217,14 +217,11 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
         else:
             leads = base_queryset.filter(agent__user=user)
 
-        query = self.request.GET.get('query', None)
-        # Handling the search query
-        # When there's a search query or filters, it'll consider all leads.
-        if not query and not self.request.GET.get('filter_arg', None):
-            leads = leads[:200]  # Only consider the first 200 leads by default.
 
+        # Handling the search query
+        query = self.request.GET.get('query', None)
         if query:
-            leads = leads.filter(phone_number__icontains=query)
+            queryset = queryset.filter(phone_number__icontains=query)
 
         self.filterset = LeadFilter(self.request.GET, queryset=leads)
     
@@ -290,6 +287,8 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
         context['agents_data']['percentage_overall'] = (context['agents_data']['converted_leads_overall'] / context['agents_data']['total_leads_overall']) * 100 if context['agents_data']['total_leads_overall'] else 0
 
         return context
+            
+
 
 def lead_list(request):
     leads = Lead.objects.all().sort_by
