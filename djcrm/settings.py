@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'chartjs',
     'jalali_date',
     'background_task',
+    'debug_toolbar',
     # Local apps
     "leads",
     "agents",
@@ -85,7 +86,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = "djcrm.urls"
@@ -204,6 +205,7 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -218,6 +220,10 @@ LOGGING = {
     },
 }
 
+INTERNAL_IPS = [
+    # ...
+    '127.0.0.1',
+]
 TAILWIND_APP_NAME = "theme"
 
 IMPORT_EXPORT_USE_TRANSACTIONS = True
