@@ -37,6 +37,10 @@ class LeadModelForm(forms.ModelForm):
         if user:
             if user.is_organisor:
                 organisation = user.userprofile
+                self.fields['category'].widget.attrs['readonly'] = False
+                self.fields['source'].widget.attrs['readonly'] = False
+                self.fields['agent'].widget.attrs['readonly'] = False
+                self.fields['phone_number'].widget.attrs['readonly'] = False
             else:
                 organisation = user.agent.organisation
                 self.fields['category'].widget.attrs['readonly'] = True
@@ -54,28 +58,36 @@ class LeadModelForm(forms.ModelForm):
  
     def clean_category(self):
         instance = getattr(self, 'instance', None)
-        if instance and instance.pk:
+        user = self.initial.get('user')
+
+        if instance and instance.pk and user and not user.is_organisor:
             return instance.category
         else:
             return self.cleaned_data['category']
-
+        
     def clean_phone_number(self):
         instance = getattr(self, 'instance', None)
-        if instance and instance.pk:
+        user = self.initial.get('user')
+
+        if instance and instance.pk and user and not user.is_organisor:
             return instance.phone_number
         else:
             return self.cleaned_data['phone_number']
     
     def clean_source(self):
         instance = getattr(self, 'instance', None)
-        if instance and instance.pk:
+        user = self.initial.get('user')
+
+        if instance and instance.pk and user and not user.is_organisor:
             return instance.source
         else:
             return self.cleaned_data['source']
     
     def clean_agent(self):
         instance = getattr(self, 'instance', None)
-        if instance and instance.pk:
+        user = self.initial.get('user')
+
+        if instance and instance.pk and user and not user.is_organisor:
             return instance.agent
         else:
             return self.cleaned_data['agent']
