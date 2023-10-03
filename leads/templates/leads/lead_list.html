@@ -65,9 +65,9 @@
                         </div>
                 </div>
             </section>
-        {% endif %} 
+            {% endif %} 
             
-                    <div class="flex flex-wrap -m-4 text-center">
+                    {% comment %} <div class="flex flex-wrap -m-4 text-center">
                         <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
                             <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">
                                 <button class="btn btn-primary" id="showDailyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">  <path stroke="none" d="M0 0h24v24H0z"/>  <rect x="4" y="5" width="16" height="16" rx="2" />  <line x1="16" y1="3" x2="16" y2="7" />  <line x1="8" y1="3" x2="8" y2="7" />  <line x1="4" y1="11" x2="20" y2="11" />  <rect x="8" y="15" width="2" height="2" /></svg></button>
@@ -184,11 +184,11 @@
                         <span class="close">&times;</span>
                         <pre id="logOutput"></pre> <!-- This is where logs will be appended -->
                         </div>
-                    </div>
+                    </div> {% endcomment %}
                     
                     
         
-                {% endif %}
+                {% comment %} {% endif %} {% endcomment %}
     <div class="w-full justify-center">
         <!-- Search Input -->
     <input type="text" id="searchInput" placeholder="Search leads..." class="p-2 border rounded w-full" onkeyup="searchLeads()">
@@ -198,7 +198,7 @@
 
 
     </div>
-        <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200">
+        <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200 text-left">
             <div>
                 <h1 class="text-4xl text-gray-800">Leads</h1>
                 {% if request.user.is_organisor %}
@@ -209,7 +209,7 @@
                     <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:source-list' %}">
                         {% trans "View Sources" %}
                     </a>
-                    <h1 class=" text-l text-gray-400">{% trans "There Are" %} {{bank_numbers.bank_total}} {% trans "Leads in the Bank" %}</h1>
+                    {% comment %} <h1 class=" text-l text-gray-400">{% trans "There Are" %} {{bank_numbers.bank_total}} {% trans "Leads in the Bank" %}</h1> {% endcomment %}
                 {% endif %}
             </div>
             <div>
@@ -267,59 +267,59 @@
             <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
                 <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200" id="lead-table">
+                <table class="min-w-full divide-y divide-gray-200 text-center" id="lead-table">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Pesented" %}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Phone Number" %}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "First Name" %}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Last Name" %}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "City" %}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Age" %}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Category" %}
                             </th>
                             {% if request.user.is_organisor %}
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Source" %}
                             </th>
                             {% endif %}
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Agent" %}
                                 </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Feedback" %}
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     {% trans "Proposed Price" %}
                                     </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         {% trans "Registered Price" %}
                                         </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Sales" %}
                                 </th>
                                 {% if request.user.is_organisor %}
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Date Added" %}
                                 </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Date Modified" %}
                                 </th>
                                 {% endif %}
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Date Assigned" %}
                                 </th>
                             <th scope="col" class="relative px-6 py-3">
@@ -524,7 +524,7 @@
                 }
 
 
-                const closeModalBtn = document.getElementById('closeModal');
+                {% comment %} const closeModalBtn = document.getElementById('closeModal');
                 const modal = document.getElementById('chartModal');
                 const overlay = document.getElementById('modalOverlay');
                 const chartTitle = document.getElementById('chartTitle');
@@ -576,7 +576,7 @@
                                 }
                             });
                         });
-                    }
+                    } {% endcomment %}
 
                     // Reference modal and elements
                     var modal_log = document.getElementById("logModal");

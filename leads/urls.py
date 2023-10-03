@@ -57,14 +57,30 @@ urlpatterns = [
     path('<int:pk>/sales/create/', SaleCreateView.as_view(), name='lead-sales-create'),
     path('sales/update/<int:pk>/', LeadSalesEditView.as_view(), name='lead-sales-update'),
     path('sales/<int:pk>/delete/', SaleDeleteView.as_view(), name='lead-sales-delete'),
-    path('daily_sales_chart/', generic.TemplateView.as_view(template_name='leads/daily_chart.html'), name='daily_sales_chart'),
-    path('daily_sales_chart/data/', DailySalesChart.as_view(), name='daily_sales_chart_data'),
-    path('weekly_sales_chart/', generic.TemplateView.as_view(template_name='leads/weekly_chart.html'), name='weekly_sales_chart'),
-    path('weekly_sales_chart/data/', WeeklySalesChart.as_view(), name='weekly_sales_chart_data'),
-    path('monthly_sales_chart/', generic.TemplateView.as_view(template_name='leads/monthly_chart.html'), name='monthly_sales_chart'),
-    path('monthly_sales_chart/data/', MonthlySalesChart.as_view(), name='monthly_sales_chart_data'),
-    path('yearly_sales_chart/', generic.TemplateView.as_view(template_name='leads/yearly_chart.html'), name='yearly_sales_chart'),
-    path('yearly_sales_chart/data/', YearlySalesChart.as_view(), name='yearly_sales_chart_data'),
+    # path('daily_sales_chart/', generic.TemplateView.as_view(template_name='leads/daily_chart.html'), name='daily_sales_chart'),
+    path('sales/daily_sales_chart/', generic.TemplateView.as_view(template_name='leads/daily_chart.html'), name='daily_sales_chart'),
+
+    # path('daily_sales_chart/data/', DailySalesChart.as_view(), name='daily_sales_chart_data'),
+    path('sales/daily_sales_chart/data/', DailySalesChart.as_view(), name='daily_sales_chart_data'),
+
+    # path('weekly_sales_chart/', generic.TemplateView.as_view(template_name='leads/weekly_chart.html'), name='weekly_sales_chart'),
+    path('sales/weekly_sales_chart/', generic.TemplateView.as_view(template_name='leads/weekly_chart.html'), name='weekly_sales_chart'),
+
+    # path('weekly_sales_chart/data/', WeeklySalesChart.as_view(), name='weekly_sales_chart_data'),
+    path('sales/weekly_sales_chart/data/', WeeklySalesChart.as_view(), name='weekly_sales_chart_data'),
+
+    # path('monthly_sales_chart/', generic.TemplateView.as_view(template_name='leads/monthly_chart.html'), name='monthly_sales_chart'),
+    path('sales/monthly_sales_chart/', generic.TemplateView.as_view(template_name='leads/monthly_chart.html'), name='monthly_sales_chart'),
+
+    # path('monthly_sales_chart/data/', MonthlySalesChart.as_view(), name='monthly_sales_chart_data'),
+    path('sales/monthly_sales_chart/data/', MonthlySalesChart.as_view(), name='monthly_sales_chart_data'),
+
+    # path('yearly_sales_chart/', generic.TemplateView.as_view(template_name='leads/yearly_chart.html'), name='yearly_sales_chart'),
+    path('sales/yearly_sales_chart/', generic.TemplateView.as_view(template_name='leads/yearly_chart.html'), name='yearly_sales_chart'),
+
+    # path('yearly_sales_chart/data/', YearlySalesChart.as_view(), name='yearly_sales_chart_data'),
+    path('sales/yearly_sales_chart/data/', YearlySalesChart.as_view(), name='yearly_sales_chart_data'),
+
     path('sources/', SourceListView.as_view(), name='source-list'),
     path('sources/<int:pk>/', SourceDetailView.as_view(), name='source-detail'),
     path('sources/<int:pk>/update/', SourceUpdateView.as_view(), name='source-update'),

@@ -36,9 +36,9 @@
           <a href="{% url 'leads:team-list' %}" class="mr-5 hover:text-gray-900">{% trans "Teams" %}</a>
           <a href="{% url 'agents:agent-list' %}" class="mr-5 hover:text-gray-900">{% trans "Agents" %}</a>
           <a href="{% url 'leads:bank-list' %}" class="mr-5 hover:text-gray-900">{% trans "Bank of Numbers" %}</a>
-          <a href="{% url 'leads:sale-list' %}" class="mr-5 hover:text-gray-900">{% trans "Sales" %}</a>
           {% endif %}
           
+          <a href="{% url 'leads:sale-list' %}" class="mr-5 hover:text-gray-900">{% trans "Sales" %}</a>
           <a href="{% url 'leads:lead-list' %}" class="mr-5 hover:text-gray-900">{% trans "Leads" %}</a>
           
         {% endif %}

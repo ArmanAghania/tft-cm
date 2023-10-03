@@ -7,6 +7,109 @@
 <h1 class="text-4xl text-gray-800">{% trans "Sales" %}</h1>
 </br>
 <div class="flex flex-col w-full">
+<div class="flex flex-wrap -m-4 text-center">
+    <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
+        <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">
+            <button class="btn btn-primary" id="showDailyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">  <path stroke="none" d="M0 0h24v24H0z"/>  <rect x="4" y="5" width="16" height="16" rx="2" />  <line x1="16" y1="3" x2="16" y2="7" />  <line x1="8" y1="3" x2="8" y2="7" />  <line x1="4" y1="11" x2="20" y2="11" />  <rect x="8" y="15" width="2" height="2" /></svg></button>
+          <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.daily_sales|intcomma }}</h2>
+          <p class="leading-relaxed">{% trans "Daily Sales" %}</p>
+          <!-- Overlay with 75% opacity -->
+          <div class="fixed inset-0 bg-black opacity-75 hidden" id="modalOverlay"></div>
+      
+          <!-- Modal with full opacity -->
+          <div class="fixed inset-0 flex items-center justify-center z-50 hidden" id="chartModal">
+              <div class="bg-white w-3/4 h-4/5 m-6 p-6 rounded shadow-lg overflow-auto relative">
+                <h5 class="text-xl mb-4" id="chartTitle">{% trans "Daily Sales Chart" %}</h5>
+                  <canvas class="m-6" id="myChart"></canvas>
+                  <button class="mt-4 text-red-500" id="closeModal">{% trans "Close" %}</button>
+              </div>
+          </div>
+        </div>
+        </div>
+        <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
+            <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">
+                <button class="btn btn-primary" id="showWeeklyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg></button>
+                <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.weekly_sales|intcomma }} </h2>
+                <p class="leading-relaxed">{% trans "Weekly Sales" %}</p>
+        </div>
+    </div>
+      <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
+        <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">
+            <button class="btn btn-primary" id="showMonthlyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">  <path stroke="none" d="M0 0h24v24H0z"/>  <polyline points="3 17 9 11 13 15 21 7" />  <polyline points="14 7 21 7 21 14" /></svg></button>
+          <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.monthly_sales|intcomma }}</h2>
+          <p class="leading-relaxed">{% trans "Monthly Sales" %}</p>
+        </div>
+    </div>
+    <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
+        <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">                                
+            <button class="btn btn-primary" id="showYearlyModal"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">
+                <line x1="18" y1="20" x2="18" y2="10" /> <line x1="12" y1="20" x2="12" y2="4" />  <line x1="6" y1="20" x2="6" y2="14" /></svg></button> 
+                <h2 class="title-font font-medium text-3xl text-gray-900">{{  sales_data.total_sales|intcomma }}</h2>
+                <p class="leading-relaxed">{% trans "Yearly Sales" %}</p>
+            </div>
+    </div>
+</div>
+</div>
+<br/>
+<hr/>
+<div class="mx-6 my-6">
+{% if request.user.is_organisor %}
+    <h2 class="text-xl font-bold mb-3">{% trans "Monthly Sale Performance" %}</h2>
+{% elif request.user.is_agent %}
+    <h2 class="text-xl font-bold mb-3">{% trans "Monthly Agent Performance" %}</h2>
+{% endif %}
+<div class="relative pt-1">
+    <div class="flex mb-2 items-center justify-between">
+        <div>
+            <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                {{ agents_data.percentage|floatformat:2 }} %
+            </span>
+        </div>
+        <div class="text-right">
+            <span class="text-xs font-semibold inline-block text-blue-600">
+                {{ agents_data.converted_leads }} / {{ agents_data.total_leads }}
+            </span>
+        </div>
+    </div>
+    <div class="w-full h-2 bg-gray-300 rounded-full"> <!-- The overall bar with a gray background -->
+        <div style="width:{{ agents_data.percentage|default:0 }}%" class="h-full text-center text-xs text-white bg-blue-600 rounded-full p-1"> 
+            <!-- The filled part of the bar with a blue background. The width is set dynamically based on the percentage. -->
+            
+        </div>
+    </div>
+</div>
+</div>
+<hr/>
+<div class="mx-6 my-6">
+{% if request.user.is_organisor %}
+    <h2 class="text-xl font-bold mb-3">{% trans "Overall Sale Performance" %}</h2>
+{% elif request.user.is_agent %}
+    <h2 class="text-xl font-bold mb-3">{% trans "Overall Agent Performance" %}</h2>
+{% endif %}
+<div class="relative pt-1">
+    <div class="flex mb-2 items-center justify-between">
+        <div>
+            <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-yellow-500 bg-yellow-200">
+                {{ agents_data.percentage_overall|floatformat:2 }} %
+            </span>
+        </div>
+        <div class="text-right">
+            <span class="text-xs font-semibold inline-block text-yellow-500">
+                {{ agents_data.converted_leads_overall }} / {{ agents_data.total_leads_overall }}
+            </span>
+        </div>
+    </div>
+    <div class="w-full h-2 bg-gray-300 rounded-full"> <!-- The overall bar with a gray background -->
+        <div style="width:{{ agents_data.percentage_overall|default:0 }}%" class="h-full text-center text-xs text-white bg-yellow-500 rounded-full p-1"> 
+            <!-- The filled part of the bar with a blue background. The width is set dynamically based on the percentage_overall. -->
+            
+        </div>
+    </div>
+</div>
+</div>
+<hr/>
+</br>
+
     <div class="flex mb-4">
         <button class="tab-selector w-1/2 py-2" data-target="allSalesContent">{% trans "All Sales" %}</button>
         <button class="tab-selector w-1/2 py-2" data-target="monthlySalesContent">{% trans "Monthly Sales" %}</button>
@@ -120,6 +223,59 @@
         });
     });
     
+    const closeModalBtn = document.getElementById('closeModal');
+                const modal = document.getElementById('chartModal');
+                const overlay = document.getElementById('modalOverlay');
+                const chartTitle = document.getElementById('chartTitle');
+                let currentChart;  // to store the current chart instance
+
+                // Event listeners for showing modals
+                document.getElementById('showDailyModal').addEventListener('click', () => openModal('Daily Sales', 'daily_sales_chart/data/'));
+                document.getElementById('showWeeklyModal').addEventListener('click', () => openModal('Weekly Sales', 'weekly_sales_chart/data/'));
+                document.getElementById('showMonthlyModal').addEventListener('click', () => openModal('Monthly Sales', 'monthly_sales_chart/data/'));
+                document.getElementById('showYearlyModal').addEventListener('click', () => openModal('Yearly Sales', 'yearly_sales_chart/data/'));
+
+                // Event listeners for closing modals
+                closeModalBtn.addEventListener('click', closeAllModals);
+                overlay.addEventListener('click', closeAllModals);
+
+                function openModal(title, fetchUrl) {
+                    chartTitle.textContent = title + ' Chart';  // set the modal title
+                    modal.classList.remove('hidden');
+                    overlay.classList.remove('hidden');
+                    loadChart(fetchUrl);  // pass in the fetch URL for the respective chart
+                }
+
+                function closeAllModals() {
+                    modal.classList.add('hidden');
+                    overlay.classList.add('hidden');
+                    if (currentChart) {
+                        currentChart.destroy();  // destroy the current chart instance to make room for a new one
+                    }
+                }
+
+                function loadChart(fetchUrl) {
+                    fetch(fetchUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            currentChart = new Chart(document.getElementById("myChart"), {
+                                type: 'line',
+                                data: {
+                                    labels: data.labels,
+                                    datasets: [{
+                                        label: chartTitle.textContent,
+                                        data: data.datasets[0].data,
+                                        borderColor: 'rgba(99, 102, 241,0.8)',
+                                        backgroundColor: 'rgba(99, 102, 241,0.8)'
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false
+                                }
+                            });
+                        });
+                    }
     
 </script>
 
