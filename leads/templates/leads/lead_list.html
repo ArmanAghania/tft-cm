@@ -387,7 +387,7 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ lead.followups.last.notes }}
+                                    {{ lead.followups.last.notes|truncatechars:30 }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ lead.proposed_sale|intcomma }} {% trans "Tomans" %}

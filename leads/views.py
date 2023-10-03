@@ -211,22 +211,22 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
         # initial queryset of leads for the entire organisation
         
         if user.is_organisor:
-            queryset = Lead.objects.filter(organisation=user.userprofile)
+            queryset = Lead.objects.filter(organisation=user.userprofile).order_by('-date_assigned')
         else:
             queryset = Lead.objects.filter(
                 organisation=user.agent.organisation, agent__isnull=False
-            )
+            ).order_by('-date_assigned')
             # filter for the agent that is logged in
             queryset = queryset.filter(agent__user=user)
 
         # Handling the search query
         query = self.request.GET.get('query', None)
         if query:
-            queryset = queryset.filter(phone_number__icontains=query)
+            queryset = queryset.filter(phone_number__icontains=query).order_by('-date_assigned')
 
         self.filterset = LeadFilter(self.request.GET, queryset=queryset)
     
-        return self.filterset.qs
+        return self.filterset.qs.order_by('-date_assigned')
             
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -234,133 +234,14 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
         if user.is_organisor:
             queryset = Lead.objects.filter(
                 organisation=user.userprofile, agent__isnull=True
-            )
+            ).order_by('-date_assigned')
             context["unassigned_leads"] = queryset
-
-        # # Calculate agent sales data
-        # agent = self.request.user.id
-        # today = date.today()
-
-        # base_filter_args = {}
-        # if not user.is_organisor:
-        #     base_filter_args["lead__agent__user"] = user
-
-        
-        # total_bank_numbers = BankNumbers.objects.filter(organisation=user.userprofile).count()
-
-        # leads_not_in_bank_count = Lead.objects.filter(organisation=user.userprofile).exclude(phone_number__in=BankNumbers.objects.filter(organisation=user.userprofile).values('number')).count()
-
-        # context["bank_numbers"] = {
-        #     'bank_total': total_bank_numbers if total_bank_numbers else 0,
-        # }
-
-        # context["new_leads"] = {
-        #     'new_leads_total': leads_not_in_bank_count if leads_not_in_bank_count else 0,
-        # }
 
         # Add the search form
         context["search_form"] = LeadSearchForm(self.request.GET or None)
 
         context["filter_form"] = self.filterset.form
 
-       # Calculate agent sales data
-        # agent = self.request.user.id
-        # today = JalaliDate.today()  # Use JalaliDate from persiantools
-        
-        # # Calculate the start of the week (Saturday) and month (first day of the month)
-        # # Convert JalaliDate to a Gregorian date
-        # gregorian_today = today.to_gregorian()
-
-        # # Find out how many days we are away from the last Saturday
-        # days_since_last_saturday = gregorian_today.weekday() + 2  # +1 to shift from Monday-start to Sunday-start, another +1 to make Sunday = 1, Monday = 2, ..., Saturday = 7
-
-        # # Subtract those days
-        # start_of_week_gregorian = gregorian_today - timedelta(days=days_since_last_saturday % 7)  # % 7 makes sure that if today is Saturday, we subtract 0 days
-
-        # # Convert back to JalaliDate
-        # start_of_week = JalaliDate(start_of_week_gregorian)
-        # start_of_month = today.replace(day=1)
-
-        # base_filter_args = {}
-        # if user.is_organisor:
-        #     # Aggregate sales
-        #     daily_sales = Sale.objects.filter(organisation=user.userprofile, date__date=today.to_gregorian()).aggregate(Sum('amount'))['amount__sum'] or 0
-        #     weekly_sales = Sale.objects.filter(organisation=user.userprofile, date__date__range=(start_of_week.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
-        #     monthly_sales = Sale.objects.filter(organisation=user.userprofile, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
-        #     total_sales = Sale.objects.filter(organisation=user.userprofile).aggregate(Sum('amount'))['amount__sum'] or 0
-        # elif user.is_agent:
-        #     # Aggregate sales
-        #     daily_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent, date__date=today.to_gregorian()).aggregate(Sum('amount'))['amount__sum'] or 0
-        #     weekly_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent, date__date__range=(start_of_week.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
-        #     monthly_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
-        #     total_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent).aggregate(Sum('amount'))['amount__sum'] or 0
-
-        # context["sales_data"] = {
-        #     'daily_sales': daily_sales,
-        #     'weekly_sales': weekly_sales,
-        #     'monthly_sales': monthly_sales,
-        #     'total_sales': total_sales,
-        # }
-
-        # if user.is_organisor:
-        #     # Filter leads for the organisation in the last month
-        #     total_leads = Lead.objects.filter(organisation=user.userprofile, date_assigned__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).count()
-        #     total_leads_overall = Lead.objects.filter(organisation=user.userprofile).count()
-
-        #     print(total_leads)
-        #     # Filter sales made by the organisation in the last month
-        #     converted_leads = Sale.objects.filter(organisation=user.userprofile, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).values('lead').distinct().count()
-        #     converted_leads_overall = Sale.objects.filter(organisation=user.userprofile).values('lead').distinct().count()
-
-        #     print(converted_leads)
-        #     if total_leads == 0:
-        #         percentage = 0
-        #     else:
-        #         percentage = (converted_leads / total_leads) * 100
-
-        #     if total_leads_overall == 0:
-        #         percentage_overall = 0
-        #     else:
-        #         percentage_overall = (converted_leads_overall / total_leads_overall) * 100
-
-        #     agents_data = {
-        #         'total_leads': total_leads,
-        #         'converted_leads': converted_leads,
-        #         'percentage': percentage,
-        #         'total_leads_overall': total_leads_overall,
-        #         'converted_leads_overall': converted_leads_overall,
-        #         'percentage_overall': percentage_overall,
-        #     }
-
-        # else:
-        #     # Filter leads for the agent in the last month
-        #     total_leads = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user, date_assigned__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).count()
-        #     total_leads_overall = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user).count()
-
-        #     # Filter sales made by the agent in the last month
-        #     converted_leads = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).values('lead').distinct().count()
-        #     converted_leads_overall = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user).values('lead').distinct().count()
-
-        #     if total_leads == 0:
-        #         percentage = 0
-        #     else:
-        #         percentage = (converted_leads / total_leads) * 100
-
-        #     if total_leads_overall == 0:
-        #         percentage_overall = 0
-        #     else:
-        #         percentage_overall = (converted_leads_overall / total_leads_overall) * 100
-
-        #     agents_data = {
-        #         'total_leads': total_leads,
-        #         'converted_leads': converted_leads,
-        #         'percentage': percentage,
-        #         'total_leads_overall': total_leads_overall,
-        #         'converted_leads_overall': converted_leads_overall,
-        #         'percentage_overall': percentage_overall,
-        #     }
-
-        # context['agents_data'] = agents_data
         
         return context
 
@@ -459,6 +340,9 @@ class LeadUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
         return reverse("leads:lead-list")
 
     def form_valid(self, form):
+
+        if not form.is_valid():
+            print(form.errors)
         # Before saving, capture the original agent
         original_agent = self.get_object().agent
 

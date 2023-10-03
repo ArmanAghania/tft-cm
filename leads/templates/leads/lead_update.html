@@ -4,6 +4,7 @@
 {% load static %}
 
 {% block content %}
+{{ form.non_field_errors }}
 
 <section class="text-gray-700 body-font overflow-hidden">
     <div class="container px-5 py-24 mx-auto">
@@ -48,13 +49,12 @@
                 {{ form.birthday|as_crispy_field }}
                 {{ form.proposed_price|as_crispy_field }}
                 {{ form.registered_price|as_crispy_field }}
+                
                 {{ form.agent|as_crispy_field }}
                 {{ form.phone_number|as_crispy_field }}
-                {% if request.user.is_organisor %}
-                    {{ form.category|as_crispy_field }}
-                    {{ form.source|as_crispy_field }}
-                {% endif %}
-                
+                {{ form.category|as_crispy_field }}
+                {{ form.source|as_crispy_field }}
+
                 <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">{% trans "Submit" %}</button>
             </form>
             <div class="mt-5 py-5 border-t border-gray-200">

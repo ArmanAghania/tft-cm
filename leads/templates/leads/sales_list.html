@@ -122,6 +122,8 @@
         <thead class="bg-gray-50">
             <tr>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Phone Number" %}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "First Name" %}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Last Name" %}</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Agent" %}</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Amount" %}</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Date" %}</th>
@@ -132,6 +134,8 @@
             {% for sale in all_sales %}
                 <tr class="bg-white  border-b">
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.lead.phone_number }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.lead.first_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.lead.last_name }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.agent.user.first_name }} {{ sale.agent.user.last_name}} || {{ sale.agent.user.alt_name}}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.amount|intcomma }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.date|to_jalali }}</td>
@@ -148,6 +152,8 @@
         <thead class="bg-gray-50">
             <tr>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Phone Number" %}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "ّFirst Name" %}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Last Name" %}</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Agent" %}</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Amount" %}</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Date" %}</th>
@@ -158,6 +164,8 @@
             {% for sale in monthly_sales %}
                 <tr class="bg-white  border-b">
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.lead.phone_number }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.lead.first_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.lead.last_name }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.agent.user.first_name }} {{ sale.agent.user.last_name}} || {{ sale.agent.user.alt_name}}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.amount|intcomma }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sale.date|to_jalali }}</td>

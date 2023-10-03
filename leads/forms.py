@@ -33,16 +33,53 @@ class LeadModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # Get the user from the keyword arguments
         super(LeadModelForm, self).__init__(*args, **kwargs)
+
         if user:
-            # Filter the category and source fields based on the user
-            self.fields['category'].queryset = Category.objects.filter(organisation=user.userprofile)
-            self.fields['source'].queryset = Source.objects.filter(organisation=user.userprofile)
             if user.is_organisor:
-                self.fields['agent'].queryset = Agent.objects.filter(organisation=user.userprofile)
+                organisation = user.userprofile
             else:
-                self.fields['agent'].queryset = Agent.objects.filter(organisation=user.agent.organisation)
+                organisation = user.agent.organisation
+                self.fields['category'].widget.attrs['readonly'] = True
+                self.fields['source'].widget.attrs['readonly'] = True
+                self.fields['agent'].widget.attrs['readonly'] = True
+                self.fields['phone_number'].widget.attrs['readonly'] = True
+
+            
+            self.fields['category'].queryset = Category.objects.filter(organisation=organisation)
+            self.fields['source'].queryset = Source.objects.filter(organisation=organisation)
+            self.fields['agent'].queryset = Agent.objects.filter(organisation=organisation)
             
         self.fields['birthday'] = JalaliDateField(widget=AdminJalaliDateWidget(), required=False, label='Birthday')
+
+ 
+    def clean_category(self):
+        instance = getattr(self, 'instance', None)
+        if instance and instance.pk:
+            return instance.category
+        else:
+            return self.cleaned_data['category']
+
+    def clean_phone_number(self):
+        instance = getattr(self, 'instance', None)
+        if instance and instance.pk:
+            return instance.phone_number
+        else:
+            return self.cleaned_data['phone_number']
+    
+    def clean_source(self):
+        instance = getattr(self, 'instance', None)
+        if instance and instance.pk:
+            return instance.source
+        else:
+            return self.cleaned_data['source']
+    
+    def clean_agent(self):
+        instance = getattr(self, 'instance', None)
+        if instance and instance.pk:
+            return instance.agent
+        else:
+            return self.cleaned_data['agent']
+    
 
 class LeadForm(forms.Form):
     first_name = forms.CharField()
