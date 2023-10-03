@@ -168,6 +168,7 @@
                     </div>
                 </div>
                 <hr/>
+                 {% endcomment %}
                 {% if request.user.is_organisor %}
                     <div class="container px-5 py-5 mx-auto flex flex-wrap">
                         <a id="openModalButton" href="{% url 'leads:dist_view' %}"  class="px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-full">{% trans "Start Distribution" %}</a>
@@ -184,11 +185,11 @@
                         <span class="close">&times;</span>
                         <pre id="logOutput"></pre> <!-- This is where logs will be appended -->
                         </div>
-                    </div> {% endcomment %}
+                    </div>
                     
                     
         
-                {% comment %} {% endif %} {% endcomment %}
+                 {% endif %} 
     <div class="w-full justify-center">
         <!-- Search Input -->
     <input type="text" id="searchInput" placeholder="Search leads..." class="p-2 border rounded w-full" onkeyup="searchLeads()">

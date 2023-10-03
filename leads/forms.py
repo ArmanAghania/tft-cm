@@ -92,7 +92,6 @@ class LeadModelForm(forms.ModelForm):
         else:
             return self.cleaned_data['agent']
     
-
 class LeadForm(forms.Form):
     first_name = forms.CharField()
     last_name = forms.CharField()
