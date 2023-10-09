@@ -33,7 +33,7 @@
                     <td class="px-4 py-3">
                       <a class="hover:text-blue-500" href="{% url 'leads:category-detail' category.pk %}">{{ category.name }}</a>
                     </td>
-                    <td class="px-4 py-3">{% trans "TODO count" %}</td>
+                    <td class="px-4 py-3">{{ category.lead_count }}</td>
                 </tr>
             {% endfor %}
           </tbody>

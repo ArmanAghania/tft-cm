@@ -25,17 +25,16 @@ class User(AbstractUser):
     is_active = models.BooleanField(default=True, verbose_name=_("Active"))
     alt_name = models.CharField(max_length=100, default='Persian Name', blank=True, null=True, verbose_name=_("Alternate Name"))
     
-
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name=_("User"))
+    telegram_token = models.CharField(max_length=500, blank=True, null=True, verbose_name=_("Telegram Token"))
+    chat_id = models.CharField(max_length=500, blank=True, null=True, verbose_name=_("Chat ID"))
     def __str__(self):
         return self.user.username
-
 
 class LeadManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset()
-
 
 class Lead(models.Model):
     first_name = models.CharField(max_length=20, null=True, blank=True, verbose_name=_('First Name'))
@@ -58,10 +57,10 @@ class Lead(models.Model):
     )
     feedback = models.TextField(null=True, blank=True, verbose_name=_("Feedback"))
     date_added = models.DateTimeField(auto_now_add=True, verbose_name=_("Date Added"))
-    phone_number = models.CharField(max_length=20, unique=True, db_index=True, verbose_name=_('Phone Number'))
+    phone_number = models.CharField(max_length=20, unique=True, verbose_name=_('Phone Number'))
     converted_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Converted Date'))
     date_modified = models.DateTimeField(auto_now=True, verbose_name=_("Date Modified"))
-    date_assigned = models.DateTimeField(null=True, blank=True,db_index=True, verbose_name=_("Date Assigned"))
+    date_assigned = models.DateTimeField(null=True, blank=True, verbose_name=_("Date Assigned"))
     objects = LeadManager()
     total_sale = models.IntegerField(default=0, null=True, blank=True, verbose_name=_("Total Sales"))
     source = models.ForeignKey(
@@ -96,12 +95,16 @@ class Lead(models.Model):
         if self.agent and not self.date_assigned:
             self.date_assigned = datetime.today()
 
+        if self.total_sale > 0:
+            # Assuming "Converted" is a Category object that represents a converted lead.
+            # You can modify the below query as per your setup.
+            converted_category = Category.objects.get(name="Converted")  # Modify the filter as required
+            self.category = converted_category
+
         super(Lead, self).save(*args, **kwargs)
     
-
 def handle_upload_follow_ups(instance, filename):
     return f"lead_followups/lead_{instance.lead.pk}/{filename}"
-
 
 class FollowUp(models.Model):
     lead = models.ForeignKey(Lead, related_name="followups", on_delete=models.CASCADE, verbose_name=_("Lead"))
@@ -115,8 +118,6 @@ class FollowUp(models.Model):
     
     def __str__(self):
         return f"{self.lead.agent} {self.lead.phone_number} {self.lead.category}"
-
-
 
 class Agent(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name=_("User"))
@@ -143,15 +144,12 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-
 def post_user_created_signal(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
 
-
 post_save.connect(post_user_created_signal, sender=User)
     
-
 class BankNumbers(models.Model):
     number = models.CharField(max_length=20, unique=True, verbose_name=_("Phone Number"))
     agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL, verbose_name=_("Agent"))
@@ -180,7 +178,6 @@ class DuplicateToFollow(models.Model):
 
     def __str__(self):
         return f"{self.number} {self.agent} {self.date_added}"
-
 
 class Sale(models.Model):
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, verbose_name=_('Lead'))
@@ -250,7 +247,6 @@ class Team(models.Model):
     def team_leaders(self):
         return self.members.filter(is_team_leader=True)
     
-
 class ChatSetting(models.Model):
     override_chat_id = models.BooleanField(default=False)
     chat_id = models.CharField(max_length=50, blank=True, null=True)

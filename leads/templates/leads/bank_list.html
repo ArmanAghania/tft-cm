@@ -168,8 +168,8 @@
                         results.forEach(number => {
                             const leadDiv = document.createElement('div');
                             leadDiv.innerHTML = number.agent ? 
-                                `<div class="border-b border-gray-200 p-2 hover:bg-gray-100">${number.number} - ${number.agent}</div>` : 
-                                `<div class="border-b border-gray-200 p-2 hover:bg-gray-100">${number.number}</div>`;
+                                `<div class="border-b border-gray-200 p-2 hover:bg-gray-100">${number.number} - ${number.agent} <a href="update/${number.id}" class="text-blue-500 hover:text-blue-700 ml-2">Edit</a></div>`  : 
+                                `<div class="border-b border-gray-200 p-2 hover:bg-gray-100">${number.number} <a href="update/${number.id}" class="text-blue-500 hover:text-blue-700 ml-2">Edit</a></div>`;
                             resultsContainer.appendChild(leadDiv);
                         });
                     } else {

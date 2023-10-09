@@ -229,9 +229,43 @@ class ChatOverrideForm(forms.ModelForm):
         fields = ['override_chat_id', 'chat_id']
 
 class UserUpdateForm(forms.ModelForm):
+    telegram_token = forms.CharField(required=False, max_length=500)
+    chat_id = forms.CharField(required=False, max_length=255)
+
+
     class Meta:
         model = User
-        fields = ['is_active', 'alt_name']
+        fields = ['is_active', 'alt_name', 'telegram_token', 'chat_id']
+
+    def __init__(self, *args, **kwargs):
+        super(UserUpdateForm, self).__init__(*args, **kwargs)
+
+        # Check if the instance (user) is related to the form and if the user is an organisor
+        if self.instance and self.instance.is_organisor:
+            self.fields['telegram_token'].initial = self.instance.userprofile.telegram_token
+            self.fields['chat_id'].initial = self.instance.userprofile.chat_id
+
+        else:
+            del self.fields['telegram_token']
+            del self.fields['chat_id']
+
+    def save(self, commit=True):
+        user = super(UserUpdateForm, self).save(commit=commit)
+
+        # If the user is an organisor, save the telegram token to their profile
+        if user.is_organisor and 'telegram_token' in self.cleaned_data:
+            profile = user.userprofile
+            profile.telegram_token = self.cleaned_data['telegram_token']
+            if commit:
+                profile.save()
+
+        if user.is_organisor and 'chat_id' in self.cleaned_data:
+            profile = user.userprofile
+            profile.chat_id = self.cleaned_data['chat_id']
+            if commit:
+                profile.save()
+
+        return user
 
 class PasswordChangeForm(AuthPasswordChangeForm):
     class Meta:
@@ -242,3 +276,12 @@ class PasswordChangeForm(AuthPasswordChangeForm):
         super(PasswordChangeForm, self).__init__(*args, **kwargs)
         for field_name in self.fields:
             self.fields[field_name].help_text = None
+            self.fields[field_name].required = False  # Making fields not required
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # If any of the password fields are filled out, all of them should be
+        if any([cleaned_data.get('old_password'), cleaned_data.get('new_password1'), cleaned_data.get('new_password2')]):
+            if not all([cleaned_data.get('old_password'), cleaned_data.get('new_password1'), cleaned_data.get('new_password2')]):
+                raise forms.ValidationError(_('All password fields are required to change your password.'))
+        return cleaned_data    
