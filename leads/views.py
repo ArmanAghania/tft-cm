@@ -727,7 +727,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 request.session['override_chat_id'] = False
             return redirect('leads:lead-import')
         
-        
+        chat_id = '-1001707390535'  # Default value
 
         form = LeadImportForm(request.POST, request.FILES)
         user = self.request.user
@@ -799,8 +799,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 else:
                     chat_id = user.userprofile.chat_id if user.userprofile.chat_id else '-1001707390535'
                 
-                chat_id = '-1001707390535'  # Default value
-                
+
                 message = f'''
                 منبع: {source}\n
                 نوع: {category}\n
