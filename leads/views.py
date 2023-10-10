@@ -727,7 +727,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 request.session['override_chat_id'] = False
             return redirect('leads:lead-import')
         
-        chat_id = '-1001707390535'  # Default value
+        
 
         form = LeadImportForm(request.POST, request.FILES)
         user = self.request.user
@@ -791,7 +791,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                             category, created = Category.objects.get_or_create(name='خارجی', organisation=user.userprofile)
                             Lead.objects.create(phone_number=number, category=category, source=source, organisation=user.userprofile)
 
-                    
+                chat_id = '-1001707390535'  # Default value    
 
                 # Send a message to Telegram
                 if request.session.get('override_chat_id', False):
