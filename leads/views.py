@@ -726,6 +726,8 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
             else:
                 request.session['override_chat_id'] = False
             return redirect('leads:lead-import')
+        
+        chat_id = '-1001707390535'  # Default value
 
         form = LeadImportForm(request.POST, request.FILES)
         user = self.request.user
