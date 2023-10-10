@@ -196,15 +196,37 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize DataTables for both tables
+        // const allSalesTableDT = $('#allSalesTable').DataTable({
+        //    dom: 'Bfrtip',
+        //    buttons: ['copyHtml5', 'excelHtml5', 'csvHtml5']
+        // }); 
+
         const allSalesTableDT = $('#allSalesTable').DataTable({
-            dom: 'Bfrtip',
+            "order": [],
+            "pagingType": "full_numbers",
+            "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                   "<'row'<'col-sm-12'tr>>" +
+                   "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>" +
+                   "<'row'<'col-sm-12 col-md-6'B>>", // Add 'B' for buttons
             buttons: ['copyHtml5', 'excelHtml5', 'csvHtml5']
         });
     
-        const monthlySalesTableDT = $('#monthlySalesTable').DataTable({
-            dom: 'Bfrtip',
+        // const monthlySalesTableDT = $('#monthlySalesTable').DataTable({
+        //     dom: 'Bfrtip',
+        //     buttons: ['copyHtml5', 'excelHtml5', 'csvHtml5']
+        // });
+
+        const monthlySalesTableDT = $('#agentsTable').DataTable({
+            "order": [],
+            "pagingType": "full_numbers",
+            "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                   "<'row'<'col-sm-12'tr>>" +
+                   "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>" +
+                   "<'row'<'col-sm-12 col-md-6'B>>", // Add 'B' for buttons
             buttons: ['copyHtml5', 'excelHtml5', 'csvHtml5']
         });
+
+        
     
         // Tab functionality
         const tabSelectors = document.querySelectorAll('.tab-selector');

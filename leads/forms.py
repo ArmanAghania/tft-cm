@@ -6,6 +6,7 @@ from .models import Lead, Agent, Category, FollowUp, BankNumbers, Sale, Source, 
 from jalali_date.fields import JalaliDateField
 from jalali_date.widgets import AdminJalaliDateWidget
 from django.contrib.auth.forms import PasswordChangeForm as AuthPasswordChangeForm
+from django.utils.translation import gettext as _
 
 User = get_user_model()
 
@@ -280,8 +281,8 @@ class PasswordChangeForm(AuthPasswordChangeForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        # If any of the password fields are filled out, all of them should be
-        if any([cleaned_data.get('old_password'), cleaned_data.get('new_password1'), cleaned_data.get('new_password2')]):
-            if not all([cleaned_data.get('old_password'), cleaned_data.get('new_password1'), cleaned_data.get('new_password2')]):
-                raise forms.ValidationError(_('All password fields are required to change your password.'))
-        return cleaned_data    
+        # Check if any of the password fields are filled out
+        fields_filled = [cleaned_data.get('old_password'), cleaned_data.get('new_password1'), cleaned_data.get('new_password2')]
+        if any(fields_filled) and not all(fields_filled):
+            raise forms.ValidationError(_('All password fields are required to change your password.'))
+        return cleaned_data  

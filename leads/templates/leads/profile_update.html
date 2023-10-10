@@ -6,13 +6,13 @@
 <form method="post" class="space-y-4">
     {% csrf_token %}
     {{ user_form|crispy }}
+    <input type="submit" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded" name="{% trans "Update Profile" %}" value="Update Profile">
     <div class="mt-8 border-t border-gray-200 pt-4">
         <h3 class="font-semibold text-xl">{% trans "Change Password:" %}</h3>
+    </br>
         {{ password_change_form|crispy }}
+        <input type="submit" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded" name="change_password" value="{% trans "Change Password" %}">
     </div>
-    <button type="submit" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded">
-        {% trans "Update Profile" %}
-    </button>
 </form>
 
 {% endblock content %}
