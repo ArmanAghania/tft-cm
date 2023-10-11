@@ -990,7 +990,7 @@ async def notify_agents_via_telegram(df):
                     
                     # Iterate over the phone data and add each phone number to the message.
                     for i, lead_details in enumerate(phone_data.values()):
-                        message += f"{i + 1}. {lead_details['phone_number']} \n"
+                        message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
                 elif rank == 2:
                     message = f'''
                         🥈
@@ -1002,7 +1002,7 @@ async def notify_agents_via_telegram(df):
                     
                     # Iterate over the phone data and add each phone number to the message.
                     for i, lead_details in enumerate(phone_data.values()):
-                        message += f"{i + 1}. {lead_details['phone_number']} \n"
+                        message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
                 
                 elif rank == 3:
                     message = f'''
@@ -1015,7 +1015,7 @@ async def notify_agents_via_telegram(df):
                     
                     # Iterate over the phone data and add each phone number to the message.
                     for i, lead_details in enumerate(phone_data.values()):
-                        message += f"{i + 1}. {lead_details['phone_number']} \n"
+                        message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
 
                 elif rank == 4:
                     message = f'''
@@ -1028,9 +1028,9 @@ async def notify_agents_via_telegram(df):
                     
                     # Iterate over the phone data and add each phone number to the message.
                     for i, lead_details in enumerate(phone_data.values()):
-                        message += f"{i + 1}. {lead_details['phone_number']} \n"
+                        message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
 
-                await bot.send_message(chat_id=chat_id, text=message)
+                await bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
 
 def download_excel_page(request):
     excel_file_path = request.session.get('excel_file_path')
@@ -2070,4 +2070,4 @@ class UserProfileUpdateView(View):
             'password_change_form': password_change_form,
         })
 
-###TODO ---> Duplicate Followup List 
+###TODO ---> Duplicate Followup List - Report View - Filter By Date Views
