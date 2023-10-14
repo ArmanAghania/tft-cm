@@ -79,8 +79,6 @@ import telegram
 from concurrent.futures import ThreadPoolExecutor
 from django.contrib.auth import update_session_auth_hash
 
-
-
 logger = logging.getLogger(__name__)
 
 # CRUD+L - Create, Retrieve, Update and Delete + List
@@ -203,13 +201,12 @@ def bank_create(request):
 class LeadListView(LoginRequiredMixin, generic.ListView):
     template_name = "leads/lead_list.html"
     context_object_name = "leads"
-    paginate_by = 10
+    paginate_by = 15
     
-
     def get_queryset(self):
         user = self.request.user
-        # initial queryset of leads for the entire organisation
         
+        # initial queryset of leads for the entire organisation
         if user.is_organisor:
             queryset = Lead.objects.filter(organisation=user.userprofile).order_by('-date_assigned')
         else:
@@ -219,13 +216,19 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
             # filter for the agent that is logged in
             queryset = queryset.filter(agent__user=user)
 
+        filter_date = self.request.GET.get('filter_date', None)
+        if filter_date == 'yesterday':
+            queryset = queryset.filter(date_assigned__date=date.today() - timedelta(days=1))
+        elif filter_date == 'day_before':
+            queryset = queryset.filter(date_assigned__date=date.today() - timedelta(days=2))
+
         # Handling the search query
         query = self.request.GET.get('query', None)
         if query:
             queryset = queryset.filter(phone_number__icontains=query).order_by('-date_assigned')
 
+        # IMPORTANT: Always set the filterset regardless of the branch
         self.filterset = LeadFilter(self.request.GET, queryset=queryset)
-    
         return self.filterset.qs.order_by('-date_assigned')
             
     def get_context_data(self, **kwargs):
@@ -236,6 +239,17 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
                 organisation=user.userprofile, agent__isnull=True
             ).order_by('-date_assigned')
             context["unassigned_leads"] = queryset
+
+        # Convert 'yesterday' and 'day before yesterday' to Jalali
+        gregorian_yesterday = date.today() - timedelta(days=1)
+        gregorian_day_before = date.today() - timedelta(days=2)
+        
+        jalali_yesterday = jdatetime.date.fromgregorian(date=gregorian_yesterday)
+        jalali_day_before = jdatetime.date.fromgregorian(date=gregorian_day_before)
+        
+        # Pass these dates to context
+        context["jalali_yesterday"] = jalali_yesterday.strftime('%Y/%m/%d')
+        context["jalali_day_before"] = jalali_day_before.strftime('%Y/%m/%d')
 
         # Add the search form
         context["search_form"] = LeadSearchForm(self.request.GET or None)
@@ -750,21 +764,21 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                     if BankNumbers.objects.filter(organisation=user.userprofile, number=number).exists():
                         duplicates += 1
                         bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=number)
-                        if bank_number.agent.user.first_name == 'BANK' and not Lead.objects.filter(organisation=user.userprofile, phone_number=number):
-                            if len(number) == 11:
-                                added_leads += 1
-                                Lead.objects.get_or_create(phone_number=number, category=category, source=source, organisation=user.userprofile)
-                            else:
-                                foreign_added += 1
-                                category, created = Category.objects.get_or_create(name='خارجی', organisation=user.userprofile)
-                                Lead.objects.get_or_create(phone_number=number, category=category, source=source, organisation=user.userprofile)
+                        # if bank_number.agent.user.first_name == 'BANK' and not Lead.objects.filter(organisation=user.userprofile, phone_number=number):
+                        #     if len(number) == 11:
+                        #         added_leads += 1
+                        #         Lead.objects.get_or_create(phone_number=number, category=category, source=source, organisation=user.userprofile)
+                        #     else:
+                        #         foreign_added += 1
+                        #         category, created = Category.objects.get_or_create(name='خارجی', organisation=user.userprofile)
+                        #         Lead.objects.get_or_create(phone_number=number, category=category, source=source, organisation=user.userprofile)
+                        # else:
+                        DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
+                        if request.session.get('override_chat_id', False):
+                            chat_id = '-1001707390535'
                         else:
-                            DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
-                            if request.session.get('override_chat_id', False):
-                                chat_id = '-1001707390535'
-                            else:
-                                chat_id = bank_number.agent.chat_id if bank_number.agent.chat_id else '-1001707390535'
-                            message = f'تماس {number} {bank_number.agent}'
+                            chat_id = bank_number.agent.chat_id if bank_number.agent.chat_id else '-1001707390535'
+                        message = f'تماس {number} {bank_number.agent}'
                         # notify_background_messages_celery.delay(chat_id=chat_id, message=message)
                         notify_background_messages(chat_id=chat_id, message=message)
                     elif Lead.objects.filter(organisation=user.userprofile, phone_number=number).exists():
@@ -2070,4 +2084,4 @@ class UserProfileUpdateView(View):
             'password_change_form': password_change_form,
         })
 
-###TODO ---> Duplicate Followup List - Report View - Filter By Date Views
+###TODO ---> Duplicate Followup List - Report View 

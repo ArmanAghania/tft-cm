@@ -234,7 +234,7 @@ class Team(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
     members = models.ManyToManyField(Agent, related_name="teams", verbose_name=_("Members"))  # Relating to Agent model
     leaders = models.ManyToManyField(User, related_name="lead_teams", verbose_name=_("Leaders"))  # Relating to User model
-    organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE, default='1', verbose_name=_("Organisation"))
+    organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name=_("Organisation"))
 
     class Meta:
         verbose_name = _("Team")

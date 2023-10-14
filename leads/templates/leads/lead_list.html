@@ -164,7 +164,40 @@
             
         </div>
         <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
-
+        <form method="GET" action="" class="flex justify-left">
+            <!-- Your existing form elements, if any -->
+        
+            <!-- Add these two buttons -->
+            <button type="submit" name="filter_date" value="yesterday" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{{ jalali_yesterday }}</button>
+            <button type="submit" name="filter_date" value="day_before" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{{ jalali_day_before }}</button>
+    
+            {% comment %} <!-- Rest of your form -->
+            <!-- The new '...' button -->
+            <div x-data="{ openJalali: false }" class="ml-2 inline-block">
+                <button @click="openJalali = !openJalali" type="button" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">
+                    ...
+                </button>
+            </div>
+            
+            <!-- Jalali Filter Dropdown -->
+            <div x-show="openJalali" @click.away="openJalali = false" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <div class="py-1">
+                    <!-- Dropdown items (filters) -->
+                    <form method="GET" action="{% url 'leads:lead-list' %}">
+                        <!-- Display only the Jalali date field -->
+                        <label for="{{ filter_form.date_assigned_jalali.id_for_label }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                            {{ filter_form.date_assigned_jalali.label }}:
+                            {% render_field filter_form.date_assigned_jalali class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %}
+                        </label>
+                        
+                        <div class="px-4 py-1">
+                            <button type="submit" class="w-full text-sm text-left text-white bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1">{% trans "Apply Filter" %}</button>
+                        </div>
+                    </form>
+                </div>
+            </div> {% endcomment %}
+        </form> 
+        
         <div class="flex flex-col w-full">
             <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
@@ -241,7 +274,9 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                    <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-indigo-700 hover:text-indigo-900">
                                     {{ lead.phone_number }}
+                                    </a>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
                                     {{ lead.first_name }}
@@ -424,61 +459,6 @@
                         resultsContainer.innerHTML = '';  // Clear the results if query is too short
                     }
                 }
-
-
-                {% comment %} const closeModalBtn = document.getElementById('closeModal');
-                const modal = document.getElementById('chartModal');
-                const overlay = document.getElementById('modalOverlay');
-                const chartTitle = document.getElementById('chartTitle');
-                let currentChart;  // to store the current chart instance
-
-                // Event listeners for showing modals
-                document.getElementById('showDailyModal').addEventListener('click', () => openModal('Daily Sales', 'daily_sales_chart/data/'));
-                document.getElementById('showWeeklyModal').addEventListener('click', () => openModal('Weekly Sales', 'weekly_sales_chart/data/'));
-                document.getElementById('showMonthlyModal').addEventListener('click', () => openModal('Monthly Sales', 'monthly_sales_chart/data/'));
-                document.getElementById('showYearlyModal').addEventListener('click', () => openModal('Yearly Sales', 'yearly_sales_chart/data/'));
-
-                // Event listeners for closing modals
-                closeModalBtn.addEventListener('click', closeAllModals);
-                overlay.addEventListener('click', closeAllModals);
-
-                function openModal(title, fetchUrl) {
-                    chartTitle.textContent = title + ' Chart';  // set the modal title
-                    modal.classList.remove('hidden');
-                    overlay.classList.remove('hidden');
-                    loadChart(fetchUrl);  // pass in the fetch URL for the respective chart
-                }
-
-                function closeAllModals() {
-                    modal.classList.add('hidden');
-                    overlay.classList.add('hidden');
-                    if (currentChart) {
-                        currentChart.destroy();  // destroy the current chart instance to make room for a new one
-                    }
-                }
-
-                function loadChart(fetchUrl) {
-                    fetch(fetchUrl)
-                        .then(response => response.json())
-                        .then(data => {
-                            currentChart = new Chart(document.getElementById("myChart"), {
-                                type: 'line',
-                                data: {
-                                    labels: data.labels,
-                                    datasets: [{
-                                        label: chartTitle.textContent,
-                                        data: data.datasets[0].data,
-                                        borderColor: 'rgba(99, 102, 241,0.8)',
-                                        backgroundColor: 'rgba(99, 102, 241,0.8)'
-                                    }]
-                                },
-                                options: {
-                                    responsive: true,
-                                    maintainAspectRatio: false
-                                }
-                            });
-                        });
-                    } {% endcomment %}
 
                     // Reference modal and elements
                     var modal_log = document.getElementById("logModal");

@@ -1,6 +1,8 @@
 import django_filters
 from .models import Lead
 from django.utils.translation import gettext_lazy as _
+from django_jalali.forms.widgets import jDateInput
+from jdatetime import date as jdate
 
 RANK_CHOICES = (
     (1, '1'),
@@ -10,6 +12,11 @@ RANK_CHOICES = (
 )
 
 class LeadFilter(django_filters.FilterSet):
+    date_assigned_jalali = django_filters.DateFilter(
+        method='filter_date_assigned_jalali',
+        widget=jDateInput(attrs={'type': 'date'}),
+        label=_('Date Assigned (Jalali)')
+    )
     phone_number = django_filters.CharFilter(lookup_expr='icontains')
     first_name = django_filters.CharFilter(lookup_expr='icontains')
     last_name = django_filters.CharFilter(lookup_expr='icontains')
@@ -47,6 +54,19 @@ class LeadFilter(django_filters.FilterSet):
         if value:  # If the checkbox is checked
             return queryset.exclude(phone_number__startswith='09')
         return queryset
+    
+    def filter_date_assigned_jalali(self, queryset, name, value):
+        try:
+            # Convert the Jalali date to a Gregorian date
+            jdate_obj = jdate.fromisoformat(str(value).strip())  # Creates a Jalali date object
+            gregorian_date = jdate_obj.togregorian()  # Converts it to Gregorian
+        
+            # Filter the queryset by the Gregorian date
+            return queryset.filter(date_assigned__date=gregorian_date)
+        except Exception as e:
+            # If there's an error, log it and return the original queryset
+            print(f"Error while filtering by Jalali date: {e}")
+            return queryset
 
     class Meta:
         model = Lead
