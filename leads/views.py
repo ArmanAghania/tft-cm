@@ -1326,10 +1326,10 @@ class LeadDistributionWizard(SessionWizardView):
 
     def get_active_agents_count(self):
         active_agents_count = {
-            'rank_1': Agent.objects.filter(user__rank=1, user__is_active=True).count(),
-            'rank_2': Agent.objects.filter(user__rank=2, user__is_active=True).count(),
-            'rank_3': Agent.objects.filter(user__rank=3, user__is_active=True).count(),
-            'rank_4': Agent.objects.filter(user__rank=4, user__is_active=True).count(),
+            'rank_1': Agent.objects.filter(user__rank=1, is_available_for_leads=True).count(),
+            'rank_2': Agent.objects.filter(user__rank=2, is_available_for_leads=True).count(),
+            'rank_3': Agent.objects.filter(user__rank=3, is_available_for_leads=True).count(),
+            'rank_4': Agent.objects.filter(user__rank=4, is_available_for_leads=True).count(),
         }
         return active_agents_count
 
