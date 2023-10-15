@@ -1274,10 +1274,10 @@ class LeadDistributionWizard(SessionWizardView):
         rank4_numbers = N * 10 // 100
 
         # Step 2: Get initial each_rank values
-        each_rank1 = rank1_numbers // active_agents_count['rank_1']
-        each_rank2 = rank2_numbers // active_agents_count['rank_2']
-        each_rank3 = rank3_numbers // active_agents_count['rank_3']
-        each_rank4 = rank4_numbers // active_agents_count['rank_4']
+        each_rank1 = rank1_numbers // active_agents_count['rank_1'] if active_agents_count['rank_1'] != 0 else 0
+        each_rank2 = rank2_numbers // active_agents_count['rank_2'] if active_agents_count['rank_2'] != 0 else 0
+        each_rank3 = rank3_numbers // active_agents_count['rank_3'] if active_agents_count['rank_3'] != 0 else 0
+        each_rank4 = rank4_numbers // active_agents_count['rank_4'] if active_agents_count['rank_4'] != 0 else 0
 
         # Step 3: Adjust each_rank values if necessary
         total_numbers_assigned = (
