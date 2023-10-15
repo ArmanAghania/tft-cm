@@ -79,6 +79,8 @@ from django.core.cache import cache
 import telegram
 from concurrent.futures import ThreadPoolExecutor
 from django.contrib.auth import update_session_auth_hash
+from django.db import IntegrityError
+
 
 logger = logging.getLogger(__name__)
 
@@ -304,24 +306,29 @@ class LeadCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
 
     def form_valid(self, form):
         user = self.request.user
-        if BankNumbers.objects.filter(organisation=user.userprofile, number=form.cleaned_data["phone_number"]).exists() == False or BankNumbers.objects.filter(organisation=user.userprofile, agent__user__first_name='Bank', number=form.cleaned_data["phone_number"]).exists() == False:
-            lead = form.save(commit=False)
-            lead.organisation = self.request.user.userprofile
-            lead.save()
-            send_mail(
-                subject="A lead has been created",
-                message="Go to the site to see the new lead",
-                from_email="test@test.com",
-                recipient_list=["test2@test.com"],
-            )
-            messages.success(self.request, _("You have successfully created a lead"))
-            return super(LeadCreateView, self).form_valid(form)
-        
-        else: 
-            bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=form.cleaned_data["phone_number"])
-            DuplicateToFollow.objects.get_or_create(user = self.request.user, number=form.cleaned_data["phone_number"], organisation_id=self.request.user.userprofile.id, agent=bank_number.agent)
-            messages.error(self.request, _("Lead already exists!"))
+        try:
+            if BankNumbers.objects.filter(organisation=user.userprofile, number=form.cleaned_data["phone_number"]).exists() == False or BankNumbers.objects.filter(organisation=user.userprofile, agent__user__first_name='Bank', number=form.cleaned_data["phone_number"]).exists() == False:
+                lead = form.save(commit=False)
+                lead.organisation = self.request.user.userprofile
+                lead.save()
+                send_mail(
+                    subject="A lead has been created",
+                    message="Go to the site to see the new lead",
+                    from_email="test@test.com",
+                    recipient_list=["test2@test.com"],
+                )
+                messages.success(self.request, _("You have successfully created a lead"))
+                return super(LeadCreateView, self).form_valid(form)
+            
+            else: 
+                bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=form.cleaned_data["phone_number"])
+                DuplicateToFollow.objects.get_or_create(user = self.request.user, number=form.cleaned_data["phone_number"], organisation_id=self.request.user.userprofile.id, agent=bank_number.agent)
+                messages.error(self.request, _("Lead already exists!"))
+                return redirect("leads:lead-list")
+        except IntegrityError:
+            messages.error(self.request, _("Lead with this phone number already exists for your organisation."))
             return redirect("leads:lead-list")
+
 
 def lead_create(request):
     form = LeadModelForm()
