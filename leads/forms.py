@@ -7,6 +7,8 @@ from jalali_date.fields import JalaliDateField
 from jalali_date.widgets import AdminJalaliDateWidget
 from django.contrib.auth.forms import PasswordChangeForm as AuthPasswordChangeForm
 from django.utils.translation import gettext as _
+import logging
+# logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -189,6 +191,9 @@ class BankModelForm(forms.ModelForm):
         self.fields['agent'].required = False
 
 class DistributionForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.wizard_storage = kwargs.pop('wizard_storage', None)
+        super().__init__(*args, **kwargs)
 
     rank1 = forms.IntegerField()
     rank2 = forms.IntegerField()
@@ -219,12 +224,47 @@ class DistributionForm(forms.Form):
         return data
 
 class CategorySelectionForm(forms.Form):
-    category = forms.ModelChoiceField(queryset=Category.objects.all(), label="Select a Category")
-    alternate_category = forms.ModelChoiceField(queryset=Category.objects.all(), label="Select an Alternate Category")
+    category = forms.ModelChoiceField(queryset=Category.objects.none(), label="Select a Category")
+    alternate_category = forms.ModelChoiceField(queryset=Category.objects.none(), label="Select an Alternate Category")
+
+    def __init__(self, *args, **kwargs):
+        print(f"Form kwargs: {kwargs}")  # Debugging
+        self.wizard_storage = kwargs.pop('wizard_storage', None)
+        print(self.wizard_storage.extra_data.get('user_id'))
+        super().__init__(*args, **kwargs)
+        
+        if self.wizard_storage:
+            print("Inside wizard_storage check")  # Debug
+            user_id = self.wizard_storage.extra_data.get('user_id')
+            print(f"Retrieved user_id: {user_id}")  # Debug
+            if user_id:
+                print(f"User ID from wizard_storage: {user_id}")  # Debug
+                user = User.objects.get(id=user_id)
+                print(f"Retrieved user: {user}")
+                
+                organisation = user.userprofile
+                print(f"Organisation from user profile: {organisation}")
+                
+                categories = Category.objects.filter(organisation=organisation)
+                print(f"Categories retrieved: {categories.count()}")
+                
+                self.fields['category'].queryset = categories
+                self.fields['alternate_category'].queryset = categories
 
 class ConfirmationForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.wizard_storage = kwargs.pop('wizard_storage', None)
+        super().__init__(*args, **kwargs)
     confirmation = forms.BooleanField(label="Confirm", required=True)
 
+class ChatOverrideForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.wizard_storage = kwargs.pop('wizard_storage', None)
+        super().__init__(*args, **kwargs)
+    class Meta:
+        model = ChatSetting
+        fields = ['override_chat_id', 'chat_id']
+        
 class LeadSearchForm(forms.Form):
     query = forms.CharField(label='', widget=forms.TextInput(attrs={'placeholder': 'Search leads...'}), required=False)
 
@@ -252,10 +292,6 @@ class TeamModelForm(forms.ModelForm):
         # Filter the agents based on the organization of the logged-in user
         self.fields['members'].queryset = Agent.objects.filter(organisation=user.userprofile)
 
-class ChatOverrideForm(forms.ModelForm):
-    class Meta:
-        model = ChatSetting
-        fields = ['override_chat_id', 'chat_id']
 
 class UserUpdateForm(forms.ModelForm):
     telegram_token = forms.CharField(required=False, max_length=500)

@@ -141,7 +141,7 @@ class Agent(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=30)  # New, Contacted, Converted, Unconverted
-    organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='organisation')
 
     # class Meta:
     #     verbose_name = "دسته بندی"

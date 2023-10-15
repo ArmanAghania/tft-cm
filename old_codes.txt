@@ -156,3 +156,116 @@ LeadListView Context:
         # Calculate lead conversions
         
         # return context
+
+
+
+        # @background(schedule=2)
+# def notify_background(df=None):
+#     asyncio.run(notify_agents_via_telegram(df))
+
+# async def notify_agents_via_telegram(df):
+        
+
+#         # Initialize the limiter: 3 messages every 30 seconds
+#         limiter = AsyncLimiter(2, 30)
+#         data_list = json.loads(df)
+
+#         @sync_to_async
+#         def get_organisation_token_by_agent_name(name):
+#             user = User.objects.get(alt_name=name)
+#             # Assuming each agent belongs to one organisation and each organisation has a UserProfile
+#             organisation = user.agent.organisation
+#             return organisation.telegram_token
+
+#         @sync_to_async
+#         def get_agent_by_alt_name(name):
+#             return User.objects.get(alt_name=name)
+        
+#         @sync_to_async
+#         def get_agent_chat_id(user):
+#             return user.agent.chat_id
+        
+        
+
+        
+#         for agent_name, phone_data in data_list.items():
+
+#             TOKEN = await get_organisation_token_by_agent_name(agent_name)
+#             bot = Bot(TOKEN)
+
+#             if phone_data == {}:
+#                 continue
+#             else:
+#                 user = await get_agent_by_alt_name(agent_name)
+#                 today = jdatetime.datetime.now().strftime('%Y/%m/%d')
+#                 rank = user.rank
+#                 chat_id = await get_agent_chat_id(user)
+
+#                 chat_settings = await load_chat_settings()
+#                 if chat_settings.override_chat_id and chat_settings.chat_id:
+#                     chat_id = chat_settings.chat_id
+
+#                 if not chat_id:
+#                     chat_id = '-1001707390535'
+
+#                 print(chat_id)
+#                 if not chat_id:
+#                     print(f"No chat_id found for agent: {agent_name}")
+#                     continue
+                
+#                 # Acquire a token. If rate limit is exceeded, this will wait until it's possible to proceed.
+#                 await limiter.acquire()
+
+#                 # message = f"Hello, here are your new leads for {agent_name} Rank {rank}:\n\n"
+#                 if rank == 1:
+#                     message = f'''
+#                         🥇
+#                         {today} 
+
+#                         {agent_name}
+#                         رنک : {rank}
+#                         ارجاع : {len(phone_data.values())}\n\n'''
+                    
+#                     # Iterate over the phone data and add each phone number to the message.
+#                     for i, lead_details in enumerate(phone_data.values()):
+#                         message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
+#                 elif rank == 2:
+#                     message = f'''
+#                         🥈
+#                         {today} 
+
+#                         {agent_name}
+#                         رنک : {rank}
+#                         ارجاع : {len(phone_data.values())}\n\n'''
+                    
+#                     # Iterate over the phone data and add each phone number to the message.
+#                     for i, lead_details in enumerate(phone_data.values()):
+#                         message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
+                
+#                 elif rank == 3:
+#                     message = f'''
+#                         🥉
+#                         {today} 
+
+#                         {agent_name}
+#                         رنک : {rank}
+#                         ارجاع : {len(phone_data.values())}\n\n'''
+                    
+#                     # Iterate over the phone data and add each phone number to the message.
+#                     for i, lead_details in enumerate(phone_data.values()):
+#                         message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
+
+#                 elif rank == 4:
+#                     message = f'''
+#                         🏅
+#                         {today} 
+
+#                         {agent_name}
+#                         رنک : آموزش
+#                         ارجاع : {len(phone_data.values())}\n\n'''
+                    
+#                     # Iterate over the phone data and add each phone number to the message.
+#                     for i, lead_details in enumerate(phone_data.values()):
+#                         message += f"{i + 1}. [{lead_details['phone_number']}](tel:{lead_details['phone_number']}) \n"
+
+#                 await bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
