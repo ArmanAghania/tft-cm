@@ -39,7 +39,8 @@ from .forms import (LeadModelForm,
                     TeamModelForm,
                     ChatOverrideForm,
                     UserUpdateForm,
-                    PasswordChangeForm
+                    PasswordChangeForm,
+                    LeadImportFormAgents,
 )
 from .resources import LeadResource, BankResource
 import csv
@@ -688,6 +689,32 @@ class BankExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.F
     def get_success_url(self):
         return reverse("leads:bank-list")
 
+def preprocess_csv_numbers(csv_file):
+    """
+    Preprocess a list of phone numbers from a CSV file:
+    - Remove whitespace
+    - Replace '+' with '00'
+    - Remove '(' and ')'
+    - Ensure valid numbers start with '0' or '00'
+    """
+    # Read the CSV file into a list
+    df = pd.read_csv(csv_file, header=None, dtype=str)
+    numbers = df[0].tolist()
+
+    processed_numbers = []
+    
+    for num in numbers:
+        # Remove whitespace and replace special characters
+        cleaned_num = num.replace(' ', '').replace('+', '00').replace('(', '').replace(')', '')
+        
+        # Ensure valid numbers start with '0' or '00'
+        if cleaned_num[0] == '9' and len(cleaned_num) == 10:
+            cleaned_num = '0' + cleaned_num
+        
+        processed_numbers.append(cleaned_num)
+
+    return list(set(processed_numbers))  # Remove duplicates and return
+
 @background(schedule=1)
 def notify_background_messages(chat_id, message):
     asyncio.run(send_telegram_message(chat_id, message))
@@ -716,7 +743,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
         if 'override_chat_id' not in request.session:
             return render(request, 'leads/prompt_override_chat_id.html')
        
-        form = LeadImportForm()
+        form = LeadImportForm(user=request.user)
         return render(request, self.template_name, {'form': form})
 
     def lead_preprocess(self, csv_file):
@@ -747,7 +774,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
         
         
         chat_id = '-1001707390535'  # Default value 
-        form = LeadImportForm(request.POST, request.FILES)
+        form = LeadImportForm(request.POST, request.FILES, user=request.user)
         user = self.request.user
         TOKEN = user.userprofile.telegram_token
         bot = Bot(TOKEN)
@@ -849,12 +876,12 @@ class BankImportView(OrganisorAndLoginRequiredMixin, View):
     template_name = 'leads/bank_import.html'
 
     def get(self, request):
-        form = BankImportForm()
+        form = BankImportForm(user=request.user)
         return render(request, self.template_name, {'form': form})
         
 
     def post(self, request):
-        form = BankImportForm(request.POST, request.FILES)
+        form = BankImportForm(request.POST, request.FILES, user=request.user)
         user = request.user.userprofile.id
         
 
@@ -899,6 +926,43 @@ class BankImportView(OrganisorAndLoginRequiredMixin, View):
             return redirect("leads:bank-list")
 
         return render(request, self.template_name, {'form': form})    
+
+class LeadImportAgentsView(OrganisorAndLoginRequiredMixin, View):
+    template_name = 'leads/lead_import_agents.html'
+
+    def get(self, request):
+        if 'override_chat_id' not in request.session:
+            return render(request, 'leads/prompt_override_chat_id.html')
+        form = LeadImportFormAgents(user=request.user)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = LeadImportFormAgents(request.POST, request.FILES, user=request.user)
+        user = request.user
+        
+        if 'choice' in request.POST:
+            if request.POST['choice'] == "Yes":
+                request.session['override_chat_id'] = True
+            else:
+                request.session['override_chat_id'] = False
+            return redirect('leads:lead-import-agents')
+
+        if form.is_valid():
+            csv_file = form.cleaned_data['csv_file']
+            source = form.cleaned_data['source']
+            category = form.cleaned_data['category']
+            agent = form.cleaned_data['agent']  # Extracting the agent from form
+
+            all_numbers = preprocess_csv_numbers(csv_file)
+            
+
+            for number in all_numbers:
+                Lead.objects.get_or_create(phone_number=number, category=category, source=source, agent=agent, organisation=user.userprofile)
+
+            return redirect("leads:lead-list")
+
+        return render(request, self.template_name, {'form': form})
+
 
 class BankUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
     model = BankNumbers

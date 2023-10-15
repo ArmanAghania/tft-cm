@@ -125,6 +125,10 @@
                         {% trans "Import" %}
                     </a>
                     <br/>
+                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-import-agents' %}">
+                        {% trans "Import With Agents" %}
+                    </a>
+                    <br/>
                     <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-export' %}">
                         {% trans "Export" %}
                     </a>

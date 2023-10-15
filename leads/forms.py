@@ -142,12 +142,39 @@ class FormatForm(forms.Form):
 
 class LeadImportForm(forms.Form):
     csv_file = forms.FileField()
-    category = forms.ModelChoiceField(queryset=Category.objects.all())
-    source = forms.ModelChoiceField(queryset=Source.objects.all())
+    category = forms.ModelChoiceField(queryset=Category.objects.none())
+    source = forms.ModelChoiceField(queryset=Source.objects.none())
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(LeadImportForm, self).__init__(*args, **kwargs)
+        if user:
+            self.fields['category'].queryset = Category.objects.filter(organisation=user.userprofile)
+            self.fields['source'].queryset = Source.objects.filter(organisation=user.userprofile)
 
 class BankImportForm(forms.Form):
     csv_file = forms.FileField()
-    agent = forms.ModelChoiceField(queryset=Agent.objects.all())
+    agent = forms.ModelChoiceField(queryset=Agent.objects.none())
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(BankImportForm, self).__init__(*args, **kwargs)
+        if user:
+            self.fields['agent'].queryset = Agent.objects.filter(organisation=user.userprofile)
+
+class LeadImportFormAgents(forms.Form):
+    csv_file = forms.FileField()
+    category = forms.ModelChoiceField(queryset=Category.objects.none())
+    source = forms.ModelChoiceField(queryset=Source.objects.none())
+    agent = forms.ModelChoiceField(queryset=Agent.objects.none())
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(LeadImportFormAgents, self).__init__(*args, **kwargs)
+        if user:
+            self.fields['category'].queryset = Category.objects.filter(organisation=user.userprofile)
+            self.fields['source'].queryset = Source.objects.filter(organisation=user.userprofile)
+            self.fields['agent'].queryset = Agent.objects.filter(organisation=user.userprofile)
 
 class BankModelForm(forms.ModelForm):
     class Meta:
