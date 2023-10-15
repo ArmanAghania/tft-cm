@@ -221,6 +221,10 @@ class LeadListView(LoginRequiredMixin, generic.ListView):
             queryset = queryset.filter(date_assigned__date=date.today() - timedelta(days=1))
         elif filter_date == 'day_before':
             queryset = queryset.filter(date_assigned__date=date.today() - timedelta(days=2))
+        elif filter_date == 'today':
+            queryset = queryset.filter(date_assigned__date=date.today())
+        elif filter_date == 'all':
+            queryset = queryset
 
         # Handling the search query
         query = self.request.GET.get('query', None)
@@ -1063,7 +1067,12 @@ class LeadDistributionWizard(SessionWizardView):
         if step == 'distribution_info' and data:
             try:
                 category = Category.objects.get(pk=data.get('category'))
-                form.initial = {'category': category}
+                alternate_category = Category.objects.get(pk=data.get('alternate_category'))
+
+                form.initial = {
+                    'category': category,
+                    'alternate_category': alternate_category
+                    }
             except (MultiValueDictKeyError, Category.DoesNotExist):
                 pass
         if step == 'chat_override' and data:
@@ -1077,12 +1086,14 @@ class LeadDistributionWizard(SessionWizardView):
         
         if self.steps.current == 'distribution_info':
             category_data = self.get_cleaned_data_for_step('category')
+
             
             if category_data:
                 category = category_data['category']
-
+                alternate_category = category_data['alternate_category']
+            
                 # Calculate lead details
-                context.update(self.calculate_lead_details(category))
+                context.update(self.calculate_lead_details(category, alternate_category))
             
         elif self.steps.current == 'confirm':
             # Set up data for confirmation
@@ -1090,28 +1101,33 @@ class LeadDistributionWizard(SessionWizardView):
 
         return context
 
-    def calculate_lead_details(self, category):
+    def calculate_lead_details(self, category, alternate_category):
         category = self.get_cleaned_data_for_step('category')['category']
+        alternate_category = self.get_cleaned_data_for_step('category')['alternate_category']
         category_id = category.id
+        alternate_category_id = alternate_category.id
 
         leads = Lead.objects.filter(category=category_id, agent__isnull=True)
-        new_leads = leads.exclude(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).count()
-        new_912_leads = leads.filter(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).count()
-        foreign_or_wrong_leads = leads.annotate(phone_length=Length('phone_number')).exclude(phone_length=11).count()
+        new_leads = leads.annotate(phone_length=Length('phone_number')).filter(phone_length=11).count()
+        # new_912_leads = leads.filter(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).count()
+        # foreign_or_wrong_leads = leads.annotate(phone_length=Length('phone_number')).exclude(phone_length=11).count()
+        extra = Lead.objects.filter(category=alternate_category_id, agent__isnull=True).annotate(phone_length=Length('phone_number')).filter(phone_length=11).count()
 
-        total_new_leads = new_leads + new_912_leads
+        total_new_leads = new_leads
         active_agents_count = self.get_active_agents_count()
 
         recommended_leads_per_agent = self.compute_initial_distribution(total_new_leads, active_agents_count, category)
         self.request.session['total_new_leads'] = total_new_leads
         return {
             'total_new_leads': total_new_leads,
-            'new_912_leads': new_912_leads,
-            'foreign_or_wrong_leads': foreign_or_wrong_leads,
+            # 'new_912_leads': new_912_leads,
+            'extra': extra,
+            # 'foreign_or_wrong_leads': foreign_or_wrong_leads,
             'active_agents': active_agents_count,
             'recommended_leads_per_agent': recommended_leads_per_agent,
             'display_data': True,
         }
+    
     def assign_leads_to_agent(self, df):
         if df is None: 
             return
@@ -1271,19 +1287,19 @@ class LeadDistributionWizard(SessionWizardView):
             ),
         }
 
-    def distribute_leads(self, unassigned_leads, unassigned_912_leads, recommended_leads_per_agent):
+    def distribute_leads(self, unassigned_leads, unassigned_912_leads, recommended_leads_per_agent, extra):
         # This function will distribute the leads to the agents using pandas
         # and return a dataframe with the distribution
-        active_agents_rank1 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=1, user__is_active=True).values('user__alt_name')]
-        active_agents_rank2 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=2, user__is_active=True).values('user__alt_name')]
-        active_agents_rank3 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=3, user__is_active=True).values('user__alt_name')]
-        active_agents_rank4 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=4, user__is_active=True).values('user__alt_name')]
+        active_agents_rank1 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=1, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank2 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=2, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank3 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=3, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank4 = [agent['user__alt_name'] for agent in Agent.objects.filter(user__rank=4, is_available_for_leads=True).values('user__alt_name')]
 
         random.shuffle(unassigned_leads)
         random.shuffle(unassigned_912_leads)
+        random.shuffle(extra)
 
-        dist_list = unassigned_912_leads + unassigned_leads
-        random.shuffle(dist_list)
+        dist_list = unassigned_912_leads + unassigned_leads + extra
 
         df_rank1 = pd.DataFrame(columns=active_agents_rank1)
         df_rank2 = pd.DataFrame(columns=active_agents_rank2)
@@ -1320,16 +1336,19 @@ class LeadDistributionWizard(SessionWizardView):
     def setup_confirmation_data(self, context):
         distribution_data = self.get_cleaned_data_for_step('distribution_info')
         
-        category = Category.objects.get(pk=self.get_cleaned_data_for_step('category')['category'].id)        
+        category = Category.objects.get(pk=self.get_cleaned_data_for_step('category')['category'].id)
+        alternate_category = Category.objects.get(pk=self.get_cleaned_data_for_step('category')['alternate_category'].id)        
+
     
 
         unassigned_leads = list(Lead.objects.filter(agent__isnull=True, category=category).exclude(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
         unassigned_912_leads = list(Lead.objects.filter(agent__isnull=True, category=category, phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
-
+        extra = list(Lead.objects.filter(agent__isnull=True, category=alternate_category).annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
+        print(extra)
         recommended_leads_per_agent = distribution_data
 
         print(recommended_leads_per_agent)
-        df_rank1, df_rank2, df_rank3, df_rank4 = self.distribute_leads(unassigned_leads, unassigned_912_leads, recommended_leads_per_agent)
+        df_rank1, df_rank2, df_rank3, df_rank4 = self.distribute_leads(unassigned_leads, unassigned_912_leads, recommended_leads_per_agent, extra)
         context.update({
             'df_rank1': df_rank1,
             'df_rank2': df_rank2,

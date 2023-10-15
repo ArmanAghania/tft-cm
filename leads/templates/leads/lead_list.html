@@ -168,34 +168,38 @@
             <!-- Your existing form elements, if any -->
         
             <!-- Add these two buttons -->
+            <button type="submit" name="filter_date" value="all" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans 'All' %}</button>
+            <button type="submit" name="filter_date" value="today" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans 'Today' %}</button>
             <button type="submit" name="filter_date" value="yesterday" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{{ jalali_yesterday }}</button>
             <button type="submit" name="filter_date" value="day_before" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{{ jalali_day_before }}</button>
-    
-            {% comment %} <!-- Rest of your form -->
-            <!-- The new '...' button -->
-            <div x-data="{ openJalali: false }" class="ml-2 inline-block">
-                <button @click="openJalali = !openJalali" type="button" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">
-                    ...
-                </button>
-            </div>
             
-            <!-- Jalali Filter Dropdown -->
-            <div x-show="openJalali" @click.away="openJalali = false" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
-                <div class="py-1">
-                    <!-- Dropdown items (filters) -->
-                    <form method="GET" action="{% url 'leads:lead-list' %}">
-                        <!-- Display only the Jalali date field -->
-                        <label for="{{ filter_form.date_assigned_jalali.id_for_label }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                            {{ filter_form.date_assigned_jalali.label }}:
-                            {% render_field filter_form.date_assigned_jalali class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %}
-                        </label>
-                        
-                        <div class="px-4 py-1">
-                            <button type="submit" class="w-full text-sm text-left text-white bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1">{% trans "Apply Filter" %}</button>
-                        </div>
-                    </form>
+            <div x-data="{ open: false }" class="relative  text-left">
+                <div>
+                    <button @click="open = !open" type="button" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">
+                {% trans "..." %}
+                        {% comment %} <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg> {% endcomment %}
+                    </button>
                 </div>
-            </div> {% endcomment %}
+                
+                <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                    <div class="py-1" role="none">
+                        <!-- Dropdown items (filters) -->
+                        <form method="GET" action="{% url 'leads:lead-list' %}">
+                            <!-- Display only the Jalali date field -->
+                            <label for="{{ filter_form.date_assigned_jalali.id_for_label }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                                {{ filter_form.date_assigned_jalali.label }}:
+                                {% render_field filter_form.date_assigned_jalali class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %}
+                            </label>
+                            
+                            <div class="px-4 py-1">
+                                <button type="submit" class="w-full text-sm text-left text-white bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1">{% trans "Apply Filter" %}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </form> 
         
         <div class="flex flex-col w-full">

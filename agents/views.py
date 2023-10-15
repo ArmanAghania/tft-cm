@@ -14,8 +14,6 @@ from django.db.models import F
 from datetime import timedelta, date, datetime
 from django.db.models import Sum
 import jdatetime
-from django.utils import timezone
-from chartjs.views.lines import BaseLineChartView
 from django.utils.translation import gettext as _
 
 
@@ -24,7 +22,7 @@ class AgentListView(OrganisorAndLoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         organisation = self.request.user.userprofile
-        return Agent.objects.filter(organisation=organisation).annotate(rank=F('user__rank')).order_by('rank')
+        return Agent.objects.filter(organisation=organisation).annotate(rank=F('user__rank'))
     
     def get_context_data(self, **kwargs):
         context = super(AgentListView, self).get_context_data(**kwargs)
@@ -39,7 +37,7 @@ class AgentListView(OrganisorAndLoginRequiredMixin, generic.ListView):
         # Convert the start of the Jalali month back to Gregorian
         gregorian_start_of_month = jalali_start_of_month.togregorian()
         
-        agent_list = Agent.objects.filter(organisation=self.request.user.userprofile).annotate(rank=F('user__rank')).order_by('rank')
+        agent_list = Agent.objects.filter(organisation=self.request.user.userprofile).annotate(rank=F('user__rank'))
         agents_sales_data = []
         for agent in agent_list:
             daily_sales = Sale.objects.filter(organisation=organisation, agent=agent, date__date=jalali_today.togregorian()).aggregate(Sum('amount'))['amount__sum'] or 0

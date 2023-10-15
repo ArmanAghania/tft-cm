@@ -26,8 +26,10 @@
     <div class="bg-gray-100 p-5 rounded shadow-md">
         <h2 class="text-xl mb-4 font-semibold">{% trans "Lead Information" %}</h2>
         <h3 class="mb-3 text-md font-semibold">{% trans "Total Unassigned Leads:" %} <span class="font-medium text-blue-600">{{ total_new_leads }}</span></h3>
-        <h3 class="mb-3 text-md font-semibold">{% trans "Unassigned 912 Leads:" %} <span class="font-medium text-blue-600">{{ new_912_leads }}</span></h3>
-        <h3 class="mb-3 text-md font-semibold">{% trans "Foreign or Wrong Leads:" %} <span class="font-medium text-blue-600">{{ foreign_or_wrong_leads }}</span></h3>
+        <h3 class="mb-3 text-md font-semibold">{% trans "Extra:" %} <span class="font-medium text-blue-600">{{ extra }}</span></h3>
+
+        {% comment %} <h3 class="mb-3 text-md font-semibold">{% trans "Unassigned 912 Leads:" %} <span class="font-medium text-blue-600">{{ new_912_leads }}</span></h3> {% endcomment %}
+        {% comment %} <h3 class="mb-3 text-md font-semibold">{% trans "Foreign or Wrong Leads:" %} <span class="font-medium text-blue-600">{{ foreign_or_wrong_leads }}</span></h3> {% endcomment %}
         <h3 class="mb-3 text-md font-semibold">{% trans "Active Agents:" %}</h3>
         <ul class="list"> 
             <li class="pl-4">{% trans "Rank 1:" %}<span class="font-medium text-blue-600">   {{ active_agents.rank_1 }}</span></li>  
@@ -62,6 +64,7 @@
         
             function updateRemaining() {
                 const total = {{ total_new_leads }};
+                const extra = {{ extra }};
                 const rank1 = parseInt(rank1Input.value);
                 const rank2 = parseInt(rank2Input.value);
                 const rank3 = parseInt(rank3Input.value);
@@ -72,7 +75,7 @@
                 const rank4_pop = {{ active_agents.rank_4 }}
     
         
-                const remaining = total - (rank1*rank1_pop + rank2*rank2_pop + rank3*rank3_pop + rank4*rank4_pop);
+                const remaining = total - (rank1*rank1_pop + rank2*rank2_pop + rank3*rank3_pop + rank4*rank4_pop) + extra;
                 remainingDisplay.textContent = remaining.toString();
         
                 // Change colors based on conditions

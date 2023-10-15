@@ -26,10 +26,17 @@
                 {{ form.last_name|as_crispy_field }}
                 {{ form.email|as_crispy_field }}
                 {{ form.rank|as_crispy_field }}
+                {{ form.position|as_crispy_field }}
                 {{ form.chat_id|as_crispy_field }}
                 {{ form.is_active|as_crispy_field }}
+                {{ form.is_available_for_leads|as_crispy_field }}
                 {{ form.alt_name|as_crispy_field }}
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    Teams
+                </label>
+            
                 {{ form.teams }}
+                </br>
                 {{ form.is_team_leader|as_crispy_field }}
 
 

@@ -124,15 +124,19 @@ class Agent(models.Model):
     organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name=_("Organisation"))
     is_team_leader = models.BooleanField(default=False, verbose_name=_("Team Leader"))
     chat_id = models.CharField(max_length=50, unique=True, null=True, blank=True, verbose_name=_("Chat ID"))
+    position = models.IntegerField(default='0', verbose_name=_("Position in Rank"))
+    is_available_for_leads = models.BooleanField(default=True, verbose_name=_("Available for Leads"))
+
     
 
 
     class Meta:
         verbose_name = _("Agent")
         verbose_name_plural = _("Agents")
+        ordering = ['user__rank', 'position']
     
     def __str__(self):
-        return f"{self.user.alt_name}, {self.user.rank}"
+        return f"{self.user.alt_name}, {self.user.rank}, {self.position}"
 
 class Category(models.Model):
     name = models.CharField(max_length=30)  # New, Contacted, Converted, Unconverted

@@ -193,6 +193,7 @@ class DistributionForm(forms.Form):
 
 class CategorySelectionForm(forms.Form):
     category = forms.ModelChoiceField(queryset=Category.objects.all(), label="Select a Category")
+    alternate_category = forms.ModelChoiceField(queryset=Category.objects.all(), label="Select an Alternate Category")
 
 class ConfirmationForm(forms.Form):
     confirmation = forms.BooleanField(label="Confirm", required=True)
