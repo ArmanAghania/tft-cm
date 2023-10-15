@@ -57,7 +57,7 @@ class Lead(models.Model):
     )
     feedback = models.TextField(null=True, blank=True, verbose_name=_("Feedback"))
     date_added = models.DateTimeField(auto_now_add=True, verbose_name=_("Date Added"))
-    phone_number = models.CharField(max_length=20, unique=True, verbose_name=_('Phone Number'))
+    phone_number = models.CharField(max_length=20, verbose_name=_('Phone Number'))
     converted_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Converted Date'))
     date_modified = models.DateTimeField(auto_now=True, verbose_name=_("Date Modified"))
     date_assigned = models.DateTimeField(null=True, blank=True, verbose_name=_("Date Assigned"))
@@ -80,6 +80,7 @@ class Lead(models.Model):
         verbose_name = _("Lead")
         verbose_name_plural = _("Leads")
         ordering = ['date_assigned']
+        unique_together = ['phone_number', 'organisation']
 
     def __str__(self):
         return f"{self.phone_number} {self.category}"
