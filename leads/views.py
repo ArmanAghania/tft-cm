@@ -1209,8 +1209,8 @@ class LeadDistributionWizard(SessionWizardView):
                 if not phone_data:
                     continue
                 
-                user = User.objects.get(organisation=organisor.userprofile, alt_name=agent_name)
-                rank = user.rank
+                agent = Agent.objects.get(organisation=organisor.userprofile, user__alt_name=agent_name)
+                rank = agent.user.rank
                 message = create_agent_message(agent_name, rank, phone_data)
                 
                 # Apply chat_settings override if needed:
@@ -1218,7 +1218,7 @@ class LeadDistributionWizard(SessionWizardView):
                 if chat_settings.override_chat_id and chat_settings.chat_id:
                     chat_id = chat_settings.chat_id
                 else:
-                    chat_id = user.agent.chat_id or '-1001707390535'
+                    chat_id = agent.chat_id or '-1001707390535'
                 
                 # Schedule the message sending:
                 notify_background_messages(chat_id, message, organisor_id)
@@ -1376,8 +1376,8 @@ class LeadDistributionWizard(SessionWizardView):
         user = self.request.user
         distribution_data = self.get_cleaned_data_for_step('distribution_info')
         
-        category = Category.objects.get(organisation=user.userprotile, pk=self.get_cleaned_data_for_step('category')['category'].id)
-        alternate_category = Category.objects.get(organisation=user.userprotile, pk=self.get_cleaned_data_for_step('category')['alternate_category'].id)        
+        category = Category.objects.get(organisation=user.userprofile, pk=self.get_cleaned_data_for_step('category')['category'].id)
+        alternate_category = Category.objects.get(organisation=user.userprofile, pk=self.get_cleaned_data_for_step('category')['alternate_category'].id)        
 
         unassigned_leads = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category).exclude(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
         unassigned_912_leads = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category, phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
