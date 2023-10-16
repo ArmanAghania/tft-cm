@@ -1200,16 +1200,16 @@ class LeadDistributionWizard(SessionWizardView):
         self.assign_leads_to_agent(df_rank2)
         self.assign_leads_to_agent(df_rank3)
         self.assign_leads_to_agent(df_rank4)
-    
+        
         organisor_id = self.request.user.userprofile.id
-
+        organisor = self.request.user 
         for df in [df_rank1, df_rank2, df_rank3, df_rank4]:
             for agent_name, phone_data in json.loads(df.to_json()).items():
                 # Check if phone_data is empty or None:
                 if not phone_data:
                     continue
                 
-                user = User.objects.get(alt_name=agent_name)
+                user = User.objects.get(organisation=organisor.userprofile, alt_name=agent_name)
                 rank = user.rank
                 message = create_agent_message(agent_name, rank, phone_data)
                 
