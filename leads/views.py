@@ -1376,10 +1376,8 @@ class LeadDistributionWizard(SessionWizardView):
         user = self.request.user
         distribution_data = self.get_cleaned_data_for_step('distribution_info')
         
-        category = Category.objects.get(pk=self.get_cleaned_data_for_step('category')['category'].id)
-        alternate_category = Category.objects.get(pk=self.get_cleaned_data_for_step('category')['alternate_category'].id)        
-
-    
+        category = Category.objects.get(organisation=user.userprotile, pk=self.get_cleaned_data_for_step('category')['category'].id)
+        alternate_category = Category.objects.get(organisation=user.userprotile, pk=self.get_cleaned_data_for_step('category')['alternate_category'].id)        
 
         unassigned_leads = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category).exclude(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
         unassigned_912_leads = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category, phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
