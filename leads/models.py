@@ -156,7 +156,7 @@ def post_user_created_signal(sender, instance, created, **kwargs):
 post_save.connect(post_user_created_signal, sender=User)
     
 class BankNumbers(models.Model):
-    number = models.CharField(max_length=20, unique=True, verbose_name=_("Phone Number"))
+    number = models.CharField(max_length=20, verbose_name=_("Phone Number"))
     agent = models.ForeignKey("Agent", null=True, blank=True, on_delete=models.SET_NULL, verbose_name=_("Agent"))
     organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name=_("Organisation"))
     date_added = models.DateTimeField(auto_now_add=True, verbose_name=_("Date Added"))
@@ -164,6 +164,7 @@ class BankNumbers(models.Model):
     class Meta:
         verbose_name = _('Database Number')
         verbose_name_plural = _('Database Numbers')
+        unique_together = ['number', 'organisation']
 
     def date_added_jalali(self):
         return jalali_converter(self.date_added)
