@@ -1325,13 +1325,13 @@ class LeadDistributionWizard(SessionWizardView):
         }
 
     def distribute_leads(self, unassigned_leads, unassigned_912_leads, recommended_leads_per_agent, extra):
-        user = self.request.user
+        organisor = self.request.user
         # This function will distribute the leads to the agents using pandas
         # and return a dataframe with the distribution
-        active_agents_rank1 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=user.userprofile, user__rank=1, is_available_for_leads=True).values('user__alt_name')]
-        active_agents_rank2 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=user.userprofile, user__rank=2, is_available_for_leads=True).values('user__alt_name')]
-        active_agents_rank3 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=user.userprofile, user__rank=3, is_available_for_leads=True).values('user__alt_name')]
-        active_agents_rank4 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=user.userprofile, user__rank=4, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank1 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=organisor.userprofile, user__rank=1, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank2 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=organisor.userprofile, user__rank=2, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank3 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=organisor.userprofile, user__rank=3, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank4 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=organisor.userprofile, user__rank=4, is_available_for_leads=True).values('user__alt_name')]
 
         random.shuffle(unassigned_leads)
         random.shuffle(unassigned_912_leads)
@@ -1363,12 +1363,12 @@ class LeadDistributionWizard(SessionWizardView):
         return df_rank1, df_rank2, df_rank3, df_rank4
 
     def get_active_agents_count(self):
-        user = self.request.user
+        organisor = self.request.user
         active_agents_count = {
-            'rank_1': Agent.objects.filter(organisation=user.userprofile, user__rank=1, is_available_for_leads=True).count(),
-            'rank_2': Agent.objects.filter(organisation=user.userprofile, user__rank=2, is_available_for_leads=True).count(),
-            'rank_3': Agent.objects.filter(organisation=user.userprofile, user__rank=3, is_available_for_leads=True).count(),
-            'rank_4': Agent.objects.filter(organisation=user.userprofile, user__rank=4, is_available_for_leads=True).count(),
+            'rank_1': Agent.objects.filter(organisation=organisor.userprofile, user__rank=1, is_available_for_leads=True).count(),
+            'rank_2': Agent.objects.filter(organisation=organisor.userprofile, user__rank=2, is_available_for_leads=True).count(),
+            'rank_3': Agent.objects.filter(organisation=organisor.userprofile, user__rank=3, is_available_for_leads=True).count(),
+            'rank_4': Agent.objects.filter(organisation=organisor.userprofile, user__rank=4, is_available_for_leads=True).count(),
         }
         return active_agents_count
 
