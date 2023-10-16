@@ -1158,18 +1158,18 @@ class LeadDistributionWizard(SessionWizardView):
             try:
                 agent = Agent.objects.get(organisation=user.userprofile, user__alt_name=alt_name)
                 for number in numbers:
-                    lead = Lead.objects.get(phone_number=number['phone_number'])
+                    lead = Lead.objects.get(organisation=user.userprofile, phone_number=number['phone_number'])
                     lead.agent = agent
                     lead.save()
 
                     # Add the lead's number to BankNumbers if it doesn't exist
-                    # bank_number, created = BankNumbers.objects.get_or_create(
-                    #     organisation=user.userprofile,
-                    #     number=lead.phone_number, 
-                    #     defaults={'agent': agent, 'organisation': agent.organisation}
-                    # )
-                    # if not created:
-                    #     print(f"Number {lead.phone_number} already exists in BankNumbers.")
+                    bank_number, created = BankNumbers.objects.get_or_create(
+                        organisation=user.userprofile,
+                        number=lead.phone_number, 
+                        defaults={'agent': agent, 'organisation': agent.organisation}
+                    )
+                    if not created:
+                        print(f"Number {lead.phone_number} already exists in BankNumbers.")
             except User.DoesNotExist:
                 print(f"No user found with alt_name: {alt_name}")
             except Agent.DoesNotExist:
