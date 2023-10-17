@@ -33,6 +33,22 @@
             border: 1px solid #888;
             width: 80%;
         }
+
+        .bg-emerald-300 {
+            background-color: rgb(110 231 183);
+        }
+
+        .bg-lime-300 {
+            background-color: rgb(190 242 100);
+        }
+
+        .bg-lime-400 {
+            background-color: rgb(163 230 53);
+        }
+
+        .bg-emerald-200 {
+            background-color: rgb(167 243 208);
+        }
     </style>
 <hr>
 </br>
@@ -272,7 +288,7 @@
                     <tbody>
                         {% for lead in page_obj %}
                             {% if lead.total_sale > 0 %}
-                                <tr class="bg-green-100 border-b">
+                                <tr class="bg-emerald-200 border-b">
 
                             {% elif lead.low_quality %}
                                 <tr class="bg-red-100 border-b">
