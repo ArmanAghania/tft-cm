@@ -196,7 +196,6 @@
                                 {{ filter_form.date_assigned_jalali.label }}:
                                 {% render_field filter_form.date_assigned_jalali class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %}
                             </label>
-                            
                             <div class="px-4 py-1">
                                 <button type="submit" class="w-full text-sm text-left text-white bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1">{% trans "Apply Filter" %}</button>
                             </div>
@@ -272,7 +271,16 @@
                     </thead>
                     <tbody>
                         {% for lead in page_obj %}
-                            <tr class="bg-white border-b">
+                            {% if lead.total_sale > 0 %}
+                                <tr class="bg-green-100 border-b">
+
+                            {% elif lead.low_quality %}
+                                <tr class="bg-red-100 border-b">
+
+                            {% else %}    
+                                <tr class="bg-white border-b">
+
+                            {% endif %}
                                 <form method="post" action="{% url 'leads:lead-update' lead.id%}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center" >
                                     {% if lead.is_presented %}

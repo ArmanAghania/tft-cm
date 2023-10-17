@@ -74,6 +74,7 @@ class Lead(models.Model):
     proposed_price = models.IntegerField(default=0, null=True, blank=True, verbose_name=_("Proposed Price"))
     registered_price = models.IntegerField(default=0, null=True, blank=True, verbose_name=_("Registered Price"))
     is_presented = models.BooleanField(default=False, verbose_name=_("Is Presented?"))
+    low_quality = models.BooleanField(default=False, verbose_name=_("Low Quality?"))
     
 
     class Meta:

@@ -1191,6 +1191,7 @@ class LeadDistributionWizard(SessionWizardView):
         df_rank2 = context.get('df_rank2')
         df_rank3 = context.get('df_rank3')
         df_rank4 = context.get('df_rank4')
+        
         df_rank1_json = df_rank1.to_json()
         df_rank2_json = df_rank2.to_json()
         df_rank3_json = df_rank3.to_json()

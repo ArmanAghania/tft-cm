@@ -25,6 +25,7 @@ class LeadModelForm(forms.ModelForm):
             'country',
             'age',
             'is_presented',
+            'low_quality',
             'proposed_price',
             'registered_price',
             'birthday',

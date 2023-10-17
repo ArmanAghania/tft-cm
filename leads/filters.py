@@ -3,7 +3,8 @@ from .models import Lead
 from django.utils.translation import gettext_lazy as _
 from django_jalali.forms.widgets import jDateInput
 from jdatetime import date as jdate
-
+from jalali_date.widgets import AdminJalaliDateWidget, AdminSplitJalaliDateTime
+from django import forms
 RANK_CHOICES = (
     (1, '1'),
     (2, '2'),
@@ -12,10 +13,10 @@ RANK_CHOICES = (
 )
 
 class LeadFilter(django_filters.FilterSet):
-    date_assigned_jalali = django_filters.DateFilter(
+    date_assigned_jalali = django_filters.CharFilter(
         method='filter_date_assigned_jalali',
-        widget=jDateInput(attrs={'type': 'date'}),
-        label=_('Date Assigned (Jalali)')
+        widget=forms.TextInput(attrs={'placeholder': 'YYYY-MM-DD'}),
+        label=_('Date Assigned (Jalali)'),
     )
     phone_number = django_filters.CharFilter(lookup_expr='icontains')
     first_name = django_filters.CharFilter(lookup_expr='icontains')
