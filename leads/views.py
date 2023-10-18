@@ -634,11 +634,14 @@ class LeadExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.F
     model = Lead
     form_class = FormatForm
 
+    def get_queryset(self):
+        user = self.request.user
+        return Lead.objects.filter(organisation=user.userprofile)[:10]
+
     def post(self, request, **kwargs):
         user = self.request.user
         leads = Lead.objects.filter(organisation=user.userprofile)
-        qs = self.get_queryset()
-        dataset = LeadResource().export(qs)
+        dataset = LeadResource().export(leads)
 
         format = request.POST.get("format")
 
@@ -660,15 +663,14 @@ class LeadExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.F
 
 class BankExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.FormView):
     template_name = "leads/bank_export.html"
-    paginate_by = 50
     context_object_name = "bank_numbers"
     model = BankNumbers
     form_class = FormatForm
 
     def post(self, request, **kwargs):
         user = self.request.user
-        qs = self.get_queryset()
-        dataset = BankResource().export(qs)
+        leads = BankNumbers.objects.filter(organisation=user.userprofile)
+        dataset = BankResource().export(leads)
 
         format = request.POST.get("format")
 
@@ -693,7 +695,7 @@ class BankExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.F
         user = self.request.user
         
         if user.is_organisor:
-            queryset = BankNumbers.objects.filter(organisation=user.userprofile).order_by('date_added')
+            queryset = BankNumbers.objects.filter(organisation=user.userprofile)[:10]
 
         return queryset
 
@@ -2153,8 +2155,6 @@ class Echo:
         """Utility class to write to the response"""
         return value
     
-
-
 def stream_data(request):
     user = request.user
     data = BankNumbers.objects.filter(organisation=user.userprofile)
