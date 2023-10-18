@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-10-15 18:38+0330\n"
+"POT-Creation-Date: 2023-10-18 12:24+0330\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: .\agents\forms.py:24 .\leads\models.py:245
+#: .\agents\forms.py:24 .\leads\models.py:248
 #: .\leads\templates\leads\team_list.html:9 .\templates\navbar.html:37
 msgid "Teams"
 msgstr "تیم‌ها"
@@ -112,7 +112,7 @@ msgstr "رنک"
 
 #: .\agents\templates\agents\agent_detail.html:36
 #: .\agents\templates\agents\agent_list.html:42 .\leads\models.py:31
-#: .\leads\models.py:126
+#: .\leads\models.py:128
 msgid "Chat ID"
 msgstr "آیدی تلگرام"
 
@@ -123,14 +123,14 @@ msgstr "بارگذاری کارشناس‌ها"
 #: .\agents\templates\agents\agent_import.html:18
 #: .\agents\templates\agents\agent_list.html:14
 #: .\leads\templates\leads\bank_import.html:19
-#: .\leads\templates\leads\bank_list.html:23
+#: .\leads\templates\leads\bank_list.html:27
 #: .\leads\templates\leads\lead_import.html:19
 #: .\leads\templates\leads\lead_import_agents.html:19
-#: .\leads\templates\leads\lead_list.html:126
+#: .\leads\templates\leads\lead_list.html:142
 msgid "Import"
 msgstr "بارگذاری"
 
-#: .\agents\templates\agents\agent_list.html:9 .\leads\models.py:135
+#: .\agents\templates\agents\agent_list.html:9 .\leads\models.py:137
 #: .\templates\navbar.html:38
 msgid "Agents"
 msgstr "کارشناس‌ها"
@@ -143,7 +143,7 @@ msgstr "رتبه"
 msgid "Username"
 msgstr "نام کاربری"
 
-#: .\agents\templates\agents\agent_list.html:45 .\leads\models.py:244
+#: .\agents\templates\agents\agent_list.html:45 .\leads\models.py:247
 #: .\templates\navbar.html:33
 msgid "Team"
 msgstr "تیم"
@@ -193,12 +193,12 @@ msgstr "وضعیت"
 #: .\agents\templates\agents\agent_list.html:75
 #: .\agents\templates\agents\agent_list.html:141
 #: .\leads\templates\leads\bank_export.html:63
-#: .\leads\templates\leads\bank_list.html:53
-#: .\leads\templates\leads\bank_list.html:99
+#: .\leads\templates\leads\bank_list.html:57
+#: .\leads\templates\leads\bank_list.html:103
 #: .\leads\templates\leads\lead_export.html:106
 #: .\leads\templates\leads\lead_export.html:194
-#: .\leads\templates\leads\lead_list.html:271
-#: .\leads\templates\leads\lead_list.html:362
+#: .\leads\templates\leads\lead_list.html:286
+#: .\leads\templates\leads\lead_list.html:386
 #: .\leads\templates\leads\sales_list.html:185
 msgid "Edit"
 msgstr "تغییر"
@@ -233,13 +233,13 @@ msgstr "انگلیسی"
 msgid "Persian"
 msgstr "فارسی"
 
-#: .\leads\filters.py:18
+#: .\leads\filters.py:19
 #, fuzzy
 #| msgid "Date Assigned"
 msgid "Date Assigned (Jalali)"
 msgstr "تاریخ ارجاع"
 
-#: .\leads\forms.py:315
+#: .\leads\forms.py:352
 msgid "All password fields are required to change your password."
 msgstr "تمامی ورودی های رمز عبور برای تغییر رمز نیاز است"
 
@@ -263,13 +263,13 @@ msgstr "آموزش"
 msgid "Organisor"
 msgstr "سازمان"
 
-#: .\leads\models.py:23 .\leads\models.py:49 .\leads\models.py:134
-#: .\leads\models.py:159 .\leads\models.py:175 .\leads\models.py:188
+#: .\leads\models.py:23 .\leads\models.py:49 .\leads\models.py:136
+#: .\leads\models.py:161 .\leads\models.py:178 .\leads\models.py:191
 #: .\leads\templates\leads\bank_export.html:55
-#: .\leads\templates\leads\bank_list.html:47
+#: .\leads\templates\leads\bank_list.html:51
 #: .\leads\templates\leads\lead_detail.html:88
 #: .\leads\templates\leads\lead_export.html:80
-#: .\leads\templates\leads\lead_list.html:245
+#: .\leads\templates\leads\lead_list.html:260
 #: .\leads\templates\leads\sales_list.html:130
 #: .\leads\templates\leads\sales_list.html:166
 msgid "Agent"
@@ -283,7 +283,7 @@ msgstr "فعال"
 msgid "Alternate Name"
 msgstr "نام جایگزین"
 
-#: .\leads\models.py:29 .\leads\models.py:123
+#: .\leads\models.py:29 .\leads\models.py:125
 msgid "User"
 msgstr "کاربر"
 
@@ -293,7 +293,7 @@ msgstr "توکن تلگرام"
 
 #: .\leads\models.py:40 .\leads\templates\leads\lead_detail.html:40
 #: .\leads\templates\leads\lead_export.html:60
-#: .\leads\templates\leads\lead_list.html:225
+#: .\leads\templates\leads\lead_list.html:240
 #: .\leads\templates\leads\sales_list.html:126
 #: .\leads\templates\leads\source_detail.html:24
 msgid "First Name"
@@ -301,7 +301,7 @@ msgstr "نام"
 
 #: .\leads\models.py:41 .\leads\templates\leads\lead_detail.html:44
 #: .\leads\templates\leads\lead_export.html:63
-#: .\leads\templates\leads\lead_list.html:228
+#: .\leads\templates\leads\lead_list.html:243
 #: .\leads\templates\leads\sales_list.html:127
 #: .\leads\templates\leads\sales_list.html:163
 #: .\leads\templates\leads\source_detail.html:27
@@ -310,7 +310,7 @@ msgstr "نام خانوادگی"
 
 #: .\leads\models.py:42 .\leads\templates\leads\lead_detail.html:64
 #: .\leads\templates\leads\lead_export.html:69
-#: .\leads\templates\leads\lead_list.html:234
+#: .\leads\templates\leads\lead_list.html:249
 #: .\leads\templates\leads\sales_list.html:128
 #: .\leads\templates\leads\sales_list.html:164
 msgid "Age"
@@ -326,7 +326,7 @@ msgstr "شغل"
 
 #: .\leads\models.py:45 .\leads\templates\leads\lead_detail.html:52
 #: .\leads\templates\leads\lead_export.html:66
-#: .\leads\templates\leads\lead_list.html:231
+#: .\leads\templates\leads\lead_list.html:246
 #: .\leads\templates\leads\sales_list.html:129
 #: .\leads\templates\leads\sales_list.html:165
 msgid "City"
@@ -340,16 +340,16 @@ msgstr "استان"
 msgid "Country"
 msgstr "کشور"
 
-#: .\leads\models.py:48 .\leads\models.py:124 .\leads\models.py:160
-#: .\leads\models.py:176 .\leads\models.py:189 .\leads\models.py:227
-#: .\leads\models.py:241
+#: .\leads\models.py:48 .\leads\models.py:126 .\leads\models.py:162
+#: .\leads\models.py:179 .\leads\models.py:192 .\leads\models.py:230
+#: .\leads\models.py:244
 msgid "Organisation"
 msgstr "سازمان"
 
 #: .\leads\models.py:56 .\leads\templates\leads\lead_category_update.html:21
 #: .\leads\templates\leads\lead_detail.html:22
 #: .\leads\templates\leads\lead_export.html:72
-#: .\leads\templates\leads\lead_list.html:237
+#: .\leads\templates\leads\lead_list.html:252
 #: .\leads\templates\leads\lead_update.html:24
 #: .\leads\templates\leads\sales_create.html:21
 #: .\leads\templates\leads\sales_update.html:22
@@ -357,23 +357,23 @@ msgid "Category"
 msgstr "دسته‌بندی"
 
 #: .\leads\models.py:58 .\leads\templates\leads\lead_export.html:83
-#: .\leads\templates\leads\lead_list.html:248
+#: .\leads\templates\leads\lead_list.html:263
 msgid "Feedback"
 msgstr "گزارش"
 
-#: .\leads\models.py:59 .\leads\models.py:161 .\leads\models.py:177
-#: .\leads\models.py:190 .\leads\templates\leads\bank_export.html:59
-#: .\leads\templates\leads\bank_list.html:50
+#: .\leads\models.py:59 .\leads\models.py:163 .\leads\models.py:180
+#: .\leads\models.py:193 .\leads\templates\leads\bank_export.html:59
+#: .\leads\templates\leads\bank_list.html:54
 #: .\leads\templates\leads\lead_export.html:96
-#: .\leads\templates\leads\lead_list.html:261
+#: .\leads\templates\leads\lead_list.html:276
 msgid "Date Added"
 msgstr "تاریخ ثبت"
 
-#: .\leads\models.py:60 .\leads\models.py:158 .\leads\models.py:174
+#: .\leads\models.py:60 .\leads\models.py:160 .\leads\models.py:177
 #: .\leads\templates\leads\category_detail.html:24
 #: .\leads\templates\leads\lead_detail.html:72
 #: .\leads\templates\leads\lead_export.html:57
-#: .\leads\templates\leads\lead_list.html:222
+#: .\leads\templates\leads\lead_list.html:237
 #: .\leads\templates\leads\sales_list.html:124
 #: .\leads\templates\leads\sales_list.html:160
 msgid "Phone Number"
@@ -384,13 +384,13 @@ msgid "Converted Date"
 msgstr "تاریخ تبدیل"
 
 #: .\leads\models.py:62 .\leads\templates\leads\lead_export.html:99
-#: .\leads\templates\leads\lead_list.html:264
+#: .\leads\templates\leads\lead_list.html:279
 msgid "Date Modified"
 msgstr "تاریخ آخرین تغییر"
 
 #: .\leads\models.py:63 .\leads\templates\leads\lead_detail.html:92
 #: .\leads\templates\leads\lead_export.html:103
-#: .\leads\templates\leads\lead_list.html:268
+#: .\leads\templates\leads\lead_list.html:283
 msgid "Date Assigned"
 msgstr "تاریخ ارجاع"
 
@@ -398,21 +398,21 @@ msgstr "تاریخ ارجاع"
 msgid "Total Sales"
 msgstr "کل فروش"
 
-#: .\leads\models.py:72 .\leads\models.py:230
+#: .\leads\models.py:72 .\leads\models.py:233
 #: .\leads\templates\leads\lead_export.html:76
-#: .\leads\templates\leads\lead_list.html:241
+#: .\leads\templates\leads\lead_list.html:256
 msgid "Source"
 msgstr "منبع"
 
 #: .\leads\models.py:74 .\leads\templates\leads\lead_detail.html:76
 #: .\leads\templates\leads\lead_export.html:86
-#: .\leads\templates\leads\lead_list.html:251
+#: .\leads\templates\leads\lead_list.html:266
 msgid "Proposed Price"
 msgstr "قیمت پیشنهادی"
 
 #: .\leads\models.py:75 .\leads\templates\leads\lead_detail.html:80
 #: .\leads\templates\leads\lead_export.html:89
-#: .\leads\templates\leads\lead_list.html:254
+#: .\leads\templates\leads\lead_list.html:269
 msgid "Registered Price"
 msgstr "قیمت ثبت‌نام"
 
@@ -420,7 +420,11 @@ msgstr "قیمت ثبت‌نام"
 msgid "Is Presented?"
 msgstr "پرزنت شده"
 
-#: .\leads\models.py:80 .\leads\models.py:110 .\leads\models.py:187
+#: .\leads\models.py:77
+msgid "Low Quality?"
+msgstr "کیفیت پایین"
+
+#: .\leads\models.py:81 .\leads\models.py:112 .\leads\models.py:190
 #: .\leads\templates\leads\lead_category_update.html:11
 #: .\leads\templates\leads\lead_detail.html:11
 #: .\leads\templates\leads\lead_update.html:13
@@ -429,95 +433,95 @@ msgstr "پرزنت شده"
 msgid "Lead"
 msgstr "مخاطب محتمل"
 
-#: .\leads\models.py:81 .\leads\templates\leads\lead_export.html:14
+#: .\leads\models.py:82 .\leads\templates\leads\lead_export.html:14
 #: .\templates\navbar.html:43
 msgid "Leads"
 msgstr "مشتری بالقوه"
 
-#: .\leads\models.py:112 .\leads\templates\leads\lead_detail.html:105
+#: .\leads\models.py:114 .\leads\templates\leads\lead_detail.html:105
 msgid "Notes"
 msgstr "یادداشت‌ها"
 
-#: .\leads\models.py:113
+#: .\leads\models.py:115
 msgid "File"
 msgstr "فایل"
 
-#: .\leads\models.py:116
+#: .\leads\models.py:118
 msgid "Follow-up"
 msgstr "پیگیری"
 
-#: .\leads\models.py:117
+#: .\leads\models.py:119
 msgid "Follow-ups"
 msgstr "پیگیری‌ها"
 
-#: .\leads\models.py:125
+#: .\leads\models.py:127
 msgid "Team Leader"
 msgstr "رهبر تیم"
 
-#: .\leads\models.py:127
+#: .\leads\models.py:129
 msgid "Position in Rank"
 msgstr "رتبه در رنک"
 
-#: .\leads\models.py:128
+#: .\leads\models.py:130
 msgid "Available for Leads"
 msgstr "حاضر"
 
-#: .\leads\models.py:164
+#: .\leads\models.py:166
 msgid "Database Number"
 msgstr "شماره دیتابیس"
 
-#: .\leads\models.py:165
+#: .\leads\models.py:167
 msgid "Database Numbers"
 msgstr "شماره‌های دیتابیس"
 
-#: .\leads\models.py:180
+#: .\leads\models.py:183
 msgid "Duplicate Followup"
 msgstr "تکراری قابل پیگیری"
 
-#: .\leads\models.py:181
+#: .\leads\models.py:184
 msgid "Duplicate Followups"
 msgstr "تکراری‌های قابل پیگیری"
 
-#: .\leads\models.py:191 .\leads\templates\leads\sales_list.html:131
+#: .\leads\models.py:194 .\leads\templates\leads\sales_list.html:131
 #: .\leads\templates\leads\sales_list.html:167
 msgid "Amount"
 msgstr "مقدار"
 
-#: .\leads\models.py:192
+#: .\leads\models.py:195
 msgid "Total"
 msgstr "کل"
 
-#: .\leads\models.py:196
+#: .\leads\models.py:199
 msgid "Sale"
 msgstr "فروش"
 
-#: .\leads\models.py:197 .\leads\templates\leads\lead_export.html:92
-#: .\leads\templates\leads\lead_list.html:257
+#: .\leads\models.py:200 .\leads\templates\leads\lead_export.html:92
+#: .\leads\templates\leads\lead_list.html:272
 #: .\leads\templates\leads\sales_list.html:7 .\templates\navbar.html:42
 msgid "Sales"
 msgstr "فروش‌ها"
 
-#: .\leads\models.py:226
+#: .\leads\models.py:229
 msgid "Source Name"
 msgstr "نام منبع"
 
-#: .\leads\models.py:231 .\leads\templates\leads\source_list.html:8
+#: .\leads\models.py:234 .\leads\templates\leads\source_list.html:8
 msgid "Sources"
 msgstr "منابع"
 
-#: .\leads\models.py:237
+#: .\leads\models.py:240
 msgid "Team Name"
 msgstr "نام تیم"
 
-#: .\leads\models.py:238
+#: .\leads\models.py:241
 msgid "Created At"
 msgstr "ساخته شده در"
 
-#: .\leads\models.py:239
+#: .\leads\models.py:242
 msgid "Members"
 msgstr "اعضاء"
 
-#: .\leads\models.py:240 .\leads\templates\leads\team_list.html:22
+#: .\leads\models.py:243 .\leads\templates\leads\team_list.html:22
 msgid "Leaders"
 msgstr "رهبران"
 
@@ -561,7 +565,7 @@ msgstr "شماره‌های بانک"
 #: .\leads\templates\leads\bank_export.html:26
 #: .\leads\templates\leads\bank_list.html:19
 #: .\leads\templates\leads\lead_export.html:23
-#: .\leads\templates\leads\lead_list.html:134
+#: .\leads\templates\leads\lead_list.html:150
 msgid "Export"
 msgstr "خروجی"
 
@@ -571,15 +575,15 @@ msgid "Save"
 msgstr "ذخیره"
 
 #: .\leads\templates\leads\bank_export.html:51
-#: .\leads\templates\leads\bank_list.html:44
+#: .\leads\templates\leads\bank_list.html:48
 msgid "Cell Phone Number"
 msgstr "شماره تلفن"
 
 #: .\leads\templates\leads\bank_export.html:81
-#: .\leads\templates\leads\bank_list.html:89
+#: .\leads\templates\leads\bank_list.html:93
 #: .\leads\templates\leads\category_list.html:28
 #: .\leads\templates\leads\lead_export.html:164
-#: .\leads\templates\leads\lead_list.html:332
+#: .\leads\templates\leads\lead_list.html:356
 msgid "Unassigned"
 msgstr "بدون کارشناس"
 
@@ -608,13 +612,19 @@ msgstr "بازگشت به مشتریان بالقوه"
 msgid "New Number"
 msgstr "شماره بانک جدید"
 
-#: .\leads\templates\leads\bank_list.html:119
-#: .\leads\templates\leads\lead_list.html:402
+#: .\leads\templates\leads\bank_list.html:23
+#, fuzzy
+#| msgid "Download"
+msgid "Download Data"
+msgstr "دانلود"
+
+#: .\leads\templates\leads\bank_list.html:123
+#: .\leads\templates\leads\lead_list.html:426
 msgid "Page"
 msgstr "صفحه"
 
-#: .\leads\templates\leads\bank_list.html:119
-#: .\leads\templates\leads\lead_list.html:402
+#: .\leads\templates\leads\bank_list.html:123
+#: .\leads\templates\leads\lead_list.html:426
 #: .\leads\templates\leads\wizard.html:19
 msgid "of"
 msgstr "از"
@@ -763,31 +773,31 @@ msgid "Download Leads"
 msgstr "دانلود لیست مشتریان"
 
 #: .\leads\templates\leads\lead_export.html:54
-#: .\leads\templates\leads\lead_list.html:219
+#: .\leads\templates\leads\lead_list.html:234
 msgid "Pesented"
 msgstr "پرزنت شده"
 
 #: .\leads\templates\leads\lead_export.html:172
 #: .\leads\templates\leads\lead_export.html:175
 #: .\leads\templates\leads\lead_export.html:178
-#: .\leads\templates\leads\lead_list.html:340
-#: .\leads\templates\leads\lead_list.html:343
-#: .\leads\templates\leads\lead_list.html:346
+#: .\leads\templates\leads\lead_list.html:364
+#: .\leads\templates\leads\lead_list.html:367
+#: .\leads\templates\leads\lead_list.html:370
 msgid "Tomans"
 msgstr "تومان"
 
 #: .\leads\templates\leads\lead_export.html:200
-#: .\leads\templates\leads\lead_list.html:368
+#: .\leads\templates\leads\lead_list.html:392
 msgid "Add Followup"
 msgstr "افزودن گزارش"
 
 #: .\leads\templates\leads\lead_export.html:205
-#: .\leads\templates\leads\lead_list.html:373
+#: .\leads\templates\leads\lead_list.html:397
 msgid "Add Details"
 msgstr "افزودن جزئیات"
 
 #: .\leads\templates\leads\lead_export.html:215
-#: .\leads\templates\leads\lead_list.html:382
+#: .\leads\templates\leads\lead_list.html:406
 msgid "There are currently No Leads"
 msgstr "در حال جاضر هیچ مشتری‌ای وجود ندارد"
 
@@ -796,88 +806,88 @@ msgstr "در حال جاضر هیچ مشتری‌ای وجود ندارد"
 msgid "Import Leads"
 msgstr "بارگذاری مشتریان"
 
-#: .\leads\templates\leads\lead_list.html:75
+#: .\leads\templates\leads\lead_list.html:91
 msgid "Start Distribution"
 msgstr "شروع پخش"
 
-#: .\leads\templates\leads\lead_list.html:78
+#: .\leads\templates\leads\lead_list.html:94
 msgid "Run Background Tasks"
 msgstr "انجام فعالیت‌های پشت پرده"
 
-#: .\leads\templates\leads\lead_list.html:80
+#: .\leads\templates\leads\lead_list.html:96
 msgid "Stop Tasks"
 msgstr "توقف فعالیت‌های پشت پرده"
 
-#: .\leads\templates\leads\lead_list.html:108
+#: .\leads\templates\leads\lead_list.html:124
 msgid "View Categories"
 msgstr "نمایش دسته‌بندی‌ها"
 
-#: .\leads\templates\leads\lead_list.html:112
+#: .\leads\templates\leads\lead_list.html:128
 msgid "View Sources"
 msgstr "نمایش منابع"
 
-#: .\leads\templates\leads\lead_list.html:121
+#: .\leads\templates\leads\lead_list.html:137
 msgid "Create a New Lead"
 msgstr "افزودن مشتری جدید"
 
-#: .\leads\templates\leads\lead_list.html:130
+#: .\leads\templates\leads\lead_list.html:146
 #, fuzzy
 #| msgid "Import With Agents"
 msgid "Import With Agents"
 msgstr "بارگذاری به همراه کارشناس"
 
-#: .\leads\templates\leads\lead_list.html:141
+#: .\leads\templates\leads\lead_list.html:157
 msgid "Filter Options"
 msgstr "فیلتر"
 
-#: .\leads\templates\leads\lead_list.html:159
-#: .\leads\templates\leads\lead_list.html:203
+#: .\leads\templates\leads\lead_list.html:175
+#: .\leads\templates\leads\lead_list.html:218
 msgid "Apply Filter"
 msgstr "اعمال فیلترها"
 
-#: .\leads\templates\leads\lead_list.html:162
+#: .\leads\templates\leads\lead_list.html:178
 msgid "Clear Filters"
 msgstr "پاک کردن فیلترها"
 
-#: .\leads\templates\leads\lead_list.html:176
+#: .\leads\templates\leads\lead_list.html:192
 msgid "All"
 msgstr "همه"
 
-#: .\leads\templates\leads\lead_list.html:177
+#: .\leads\templates\leads\lead_list.html:193
 msgid "Today"
 msgstr "امروز"
 
-#: .\leads\templates\leads\lead_list.html:184
+#: .\leads\templates\leads\lead_list.html:200
 msgid "..."
 msgstr "..."
 
-#: .\leads\templates\leads\lead_list.html:387
+#: .\leads\templates\leads\lead_list.html:411
 msgid "There are currently "
 msgstr "در حال حاضر"
 
-#: .\leads\templates\leads\lead_list.html:387
+#: .\leads\templates\leads\lead_list.html:411
 msgid "New Leads"
 msgstr "مشتری جدید وجود دارد"
 
-#: .\leads\templates\leads\lead_list.html:397
+#: .\leads\templates\leads\lead_list.html:421
 #, fuzzy
 #| msgid "First Name"
 msgid "First Page"
 msgstr "نام"
 
-#: .\leads\templates\leads\lead_list.html:398
+#: .\leads\templates\leads\lead_list.html:422
 #, fuzzy
 #| msgid "Previous Step"
 msgid "Previous Page"
 msgstr "مرحله قبل"
 
-#: .\leads\templates\leads\lead_list.html:406
+#: .\leads\templates\leads\lead_list.html:430
 #, fuzzy
 #| msgid "Page"
 msgid "Next Page"
 msgstr "صفحه"
 
-#: .\leads\templates\leads\lead_list.html:407
+#: .\leads\templates\leads\lead_list.html:431
 #, fuzzy
 #| msgid "Last Name"
 msgid "Last Page"
@@ -1112,51 +1122,55 @@ msgstr "مرحله اول"
 msgid "Previous Step"
 msgstr "مرحله قبل"
 
-#: .\leads\views.py:160
+#: .\leads\views.py:164
 msgid "Empty"
 msgstr "خالی"
 
-#: .\leads\views.py:186
+#: .\leads\views.py:190
 msgid "New Bank Number Created"
 msgstr "شماره بانک جدید ایجاد شد"
 
-#: .\leads\views.py:189
+#: .\leads\views.py:193
 msgid "Bank Number already exists"
 msgstr "این شماره در بانک وجود دارد"
 
-#: .\leads\views.py:317
+#: .\leads\views.py:322
 msgid "You have successfully created a lead"
 msgstr "مشتری با موفقیت ایجاد شد"
 
-#: .\leads\views.py:323
+#: .\leads\views.py:328
 msgid "Lead already exists!"
 msgstr "این شماره در بانک شماره‌ها وجود دارد"
 
-#: .\leads\views.py:386
+#: .\leads\views.py:331
+msgid "Lead with this phone number already exists for your organisation."
+msgstr "این شماره در سایت وجود دارد"
+
+#: .\leads\views.py:394
 msgid "You have successfully updated this lead"
 msgstr "جزئیات مشتری با موفقیت به روز رسانی شد"
 
-#: .\leads\views.py:978
+#: .\leads\views.py:994
 #, fuzzy
 #| msgid "Bank Number already exists"
 msgid "Bank number updated successfully!"
 msgstr "این شماره در بانک وجود دارد"
 
-#: .\leads\views.py:982
+#: .\leads\views.py:998
 msgid "Error updating the bank number. Please check your details."
 msgstr "به روزرسانی این شماره با مشکل مواجه شد. لطفا دوباره تلاش کنید"
 
-#: .\leads\views.py:991
+#: .\leads\views.py:1007
 #, fuzzy
 #| msgid "Bank Number already exists"
 msgid "Bank number deleted successfully!"
 msgstr "این شماره در بانک وجود دارد"
 
-#: .\leads\views.py:2149
+#: .\leads\views.py:2126
 msgid "Your profile has been updated successfully!"
 msgstr "پروفایل شما با موفقیت به روزرسانی شد"
 
-#: .\leads\views.py:2156
+#: .\leads\views.py:2133
 msgid "Your password has been updated successfully!"
 msgstr " رمز عبور شما با موفقیت تغییر کرد"
 

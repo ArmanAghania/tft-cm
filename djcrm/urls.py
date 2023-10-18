@@ -12,6 +12,9 @@ from django.contrib.auth.views import (
 from django.urls import path, include
 from leads.views import landing_page, LandingPageView, SignupView, DashboardView
 import debug_toolbar
+from leads.views import custom_404_view
+
+handler404 = custom_404_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),

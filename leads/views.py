@@ -81,7 +81,8 @@ import telegram
 from concurrent.futures import ThreadPoolExecutor
 from django.contrib.auth import update_session_auth_hash
 from django.db import IntegrityError
-
+from django.http import HttpResponseNotFound
+from django.http import StreamingHttpResponse
 
 # logger = logging.getLogger(__name__)
 
@@ -659,29 +660,32 @@ class LeadExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.F
 
 class BankExportView(OrganisorAndLoginRequiredMixin, generic.ListView, generic.FormView):
     template_name = "leads/bank_export.html"
-    
+    paginate_by = 50
     context_object_name = "bank_numbers"
     model = BankNumbers
     form_class = FormatForm
 
     def post(self, request, **kwargs):
         user = self.request.user
-        leads = BankNumbers.objects.filter(organisation=user.userprofile)
         qs = self.get_queryset()
         dataset = BankResource().export(qs)
 
         format = request.POST.get("format")
 
         if format == "xls":
-            ds = dataset.xls
-
+            response_content = dataset.export(format='xls')
+            content_type = "application/vnd.ms-excel"
         elif format == "csv":
-            ds = dataset.csv
-
+            response_content = dataset.export(format='csv')
+            content_type = "text/csv"
+        elif format == "json":
+            response_content = dataset.export(format='json')
+            content_type = "application/json"
         else:
-            ds = dataset.json
+            # You can raise an error here or set a default
+            return HttpResponse("Invalid format", status=400)
 
-        response = HttpResponse(ds, content_type=f"{format}")
+        response = HttpResponse(response_content, content_type=content_type)
         response["Content-Disposition"] = f"attachment; filename=leads.{format}"
         return response
     
@@ -2139,5 +2143,32 @@ class UserProfileUpdateView(View):
             'user_form': user_form,
             'password_change_form': password_change_form,
         })
+
+def custom_404_view(request, exception):
+    # add any additional context or logic here
+    return HttpResponseNotFound(render(request, '404.html'))
+
+class Echo:
+    def write(self, value):
+        """Utility class to write to the response"""
+        return value
+    
+
+
+def stream_data(request):
+    user = request.user
+    data = BankNumbers.objects.filter(organisation=user.userprofile)
+    print(data[:5])
+    
+    def generate():
+        pseudo_buffer = Echo()
+        writer = csv.writer(pseudo_buffer)
+        yield writer.writerow(['number', 'agent'])  # This will yield the headers as a string
+        for row in data:
+            yield writer.writerow([row.number, row.agent]) 
+
+    response = StreamingHttpResponse(generate(), content_type="text/csv")
+    response['Content-Disposition'] = 'attachment; filename="somefilename.csv"'
+    return response
 
 ###TODO ---> Duplicate Followup List - Report View 

@@ -19,7 +19,8 @@ from .views import (
     TeamCreateView, TeamDetailView, TeamUpdateView, TeamDeleteView, TeamListView,
     download_excel_page,
     run_background_tasks, stop_background_tasks,
-    UserProfileUpdateView
+    UserProfileUpdateView,
+    stream_data
 )
 
 app_name = "leads"
@@ -96,5 +97,6 @@ urlpatterns = [
     path('run_background_tasks/', run_background_tasks, name='run_background_tasks'),
     path('stop_background_tasks/', stop_background_tasks, name='stop_background_tasks'),
     path('profile/update/', UserProfileUpdateView.as_view(), name='profile_update'),
+    path('stream-data/', stream_data, name='stream-data'),
 ]
 
