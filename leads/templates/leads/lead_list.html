@@ -287,16 +287,7 @@
                     </thead>
                     <tbody>
                         {% for lead in page_obj %}
-                            {% if lead.total_sale > 0 %}
-                                <tr class="bg-emerald-200 border-b">
-
-                            {% elif lead.low_quality %}
-                                <tr class="bg-red-100 border-b">
-
-                            {% else %}    
-                                <tr class="bg-white border-b">
-
-                            {% endif %}
+                        <tr class="bg-white border-b">
                                 <form method="post" action="{% url 'leads:lead-update' lead.id%}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center" >
                                     {% if lead.is_presented %}
@@ -306,9 +297,19 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
-                                    <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-indigo-700 hover:text-indigo-900">
-                                    {{ lead.phone_number }}
-                                    </a>
+                                    {% if lead.total_sale > 0 %}
+                                        <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-green-800 hover:text-indigo-900 rounded-full bg-green-200">
+                                            {{ lead.phone_number }}
+                                        </a>
+                                    {% elif lead.low_quality %}
+                                        <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-red-700 hover:text-indigo-900 rounded-full bg-red-200">
+                                            {{ lead.phone_number }}
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-indigo-700 hover:text-indigo-900">
+                                            {{ lead.phone_number }}
+                                        </a>
+                                    {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
                                     {{ lead.first_name }}
