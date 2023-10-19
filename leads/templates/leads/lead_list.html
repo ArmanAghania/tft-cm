@@ -49,6 +49,12 @@
         .bg-emerald-200 {
             background-color: rgb(167 243 208);
         }
+
+        .pagination-container {
+            display: flex;      /* Enable flexbox */
+            justify-content: center; /* Center children horizontally */
+            width: 100%; /* Make sure the container spans the entire width */
+        }
     </style>
 <hr>
 </br>
@@ -410,28 +416,50 @@
                     <p>{% trans "There are currently " %} {{new_leads.new_leads_total}} {% trans "New Leads" %}</p>
                     {% endif %}
                 </table>
-                <div class="pagination flex justify-center">
-                    <span class="step-links">
-                        {% with request.GET.copy as get_params %}
-                            {% if get_params.page %}
-                                {{ get_params.pop.page }}
-                            {% endif %}
-                            {% if page_obj.has_previous %}
-                                <a href="?{{ get_params.urlencode }}&page=1" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">&laquo; {% trans "First Page" %}</a>
-                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.previous_page_number }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans "Previous Page" %}</a>
-                            {% endif %}
+                    
+                    <div class="pagination sticky bottom-0 z-10 max-width: 100% flex justify-center items-center p-5 space-x-4 bg-white shadow-md rounded-lg mt-4"> <!-- Added mt-4 for a little margin at the top -->
+                        <form method="get" action="" class="inline-flex mx-2">
+                            <!-- Keep other get params -->
+                            {% for key, value in request.GET.items %}
+                                {% if key != "page" %}
+                                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <input type="number" name="page" placeholder="Page no." min="1" max="{{ page_obj.paginator.num_pages }}" class="px-2 py-1 border rounded">
+                            <button type="submit" class="ml-2 px-2 py-1 bg-blue-500 text-white rounded">Go</button>
+                        </form>
+                        <span class="step-links">
+                            {% with request.GET.copy as get_params %}
+                                {% if get_params.page %}
+                                    {{ get_params.pop.page }}
+                                {% endif %}
                 
-                            <span class="current">
-                                {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
-                            </span>
+                                {% if page_obj.has_previous %}
+                                    <a href="?{{ get_params.urlencode }}&page=1" class="px-4 py-2 border-b hover:underline focus:outline-none">
+                                        {% trans "First" %}
+                                    </a>
+                                    <a href="?{{ get_params.urlencode }}&page={{ page_obj.previous_page_number }}" class="px-4 py-2 border-b hover:underline focus:outline-none">
+                                        {% trans "Previous" %}
+                                    </a>
+                                {% endif %}
                 
-                            {% if page_obj.has_next %}
-                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.next_page_number }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans "Next Page" %}</a>
-                                <a href="?{{ get_params.urlencode }}&page={{ page_obj.paginator.num_pages }}" class="mb-3 ml-3 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans "Last Page" %} &raquo;</a>
-                            {% endif %}
-                        {% endwith %}
-                    </span>
-                </div>
+                                <span class="px-4 py-2 font-semibold border-b-2 border-black">
+                                    {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
+                                </span>
+
+                
+                                {% if page_obj.has_next %}
+                                    <a href="?{{ get_params.urlencode }}&page={{ page_obj.next_page_number }}" class="px-4 py-2 border-b hover:underline focus:outline-none">
+                                        {% trans "Next" %}
+                                    </a>
+                                    <a href="?{{ get_params.urlencode }}&page={{ page_obj.paginator.num_pages }}" class="px-4 py-2 border-b hover:underline focus:outline-none">
+                                        {% trans "Last" %}
+                                    </a>
+                                {% endif %}
+                            {% endwith %}
+                        </span>
+                    </div>                
                 <script>
                      function sortTable(colIndex) {
                         var table, rows, switching, i, x, y, shouldSwitch;
@@ -542,9 +570,6 @@
             </div>
             </div>
         </div>
-
-        
-        
     </div>
 </section>
 {% endblock content %}

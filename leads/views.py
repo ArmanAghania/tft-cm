@@ -206,7 +206,7 @@ def bank_create(request):
 class LeadListView(LoginRequiredMixin, generic.ListView):
     template_name = "leads/lead_list.html"
     context_object_name = "leads"
-    paginate_by = 15
+    paginate_by = 10
     
     def get_queryset(self):
         user = self.request.user
