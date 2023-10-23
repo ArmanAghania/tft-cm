@@ -1031,7 +1031,7 @@ def create_agent_message(agent_name, rank, phone_data):
         medal = "🥉"
     elif rank == 4:
         medal = "🏅"
-        rank = "آموزش"
+        rank = "4"
     else:
         return None  # Handle ranks outside of 1-4 if necessary
 

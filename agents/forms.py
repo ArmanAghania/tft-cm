@@ -65,7 +65,7 @@ class AgentImportForm(forms.Form):
     (1, '1'),
     (2, '2'),
     (3, '3'),
-    (4, 'آموزش')
+    (4, '4')
 )
     csv_file = forms.FileField()
     rank = forms.ChoiceField(choices=RANK_CHOICES)
