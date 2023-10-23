@@ -72,6 +72,8 @@
                         <img class="w-full h-full rounded-full border-4 border-indigo-400 object-cover" alt="hero" src="{% static 'images\number-2-svgrepo-com.svg' %}">
                     {% elif request.user.rank == 3 %}
                         <img class="w-full h-full rounded-full border-4 border-indigo-300 object-cover" alt="hero" src="{% static 'images\number-3-svgrepo-com.svg' %}">
+                    {% elif request.user.rank == 4 %}
+                        <img class="w-full h-full rounded-full border-4 border-indigo-300 object-cover" alt="hero" src="{% static 'images\number-4-svgrepo-com.svg' %}">
                     {% else %}
                         <img class="w-full h-full rounded-full border-4 border-gray-300 object-cover" alt="hero" src="{% static 'images\education-learning-22-svgrepo-com.svg' %}">
                     {% endif %}
@@ -87,7 +89,6 @@
                 <div class="mt-4 flex items-center justify-center py-2 px-4 bg-indigo-100 rounded-full">
                     <span class="text-indigo-600 font-semibold">Rank: {{ request.user.rank }}</span>
                 </div>
-        
             </div>
         </section>
         {% endif %}

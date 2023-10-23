@@ -15,7 +15,7 @@ RANK_CHOICES = (
     (1, _('1')),
     (2, _('2')),
     (3, _('3')),
-    (4, _('Education'))
+    (4, _('4'))
 )
 
 class User(AbstractUser):
