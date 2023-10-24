@@ -1031,7 +1031,9 @@ def create_agent_message(agent_name, rank, phone_data):
         medal = "🥉"
     elif rank == 4:
         medal = "🏅"
-        rank = "4"
+    elif rank == 5:
+        medal = "🏵"
+        rank = "آموزش"
     else:
         return None  # Handle ranks outside of 1-4 if necessary
 
@@ -1197,20 +1199,26 @@ class LeadDistributionWizard(SessionWizardView):
         df_rank2 = context.get('df_rank2')
         df_rank3 = context.get('df_rank3')
         df_rank4 = context.get('df_rank4')
+        df_rank5 = context.get('df_rank5')
+
         
         df_rank1_json = df_rank1.to_json()
         df_rank2_json = df_rank2.to_json()
         df_rank3_json = df_rank3.to_json()
         df_rank4_json = df_rank4.to_json()
+        df_rank5_json = df_rank5.to_json()
+
         
         self.assign_leads_to_agent(df_rank1)
         self.assign_leads_to_agent(df_rank2)
         self.assign_leads_to_agent(df_rank3)
         self.assign_leads_to_agent(df_rank4)
+        self.assign_leads_to_agent(df_rank5)
+
         
         organisor_id = self.request.user.userprofile.id
         organisor = self.request.user 
-        for df in [df_rank1, df_rank2, df_rank3, df_rank4]:
+        for df in [df_rank1, df_rank2, df_rank3, df_rank4, df_rank5]:
             for agent_name, phone_data in json.loads(df.to_json()).items():
                 # Check if phone_data is empty or None:
                 if not phone_data:
@@ -1230,7 +1238,7 @@ class LeadDistributionWizard(SessionWizardView):
                 # Schedule the message sending:
                 notify_background_messages(chat_id, message, organisor_id)
 
-        new_df_rank1, new_df_rank2, new_df_rank3, new_df_rank4 = self.generate_excel_dataframes(df_rank1, df_rank2, df_rank3, df_rank4)
+        new_df_rank1, new_df_rank2, new_df_rank3, new_df_rank4, new_df_rank5 = self.generate_excel_dataframes(df_rank1, df_rank2, df_rank3, df_rank4, df_rank5)
 
          # Generate a unique file name
         file_name = f"output_{uuid.uuid4().hex}.xlsx"
@@ -1246,6 +1254,8 @@ class LeadDistributionWizard(SessionWizardView):
             new_df_rank2.to_excel(writer, sheet_name="rank 2", index=False)
             new_df_rank3.to_excel(writer, sheet_name="rank 3", index=False)
             new_df_rank4.to_excel(writer, sheet_name="rank 4", index=False)
+            new_df_rank5.to_excel(writer, sheet_name="rank 5", index=False)
+
 
         # Store the file path in the session so it can be accessed in the next view
 
@@ -1253,13 +1263,15 @@ class LeadDistributionWizard(SessionWizardView):
 
         return redirect('leads:download_excel_page')
     
-    def generate_excel_dataframes(self, df_rank1, df_rank2, df_rank3, df_rank4):
+    def generate_excel_dataframes(self, df_rank1, df_rank2, df_rank3, df_rank4, df_rank5):
         df_rank1 = self.create_dataframe_with_phone_numbers(df_rank1)
         df_rank2 = self.create_dataframe_with_phone_numbers(df_rank2)
         df_rank3 = self.create_dataframe_with_phone_numbers(df_rank3)
         df_rank4 = self.create_dataframe_with_phone_numbers(df_rank4)
+        df_rank5 = self.create_dataframe_with_phone_numbers(df_rank5)
 
-        return df_rank1, df_rank2, df_rank3, df_rank4
+
+        return df_rank1, df_rank2, df_rank3, df_rank4, df_rank5
     
     def create_dataframe_with_phone_numbers(self, dataframe):
         new_dataframe = dataframe.copy()  # Create a copy to avoid modifying the original DataFrame
@@ -1285,6 +1297,8 @@ class LeadDistributionWizard(SessionWizardView):
         each_rank2 = rank2_numbers // active_agents_count['rank_2'] if active_agents_count['rank_2'] != 0 else 0
         each_rank3 = rank3_numbers // active_agents_count['rank_3'] if active_agents_count['rank_3'] != 0 else 0
         each_rank4 = rank4_numbers // active_agents_count['rank_4'] if active_agents_count['rank_4'] != 0 else 0
+        each_rank5 = rank4_numbers // active_agents_count['rank_5'] if active_agents_count['rank_5'] != 0 else 0
+
 
         # Step 3: Adjust each_rank values if necessary
         total_numbers_assigned = (
@@ -1292,17 +1306,23 @@ class LeadDistributionWizard(SessionWizardView):
             + each_rank2 * active_agents_count['rank_2']
             + each_rank3 * active_agents_count['rank_3']
             + each_rank4 * active_agents_count['rank_4']
+            + each_rank4 * active_agents_count['rank_5']
+
         )
         while total_numbers_assigned > N:
             each_rank1 -= 1
             each_rank2 = each_rank1 - 1
             each_rank3 = each_rank2 - 1
-            each_rank4 = each_rank3
+            each_rank4 = each_rank3 - 1
+            each_rank5 = each_rank4
+
             total_numbers_assigned = (
                 each_rank1 * active_agents_count['rank_1']
                 + each_rank2 * active_agents_count['rank_2']
                 + each_rank3 * active_agents_count['rank_3']
                 + each_rank4 * active_agents_count['rank_4']
+                + each_rank5 * active_agents_count['rank_5']
+
             )
 
         # Step 4: Distribute remaining numbers equally among all agents
@@ -1312,22 +1332,30 @@ class LeadDistributionWizard(SessionWizardView):
             + active_agents_count['rank_2']
             + active_agents_count['rank_3']
             + active_agents_count['rank_4']
+            + active_agents_count['rank_5']
+
         )
         each_rank1 += extra_numbers_per_agent
         each_rank2 += extra_numbers_per_agent
         each_rank3 += extra_numbers_per_agent
         each_rank4 += extra_numbers_per_agent
+        each_rank5 += extra_numbers_per_agent
+
 
         return {
             "rank1": each_rank1 if each_rank1 else 0,
             "rank2": each_rank2 if each_rank2 else 0,
             "rank3": each_rank3 if each_rank3 else 0,
             "rank4": each_rank4 if each_rank4 else 0,
+            "rank5": each_rank5 if each_rank5 else 0,
+
             "remaining": N - total_numbers_assigned - extra_numbers_per_agent * (
                 active_agents_count['rank_1']
                 + active_agents_count['rank_2']
                 + active_agents_count['rank_3']
                 + active_agents_count['rank_4']
+                + active_agents_count['rank_5']
+
             ),
         }
 
@@ -1339,6 +1367,7 @@ class LeadDistributionWizard(SessionWizardView):
         active_agents_rank2 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=organisor.userprofile, user__rank=2, is_available_for_leads=True).values('user__alt_name')]
         active_agents_rank3 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=organisor.userprofile, user__rank=3, is_available_for_leads=True).values('user__alt_name')]
         active_agents_rank4 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=organisor.userprofile, user__rank=4, is_available_for_leads=True).values('user__alt_name')]
+        active_agents_rank5 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=organisor.userprofile, user__rank=5, is_available_for_leads=True).values('user__alt_name')]
 
         random.shuffle(unassigned_leads)
         random.shuffle(unassigned_912_leads)
@@ -1350,6 +1379,8 @@ class LeadDistributionWizard(SessionWizardView):
         df_rank2 = pd.DataFrame(columns=active_agents_rank2)
         df_rank3 = pd.DataFrame(columns=active_agents_rank3)
         df_rank4 = pd.DataFrame(columns=active_agents_rank4)
+        df_rank5 = pd.DataFrame(columns=active_agents_rank5)
+
 
         for i in range(recommended_leads_per_agent["rank1"]):
             df_rank1.loc[len(df_rank1)] = dist_list[:len(df_rank1.columns)]
@@ -1366,8 +1397,12 @@ class LeadDistributionWizard(SessionWizardView):
         for i in range(recommended_leads_per_agent["rank4"]):
             df_rank4.loc[len(df_rank4)] = dist_list[:len(df_rank4.columns)]
             dist_list = dist_list[len(df_rank4.columns):]
+
+        for i in range(recommended_leads_per_agent["rank5"]):
+            df_rank5.loc[len(df_rank5)] = dist_list[:len(df_rank5.columns)]
+            dist_list = dist_list[len(df_rank5.columns):]
         
-        return df_rank1, df_rank2, df_rank3, df_rank4
+        return df_rank1, df_rank2, df_rank3, df_rank4, df_rank5
 
     def get_active_agents_count(self):
         organisor = self.request.user
@@ -1376,6 +1411,8 @@ class LeadDistributionWizard(SessionWizardView):
             'rank_2': Agent.objects.filter(organisation=organisor.userprofile, user__rank=2, is_available_for_leads=True).count(),
             'rank_3': Agent.objects.filter(organisation=organisor.userprofile, user__rank=3, is_available_for_leads=True).count(),
             'rank_4': Agent.objects.filter(organisation=organisor.userprofile, user__rank=4, is_available_for_leads=True).count(),
+            'rank_5': Agent.objects.filter(organisation=organisor.userprofile, user__rank=5, is_available_for_leads=True).count(),
+
         }
         return active_agents_count
 
@@ -1391,16 +1428,20 @@ class LeadDistributionWizard(SessionWizardView):
         extra = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=alternate_category).annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
         recommended_leads_per_agent = distribution_data
 
-        df_rank1, df_rank2, df_rank3, df_rank4 = self.distribute_leads(unassigned_leads, unassigned_912_leads, recommended_leads_per_agent, extra)
+        df_rank1, df_rank2, df_rank3, df_rank4, df_rank5 = self.distribute_leads(unassigned_leads, unassigned_912_leads, recommended_leads_per_agent, extra)
         context.update({
             'df_rank1': df_rank1,
             'df_rank2': df_rank2,
             'df_rank3': df_rank3,
             'df_rank4': df_rank4,
+            'df_rank5': df_rank5,
+
             'df_rank1_json': df_rank1.to_json(orient='records'),
             'df_rank2_json': df_rank2.to_json(orient='records'),
             'df_rank3_json': df_rank3.to_json(orient='records'),
             'df_rank4_json': df_rank4.to_json(orient='records'),
+            'df_rank5_json': df_rank5.to_json(orient='records'),
+
             'display_distribution': True,
         })
 

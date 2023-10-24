@@ -200,6 +200,8 @@ class DistributionForm(forms.Form):
     rank2 = forms.IntegerField()
     rank3 = forms.IntegerField()
     rank4 = forms.IntegerField()
+    rank5 = forms.IntegerField()
+
     def clean_rank1(self):
         data = self.cleaned_data['rank1']
         if data < 0:
@@ -222,6 +224,12 @@ class DistributionForm(forms.Form):
         data = self.cleaned_data['rank4']
         if data < 0:
             raise forms.ValidationError("Rank4 leads cannot be negative.")
+        return data
+    
+    def clean_rank5(self):
+        data = self.cleaned_data['rank5']
+        if data < 0:
+            raise forms.ValidationError("Rank5 leads cannot be negative.")
         return data
 
 class CategorySelectionForm(forms.Form):

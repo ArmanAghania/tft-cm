@@ -36,6 +36,7 @@
             <li class="pl-4">{% trans "Rank 2:" %}<span class="font-medium text-blue-600">   {{ active_agents.rank_2 }}</span></li>  
             <li class="pl-4">{% trans "Rank 3:" %}<span class="font-medium text-blue-600">   {{ active_agents.rank_3 }}</span></li>  
             <li class="pl-4">{% trans "Rank 4:" %}<span class="font-medium text-blue-600">   {{ active_agents.rank_4 }}</span></li>
+            <li class="pl-4">{% trans "Rank 5:" %}<span class="font-medium text-blue-600">   {{ active_agents.rank_5 }}</span></li>
         </ul> 
     </br>
         <h3 class="mb-3 text-md font-semibold">{% trans "Recommended Leads Per Agent:" %}</h3>
@@ -44,6 +45,7 @@
             <li class="pl-4">{% trans "Rank 2:" %}<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank2 }}</span></li> 
             <li class="pl-4">{% trans "Rank 3:" %}<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank3 }}</span></li>
             <li class="pl-4">{% trans "Rank 4:" %}<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank4 }}</span></li>
+            <li class="pl-4">{% trans "Rank 5:" %}<span class="font-medium text-blue-600">    {{ recommended_leads_per_agent.rank5 }}</span></li>
         </ul>
     </br>
         <h3 class="mb-3 text-md font-semibold">{% trans "Remaining Numbers: " %} <span id="remaining-numbers" class="text-green-500 font-bold">{{ recommended_leads_per_agent.remaining }}</span></h3>
@@ -59,6 +61,8 @@
             const rank2Input = document.getElementById("id_distribution_info-rank2");
             const rank3Input = document.getElementById("id_distribution_info-rank3");
             const rank4Input = document.getElementById("id_distribution_info-rank4");
+            const rank5Input = document.getElementById("id_distribution_info-rank5");
+
             const remainingDisplay = document.getElementById("remaining-numbers");
             const nextButton = document.getElementById("next-button");
         
@@ -69,13 +73,17 @@
                 const rank2 = parseInt(rank2Input.value);
                 const rank3 = parseInt(rank3Input.value);
                 const rank4 = parseInt(rank4Input.value);
+                const rank5 = parseInt(rank5Input.value);
+
                 const rank1_pop = {{ active_agents.rank_1 }}
                 const rank2_pop = {{ active_agents.rank_2 }}
                 const rank3_pop = {{ active_agents.rank_3 }}
                 const rank4_pop = {{ active_agents.rank_4 }}
+                const rank5_pop = {{ active_agents.rank_5 }}
+
     
         
-                const remaining = total - (rank1*rank1_pop + rank2*rank2_pop + rank3*rank3_pop + rank4*rank4_pop) + extra;
+                const remaining = total - (rank1*rank1_pop + rank2*rank2_pop + rank3*rank3_pop + rank4*rank4_pop + rank5*rank5_pop) + extra;
                 remainingDisplay.textContent = remaining.toString();
         
                 // Change colors based on conditions
@@ -102,6 +110,8 @@
             rank2Input.addEventListener("input", updateRemaining);
             rank3Input.addEventListener("input", updateRemaining);
             rank4Input.addEventListener("input", updateRemaining);
+            rank5Input.addEventListener("input", updateRemaining);
+
         
             // Initial calculation
             updateRemaining();
@@ -129,6 +139,9 @@
                 <div class="mb-3">
                     <input id="rank4-input" type="number" value="{{ recommended_leads_per_agent.rank4 }}" />
                 </div>
+                <div class="mb-3">
+                    <input id="rank5-input" type="number" value="{{ recommended_leads_per_agent.rank5 }}" />
+                </div>
             </div>
             {% endfor %}
         {% else %}
@@ -154,6 +167,10 @@
         <div class=" relative overflow-x-auto shadow-md sm:rounded-lg">
             <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">{% trans "Rank 4:" %}</h3>
             <table id="df_rank4_table" class="display w-full text-sm text-left text-gray-500 dark:text-gray-400"></table>
+        </div>
+        <div class=" relative overflow-x-auto shadow-md sm:rounded-lg">
+            <h3 class="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">{% trans "Rank 5:" %}</h3>
+            <table id="df_rank5_table" class="display w-full text-sm text-left text-gray-500 dark:text-gray-400"></table>
         </div>
         
         {% endif %}
@@ -235,10 +252,14 @@
     const df_rank2_data = JSON.parse('{{ df_rank2_json|escapejs }}'.replace(/&quot;/g,'"'));
     const df_rank3_data = JSON.parse('{{ df_rank3_json|escapejs }}'.replace(/&quot;/g,'"'));
     const df_rank4_data = JSON.parse('{{ df_rank4_json|escapejs }}'.replace(/&quot;/g,'"'));
+    const df_rank5_data = JSON.parse('{{ df_rank5_json|escapejs }}'.replace(/&quot;/g,'"'));
+
 
     renderTable(df_rank1_data, 'df_rank1_table');
     renderTable(df_rank2_data, 'df_rank2_table');
     renderTable(df_rank3_data, 'df_rank3_table');
     renderTable(df_rank4_data, 'df_rank4_table');
+    renderTable(df_rank5_data, 'df_rank5_table');
+
     </script>
 {% endblock %}
