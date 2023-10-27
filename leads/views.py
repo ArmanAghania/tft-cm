@@ -2040,6 +2040,11 @@ class TeamCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
         kwargs = super(TeamCreateView, self).get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
+    
+    def form_valid(self, form):
+        # Set the organisation to the user's UserProfile before saving
+        form.instance.organisation = self.request.user.userprofile
+        return super(TeamCreateView, self).form_valid(form)
 
 class TeamUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
     model = Team
@@ -2053,6 +2058,11 @@ class TeamUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
         kwargs = super(TeamUpdateView, self).get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
+    
+    def form_valid(self, form):
+        # Set the organisation to the user's UserProfile before saving
+        form.instance.organisation = self.request.user.userprofile
+        return super(TeamUpdateView, self).form_valid(form)
 
 class TeamDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
     model = Team
