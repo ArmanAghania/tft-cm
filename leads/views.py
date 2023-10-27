@@ -2190,12 +2190,14 @@ class TeamMemberLeadView(OrganisorAndLoginRequiredMixin, generic.ListView):
         else:
             organisation = user.agent.organisation
         context = super().get_context_data(**kwargs)
-        context['agent'] = Agent.objects.get(organisation=organisation, pk=self.kwargs['agent_id']).user
+        context['agent'] = Agent.objects.get(organisation=organisation, pk=self.kwargs['agent_id'])
+        agent = Agent.objects.get(organisation=organisation, pk=self.kwargs['agent_id'])
+        context['agent_name'] = f"{agent.user.first_name} {agent.user.last_name}"
         context['team_id'] = self.kwargs['team_id'] 
         team = Team.objects.get(pk=self.kwargs['team_id'])
         context['team_name'] = team.name
         return context
-        
+
 def run_background_tasks(request):
     if request.user.is_authenticated:
         try:
