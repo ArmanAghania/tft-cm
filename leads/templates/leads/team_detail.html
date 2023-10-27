@@ -21,23 +21,42 @@
         <table class="table-auto w-full text-center whitespace-no-wrap">
           <thead>
             <tr>
-                <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200 rounded-tl rounded-bl">
-                  {% trans "Name" %}
-                </th>
-                <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200 rounded-tl rounded-bl">
-                  {% trans "Monthly Sales" %}
+              <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200 rounded-tl rounded-bl">
+                {% trans "Name" %}
               </th>
-                
+              <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200 rounded-tl rounded-bl">
+                {% trans "Monthly Sales" %}
+              </th>
+              <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200 rounded-tl rounded-bl">
+                {% trans "Daily Sales" %}
+              </th>
+              <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200 rounded-tl rounded-bl">
+                {% trans "Total Leads This Month" %}
+              </th>
+              <th class="px-4 py-3 title-font tracking-wider font-medium text-gray-900 text-sm bg-gray-200 rounded-tl rounded-bl">
+                {% trans "Converted Leads This Month" %}
+              </th> 
             </tr>
           </thead>
           <tbody>
-            {% for member, monthly_sale in member_sales %}
+            {% for member, monthly_sale, daily_sales, total_leads, converted_leads in member_sales %}
                 <tr>
-                    <td class="px-4 py-3">
+                  <td class="px-4 py-3">
+                    <a href="{% url 'leads:team-member-leads' team_id=team_id agent_id=member.id %}">
                       {{ member.user.alt_name }}
-                    </td>
-                    <td class="px-4 py-3">
-                      {{ monthly_sale|intcomma }}
+                    </a>
+                  </td>
+                  <td class="px-4 py-3">
+                    {{ monthly_sale|intcomma }}
+                  </td>
+                  <td class="px-4 py-3">
+                    {{ daily_sales|intcomma }}
+                  </td>
+                  <td class="px-4 py-3">
+                    {{ total_leads }}
+                  </td>
+                  <td class="px-4 py-3">
+                    {{ converted_leads }}
                   </td>
                 </tr>
             {% endfor %}

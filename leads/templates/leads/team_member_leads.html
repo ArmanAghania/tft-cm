@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block content %}
+<hr>
+<br>
+<div class="container">
+    <a href="{% url 'leads:team-detail' pk=team_id %}" class="btn btn-primary">Back to {{ team_name }}</a>
+    <br>
+    
+    <h1 class="pt-2 text-3xl text-gray-800 ">{% trans 'Leads for Agent:'%} {{ agent }}</h1>
+    <br>
+    <!-- Display leads in a table format -->
+    <div class="flex flex-col w-full">
+        <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+            <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200 text-center" id="lead-table">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Pesented" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Phone Number" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "First Name" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Last Name" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "City" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Age" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Category" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Feedback" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Proposed Price" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Registered Price" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Sales" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Date Assigned" %}
+                        </th>
+                    </tr>
+                </thead>
+            <tbody>
+                {% for lead in object_list %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center" >
+                            {% if lead.is_presented %}
+                                ✔️
+                            {% else %}
+                                ❌
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {% if lead.total_sale > 0 %}
+                                <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-green-800 hover:text-indigo-900 rounded-full bg-green-200">
+                                    {{ lead.phone_number }}
+                                </a>
+                            {% elif lead.low_quality %}
+                                <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-red-700 hover:text-indigo-900 rounded-full bg-red-200">
+                                    {{ lead.phone_number }}
+                                </a>
+                            {% else %}
+                                <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-indigo-700 hover:text-indigo-900">
+                                    {{ lead.phone_number }}
+                                </a>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {{ lead.first_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {{ lead.last_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {{ lead.city }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {{ lead.age }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {{ lead.category }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ lead.followups.last.notes|truncatechars:30 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ lead.proposed_price|intcomma }} {% trans "Tomans" %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ lead.registered_price|intcomma }} {% trans "Tomans" %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ lead.total_sale|intcomma }} {% trans "Tomans" %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ lead.date_assigned|to_jalali }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+    </table>
+
+    {% if not object_list %}
+        <p>No leads assigned to this agent.</p>
+    {% endif %}
+</div>
+{% endblock %}

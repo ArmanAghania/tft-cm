@@ -2086,11 +2086,33 @@ class TeamDetailView(OrganisorAndLoginRequiredMixin, generic.DetailView):
         start_of_month = today.replace(day=1)
 
         # Calculate monthly sales for each member
+
+        # Convert today's date to Jalali
+        jalali_today = jdatetime.date.today()
+        
+        # Get the start of the Jalali month
+        jalali_start_of_month = jdatetime.date(jalali_today.year, jalali_today.month, 1)
+        
+        # Convert the start of the Jalali month back to Gregorian
+        gregorian_start_of_month = jalali_start_of_month.togregorian()
+
+        user  = self.request.user
+        if user.is_organisor:
+            organisation = user.userprofile
+        else:
+            organisation = user.agent.organisation
+
         member_sales = []
         for member in team.members.all():
-            total_monthly_sale = Sale.objects.filter(agent=member, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
-            member_sales.append((member, total_monthly_sale))
+            total_monthly_sale = Sale.objects.filter(organisation=organisation, agent=member, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
+            daily_sales = Sale.objects.filter(organisation=organisation, agent=member, date__date=jalali_today.togregorian()).aggregate(Sum('amount'))['amount__sum'] or 0
+            total_leads = Lead.objects.filter(organisation=organisation,agent=member, date_assigned__date__range=(gregorian_start_of_month, jalali_today.togregorian())).count()
+            converted_leads = Sale.objects.filter(organisation=organisation,agent=member, date__date__range=(gregorian_start_of_month, jalali_today.togregorian())).values('lead').distinct().count()
+            
+            member_sales.append((member, total_monthly_sale, daily_sales, total_leads, converted_leads))
 
+
+        context['team_id'] = team.id
         context['member_sales'] = member_sales
         return context
 
@@ -2131,7 +2153,49 @@ class TeamListView(LoginRequiredMixin, generic.ListView):
 
         context['team_sales'] = team_sales
         return context
+    
+class TeamMemberLeadView(OrganisorAndLoginRequiredMixin, generic.ListView):
+    model = Lead
+    template_name = 'leads/team_member_leads.html'
 
+    def get_queryset(self):
+        # Calculate the start and end dates for the Jalali month
+        today = JalaliDate.today()  # Use JalaliDate from persiantools
+        
+        # Calculate the start of the week (Saturday) and month (first day of the month)
+        
+        start_of_month = today.replace(day=1)
+
+        # Convert today's date to Jalali
+        jalali_today = jdatetime.date.today()
+        
+        # Get the start of the Jalali month
+        jalali_start_of_month = jdatetime.date(jalali_today.year, jalali_today.month, 1)
+        
+        # Convert the start of the Jalali month back to Gregorian
+        gregorian_start_of_month = jalali_start_of_month.togregorian()
+
+        user = self.request.user
+        if user.is_organisor:
+            organisation = user.userprofile
+        else:
+            organisation = user.agent.organisation
+        agent_id = self.kwargs['agent_id']
+        return Lead.objects.filter(organisation=organisation, agent_id=agent_id, date_assigned__date__range=(gregorian_start_of_month, jalali_today.togregorian())).order_by('-date_assigned')
+
+    def get_context_data(self, **kwargs):
+        user = self.request.user
+        if user.is_organisor:
+            organisation = user.userprofile
+        else:
+            organisation = user.agent.organisation
+        context = super().get_context_data(**kwargs)
+        context['agent'] = Agent.objects.get(organisation=organisation, pk=self.kwargs['agent_id']).user
+        context['team_id'] = self.kwargs['team_id'] 
+        team = Team.objects.get(pk=self.kwargs['team_id'])
+        context['team_name'] = team.name
+        return context
+        
 def run_background_tasks(request):
     if request.user.is_authenticated:
         try:
@@ -2222,4 +2286,4 @@ def stream_data(request):
     response['Content-Disposition'] = 'attachment; filename="somefilename.csv"'
     return response
 
-###TODO ---> Duplicate Followup List - Report View 
+###TODO ---> Duplicate Followup List - Report View - Team Lead List View - Notify All Agents - 
