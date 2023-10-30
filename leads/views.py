@@ -364,7 +364,10 @@ class LeadUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
         return kwargs
     
     def get_success_url(self):
-        return reverse("leads:lead-list")
+        # Get the ID of the lead that has been updated
+        lead_id = self.object.id
+        # Return the URL for LeadDetailView with the lead's ID
+        return reverse("leads:lead-detail", kwargs={"pk": lead_id})
 
     def form_valid(self, form):
         user = self.request.user
@@ -2288,4 +2291,4 @@ def stream_data(request):
     response['Content-Disposition'] = 'attachment; filename="somefilename.csv"'
     return response
 
-###TODO ---> Duplicate Followup List - Report View - Team Lead List View - Notify All Agents - 
+###TODO ---> Duplicate Followup List - Report View - Notify All Agents - 
