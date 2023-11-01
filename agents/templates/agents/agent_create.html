@@ -26,7 +26,18 @@
                 </label>
                 {{ form.teams }}
                 </br>
-                {{ form.is_team_leader|as_crispy_field }}
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    Leader of Teams
+                </label>
+                {{ form.team_leader_for }}
+
+                {% if form.non_field_errors %}
+                <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-100 dark:bg-gray-800 dark:text-red-400" role="alert">
+                    {% for error in form.non_field_errors %}
+                    <span class="font-medium">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
         <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">{% trans "Submit" %}</button>
     </form>
 

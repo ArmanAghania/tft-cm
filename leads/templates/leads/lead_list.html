@@ -123,9 +123,10 @@
 
 
     </div>
-        <div class="w-full mb-6 py-6 flex justify-between items-center border-b border-gray-200 text-left">
+        <div class="w-full mb-6 py-6 flex justify-between items-top border-b border-gray-200 text-left align">
             <div>
-                <h1 class="text-4xl text-gray-800">Leads</h1>
+                <h1 class="text-4xl text-gray-800">{% trans 'Leads'%}</h1>
+            </br>
                 {% if request.user.is_organisor %}
                     <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:category-list' %}">
                         {% trans "View Categories" %}
@@ -143,20 +144,25 @@
                     {% trans "Create a New Lead" %}
                 </a>
                     
-                    <br/>
-                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-import' %}">
-                        {% trans "Import" %}
-                    </a>
-                    <br/>
-                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-import-agents' %}">
-                        {% trans "Import With Agents" %}
-                    </a>
-                    <br/>
-                    <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-export' %}">
-                        {% trans "Export" %}
-                    </a>
-               
-                    {% endif %}
+                <br/>
+                <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:assign-leads' %}">
+                    {% trans "Assign Leads to an Agent" %}
+                </a>
+                    
+                <br/>
+                <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-import-agents' %}">
+                    {% trans "Import With Agents" %}
+                </a>
+                <br/>
+                <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-import' %}">
+                    {% trans "Import" %}
+                </a>
+                <br/>
+                <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:lead-export' %}">
+                    {% trans "Export" %}
+                </a>
+            
+                {% endif %}
             <div x-data="{ open: false }" class="py-3 relative  text-left">
                 <div>
                     <button @click="open = !open" type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -422,7 +428,7 @@
                     {% endif %}
                 </table>
                     
-                    <div class="pagination sticky bottom-0 z-10 max-width: 100% flex justify-center items-center p-5 space-x-4 bg-white shadow-md rounded-lg mt-4"> <!-- Added mt-4 for a little margin at the top -->
+                    <div class="pagination sticky bottom-0 z-5 max-width: 100% flex justify-left items-center p-5 space-x-4 bg-white shadow-md rounded-lg mt-4"> <!-- Added mt-4 for a little margin at the top -->
                         <form method="get" action="" class="inline-flex mx-2">
                             <!-- Keep other get params -->
                             {% for key, value in request.GET.items %}

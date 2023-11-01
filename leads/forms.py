@@ -359,3 +359,12 @@ class PasswordChangeForm(AuthPasswordChangeForm):
         if any(fields_filled) and not all(fields_filled):
             raise forms.ValidationError(_('All password fields are required to change your password.'))
         return cleaned_data  
+    
+class AssignLeadsForm(forms.Form):
+    agent = forms.ModelChoiceField(queryset=Agent.objects.none(), label=_("Agent to assign"))
+    # Other fields for categories will be dynamically added in the view
+
+    def __init__(self, user, *args, **kwargs):
+        super(AssignLeadsForm, self).__init__(*args, **kwargs)
+        # Filter the agents based on the organization of the logged-in user
+        self.fields['agent'].queryset = Agent.objects.filter(organisation=user.userprofile)

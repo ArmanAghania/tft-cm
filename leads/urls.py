@@ -3,7 +3,7 @@ from django.urls import path
 from django.views import generic
 from .views import (
     LeadListView, LeadDetailView, LeadCreateView, LeadUpdateView, LeadDeleteView,
-    AssignAgentView, 
+    AssignAgentView, AssignLeadsView,
     CategoryListView, CategoryDetailView, LeadCategoryUpdateView, CategoryCreateView, CategoryUpdateView, CategoryDeleteView, 
     LeadJsonView, 
     FollowUpCreateView, FollowUpUpdateView, FollowUpDeleteView, 
@@ -99,5 +99,6 @@ urlpatterns = [
     path('stop_background_tasks/', stop_background_tasks, name='stop_background_tasks'),
     path('profile/update/', UserProfileUpdateView.as_view(), name='profile_update'),
     path('stream-data/', stream_data, name='stream-data'),
+    path('assign-leads/', AssignLeadsView.as_view(), name='assign-leads'),
 ]
 

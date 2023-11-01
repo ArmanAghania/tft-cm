@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mx-auto mt-10 max-w-2xl">
+    <form method="post" class="bg-white p-6 rounded shadow-md">
+        {% csrf_token %}
+        
+        <div class="mb-4">
+            {% comment %} <label for="{{ form.agent.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.agent.label }}</label> {% endcomment %}
+            {{ form.agent|as_crispy_field }}
+        </div>
+        
+        {% for field_name, field, num_leads in form_fields %}
+        <div class="mb-4">
+            {% comment %} <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label> {% endcomment %}
+            <div class="mt-1 relative rounded-md shadow-sm">
+                {{ field|as_crispy_field }}
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">
+                    Total: {{ num_leads }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="mt-6">
+            <input type="submit" value="Assign Leads" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow">
+        </div>
+    </form>
+</div>
+{% endblock content %}

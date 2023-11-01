@@ -99,6 +99,11 @@ class AgentCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
             recipient_list=[user.email],
         )
         return super(AgentCreateView, self).form_valid(form)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
 class AgentDetailView(OrganisorAndLoginRequiredMixin, generic.DetailView):
     template_name = "agents/agent_detail.html"
@@ -144,6 +149,11 @@ class AgentUpdateView(OrganisorAndLoginRequiredMixin, generic.UpdateView):
                 team.leaders.remove(agent.user)
 
         return response
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
 class AgentDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
     template_name = "agents/agent_delete.html"

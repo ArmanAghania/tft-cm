@@ -42,6 +42,7 @@ from .forms import (LeadModelForm,
                     UserUpdateForm,
                     PasswordChangeForm,
                     LeadImportFormAgents,
+                    AssignLeadsForm,
 )
 from .resources import LeadResource, BankResource
 import csv
@@ -83,6 +84,8 @@ from django.contrib.auth import update_session_auth_hash
 from django.db import IntegrityError
 from django.http import HttpResponseNotFound
 from django.http import StreamingHttpResponse
+from django import forms
+from django.db.models import Q
 
 # logger = logging.getLogger(__name__)
 
@@ -773,11 +776,12 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
         all_numbers = csv_file
         all_numbers = [item[0] for item in all_numbers if len(item) > 0]
         
-        for number in all_numbers:
-            number.replace(' ', '')
-            number.replace('+', '00')
-            number.replace('(', '')
-            number.replace(')', '')
+        for index, number in enumerate(all_numbers):
+            number = number.replace(' ', '')
+            number = number.replace('+', '00')
+            number = number.replace('(', '')
+            number = number.replace(')', '')
+            all_numbers[index] = number
 
         # Remove duplicates
         all_numbers = list(set(all_numbers))  
@@ -811,21 +815,11 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 foreign_added = 0
                 all_numbers = self.lead_preprocess(csv_file)
                 for number in all_numbers:
-                    print(number)
                     total_leads += 1
                     category = form.cleaned_data['category']
                     if BankNumbers.objects.filter(organisation=user.userprofile, number=number).exists():
                         duplicates += 1
                         bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=number)
-                        # if bank_number.agent.user.first_name == 'BANK' and not Lead.objects.filter(organisation=user.userprofile, phone_number=number):
-                        #     if len(number) == 11:
-                        #         added_leads += 1
-                        #         Lead.objects.get_or_create(phone_number=number, category=category, source=source, organisation=user.userprofile)
-                        #     else:
-                        #         foreign_added += 1
-                        #         category, created = Category.objects.get_or_create(name='خارجی', organisation=user.userprofile)
-                        #         Lead.objects.get_or_create(phone_number=number, category=category, source=source, organisation=user.userprofile)
-                        # else:
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
                         if request.session.get('override_chat_id', False):
                             chat_id = '-1001707390535'
@@ -851,8 +845,13 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                             notify_background_messages(chat_id='-1001707390535', message=message, organisation_id=user.userprofile.id)
                     else:
                         if len(number) == 11:
-                            added_leads += 1
-                            Lead.objects.create(phone_number=number, category=category, source=source, organisation=user.userprofile)
+                            print(type(number))
+                            if number[:4] == '0912':
+                                category, created = Category.objects.get_or_create(name='912', organisation=user.userprofile)
+                                Lead.objects.create(phone_number=number, category=category, source=source, organisation=user.userprofile)
+                                added_leads += 1
+                            else:
+                                Lead.objects.create(phone_number=number, category=category, source=source, organisation=user.userprofile)
                         else:
                             foreign_added += 1
                             category, created = Category.objects.get_or_create(name='خارجی', organisation=user.userprofile)
@@ -2290,5 +2289,69 @@ def stream_data(request):
     response = StreamingHttpResponse(generate(), content_type="text/csv")
     response['Content-Disposition'] = 'attachment; filename="somefilename.csv"'
     return response
+
+class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
+    template_name = 'leads/assign_leads.html'
+    form_class = AssignLeadsForm
+    success_url = reverse_lazy('leads:lead-list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Modify the categories query to only count leads without agents
+        categories = Category.objects.exclude(name='Converted').annotate(num_leads=Count('leads', filter=Q(leads__agent__isnull=True)))
+        
+        form_fields = []
+        for category in categories:
+            field_name = f'num_leads_{category.id}'
+            form_fields.append((field_name, context['form'][field_name], category.num_leads))
+        
+        context['form_fields'] = form_fields
+        return context
+
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        categories = Category.objects.exclude(name='Converted').annotate(num_leads=Count('leads'))
+
+        # Dynamically add fields to the form for each category
+        for category in categories:
+            form.fields[f'num_leads_{category.id}'] = forms.IntegerField(label=f"{category.name} (Total: {category.num_leads})", min_value=0, required=False)
+
+        return form
+
+    def form_valid(self, form):
+        agent = form.cleaned_data['agent']
+        categories = Category.objects.exclude(name='Converted').annotate(num_leads=Count('leads'))
+        
+        phone_data = {}  # This will store phone numbers for the agent
+        
+        for category in categories:
+            num_to_assign = form.cleaned_data[f'num_leads_{category.id}']
+            leads_to_assign = list(category.leads.filter(agent__isnull=True).order_by('?')[:num_to_assign].values_list('id', flat=True))
+            Lead.objects.filter(id__in=leads_to_assign).update(agent=agent, date_assigned=datetime.today())
+
+            # Populate phone_data for the agent
+            for lead_id in leads_to_assign:
+                lead = Lead.objects.get(id=lead_id)
+                phone_data[lead_id] = {'phone_number': f"{lead.phone_number}, {lead.category}"}
+
+        # Now that we have the phone data, let's create the message
+        agent_name = agent.user.alt_name
+        rank = agent.user.rank
+        message = create_agent_message(agent_name, rank, phone_data)
+
+        if message:
+            chat_id = agent.chat_id if agent.chat_id else '-1001707390535'  # Default chat_id
+            notify_background_messages(chat_id=chat_id, message=message, organisation_id=agent.organisation.id)
+
+        return super().form_valid(form)
+
+    
+    def get_form_kwargs(self):
+        kwargs = super(AssignLeadsView, self).get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
 
 ###TODO ---> Duplicate Followup List - Report View - Notify All Agents - 
