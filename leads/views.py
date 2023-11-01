@@ -85,7 +85,7 @@ from django.db import IntegrityError
 from django.http import HttpResponseNotFound
 from django.http import StreamingHttpResponse
 from django import forms
-from django.db.models import Q
+from django.db.models import Q, Count, Case, When, IntegerField
 
 # logger = logging.getLogger(__name__)
 
@@ -467,14 +467,22 @@ class CategoryListView(LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         user = self.request.user
-        # initial queryset of leads for the entire organisation
+        # Initial queryset of categories for the entire organisation
         if user.is_organisor:
             queryset = Category.objects.filter(organisation=user.userprofile)
-            queryset = queryset.annotate(lead_count=Count('leads')).values('pk', 'name', 'lead_count')
-
         else:
             queryset = Category.objects.filter(organisation=user.agent.organisation)
-            queryset = queryset.annotate(lead_count=Count('leads')).values('pk', 'name', 'lead_count')
+        
+        # Annotate with total lead count and unassigned lead count
+        queryset = queryset.annotate(
+            lead_count=Count('leads'),
+            unassigned_lead_count=Count(
+                Case(
+                    When(leads__agent__isnull=True, then=1),
+                    output_field=IntegerField()
+                )
+            )
+        ).values('pk', 'name', 'lead_count', 'unassigned_lead_count')
 
         return queryset
 
@@ -2312,11 +2320,11 @@ class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        categories = Category.objects.exclude(name='Converted').annotate(num_leads=Count('leads'))
+        categories = Category.objects.exclude(name='Converted').annotate(num_leads=Count('leads', filter=Q(leads__agent__isnull=True)))
 
         # Dynamically add fields to the form for each category
         for category in categories:
-            form.fields[f'num_leads_{category.id}'] = forms.IntegerField(label=f"{category.name} (Total: {category.num_leads})", min_value=0, required=False)
+            form.fields[f'num_leads_{category.id}'] = forms.IntegerField(label=f"{category.name}", min_value=0 ,required=False)
 
         return form
 

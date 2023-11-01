@@ -16,7 +16,7 @@
             {% comment %} <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label> {% endcomment %}
             <div class="mt-1 relative rounded-md shadow-sm">
                 {{ field|as_crispy_field }}
-                <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">
+                <div class="absolute inset-y-0 right-0 pr-3 pt-3 flex items-center text-gray-500 text-xs">
                     Total: {{ num_leads }}
                 </div>
             </div>
