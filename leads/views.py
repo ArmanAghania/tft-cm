@@ -859,6 +859,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                                 Lead.objects.create(phone_number=number, category=category, source=source, organisation=user.userprofile)
                                 added_leads += 1
                             else:
+                                added_leads += 1
                                 Lead.objects.create(phone_number=number, category=category, source=source, organisation=user.userprofile)
                         else:
                             foreign_added += 1
@@ -873,7 +874,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 else:
                     chat_id = user.userprofile.chat_id if user.userprofile.chat_id else '-1001707390535'
                 
-
+                category = form.cleaned_data['category']
                 message = f'''
                 منبع: {source}\n
                 نوع: {category}\n
@@ -2319,29 +2320,31 @@ class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
 
 
     def get_form(self, form_class=None):
+        user = self.request.user
         form = super().get_form(form_class)
-        categories = Category.objects.exclude(name='Converted').annotate(num_leads=Count('leads', filter=Q(leads__agent__isnull=True)))
+        categories = Category.objects.exclude(name='Converted').filter(organisation=user.userprofile).annotate(num_leads=Count('leads', filter=Q(leads__agent__isnull=True)))
 
         # Dynamically add fields to the form for each category
         for category in categories:
-            form.fields[f'num_leads_{category.id}'] = forms.IntegerField(label=f"{category.name}", min_value=0 ,required=False)
+            form.fields[f'num_leads_{category.id}'] = forms.IntegerField(label=f"{category.name}", min_value=0 ,required=False, initial=0)
 
         return form
 
     def form_valid(self, form):
+        user = self.request.user
         agent = form.cleaned_data['agent']
-        categories = Category.objects.exclude(name='Converted').annotate(num_leads=Count('leads'))
+        categories = Category.objects.exclude(name='Converted').filter(organisation=user.userprofile).annotate(num_leads=Count('leads'))
         
         phone_data = {}  # This will store phone numbers for the agent
         
         for category in categories:
             num_to_assign = form.cleaned_data[f'num_leads_{category.id}']
-            leads_to_assign = list(category.leads.filter(agent__isnull=True).order_by('?')[:num_to_assign].values_list('id', flat=True))
-            Lead.objects.filter(id__in=leads_to_assign).update(agent=agent, date_assigned=datetime.today())
+            leads_to_assign = list(category.leads.filter(organisation=user.userprofile, agent__isnull=True).order_by('?')[:num_to_assign].values_list('id', flat=True))
+            Lead.objects.filter(organisation=user.userprofile, id__in=leads_to_assign).update(agent=agent, date_assigned=datetime.today())
 
             # Populate phone_data for the agent
             for lead_id in leads_to_assign:
-                lead = Lead.objects.get(id=lead_id)
+                lead = Lead.objects.get(organisation=user.userprofile, id=lead_id)
                 phone_data[lead_id] = {'phone_number': f"{lead.phone_number}, {lead.category}"}
 
         # Now that we have the phone data, let's create the message

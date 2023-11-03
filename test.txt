@@ -59,7 +59,7 @@
 ۱۰. سارا رهبرمنش : 11
 ۱۱. امیررضا سلیمانیان: 11
 ۱۲. نیلوفر امینی : 11
-۱۳. عاطفه بابایی : ❌
+۱۳. عاطفه بابایی : 11
 ۱۴. سحر عابدی : 11
 ۱۵. مرتضی موسوی : 11
 ۱۶. نسترن کیمیایی : 11
@@ -136,110 +136,19 @@
 0093788394104 نیما رشید 
 0093792693032 ❌
 
-
-
-Name	          Rank	Position	Website	Excel	Total
-Sara Abedi	        1	1	189	34	223
-Arzhang Hoseinzadeh	1	2	197	31	228
-Nazila Talati	      1	3	186	37	223
-Nima Rashid	        1	4	189	37	226
-Amin Moghasemi	    1	5	186	37	223
-Ali Rezanejhad	    1	6	191	37	228
-Arezou Danesh	      1	7	192	37	229
-Faeze Sadeghi	      1	8	192	37	229
-Mohammad Sajjadi	  1	9	188	31	219
-Mehdi Bastan	      1	10	187	36	223
-Alireza Soleimanian	1	11	188	36	224
-Negar Vali	        1	12	189	36	225
-Jalal Ghaffari	    1	13	187	36	223
-Parya Rashid	      1	14	189	36	225
-Hedie Hajizade	    1	15	185	36	221
-Javad Farrokhi	    2	1	132	25	157
-Mohammad Mahdavi	  2	2	134	29	163
-Reza Yaveisi	      2	3	133	29	162
-Sintia Vartani	    2	4	132	29	161
-Sana Ghaemi	        2	5	133	29	162
-Amirreza Moslemi    2	6	114	29	143
-Pourya Kimiaei	    2	7	160	29	189
-Kamand Saeidi	      2	8	133	29	162
-Hamed Kimiaei	      2	9	135	29	164
-Zahra Rezaei	      2	10	32	29	61
-Pourya Kazemi	      2	11	132	29	161
-Mohammad Deylami	  2	12	131	29	160
-Parya Pirmohammad	  2	13	126	29	155
-Roham Joleini	      2	14	132	29	161
-Samira Danesh	      2	15	131	29	160
-Helia Mohammadi	    2	16	132	29	161
-Alireza Tarrahi	    2	17	131	29	160
-Alireza Kazemi	    2	18	130	29	159
-Ayda Tamsakani	    2	19	132	25	157
-Flor Ajori	        2	20	131	29	160
-Saghi Zahedifar	    3	1	101	23	124
-Atefe Babaei	      3	2	105	18	123
-Shahla Pashaei	    3	3	101	25	126
-Farinaz Sadeghi	    3	4	100	23	123
-Tina Rashid	        3	5	102	23	125
-Fateme Ghanbari	    3	6	101	23	124
-Keyvan Akbarzade	  3	7	111	20	131
-Sarina Pashaei	    3	8	100	24	124
-Zeynab Pouresmaeil	3	9	100	23	123
-Sadra Babaei	      3	10	97	23	120
-Shima Radfar	      3	11	101	23	124
-Morteza Mousavi	    3	12	100	23	123
-Rojhin Hoseinzadeh	3	13	91	23	114
-Sahar Abedi	        3	14	91	18	109
-Elmira Nikpour	    3	15	102	23	125
-Hanie Sadeghi	      3	16	102	23	125
-Amir Dehbashi	      3	17	101	23	124
-Somayye Ranjbar	    3	18	101	23	124
-Elham Javid	        3	19	102	23	125
-Sahar Shayeste	    3	20	95	23	118
-Sara Rahbarmanesh	  3	21	101	23	124
-Saman Damghani	    3	22	100	20	120
-Sara Saeidi	        3	23	102	23	125
-Nastaran Kimiaei	  3	24	94	23	117
-Farin Ajori	        3	25	99	23	122
-Zahra Dehghan	      3	26	0	6	6
-Shayan Hosseini	    3	27	100	23	123
-Niloufar Amini	    3	28	103	23	126
-Masoume Mahdavi	    3	29	101	23	124
-Laya Akbarnia	      3	30	110	23	133
-Raha Abedian	      3	31	95	23	118
-Mahnaz Kuhkan	      3	32	101	23	124
-Elnaz Zamani	      3	33	66	23	89
-Javad Shahhoseini	  3	34	90	23	113
-Amir Mahdavi	      3	35	88	23	111
-Rahime Rahimi	      4	1	47	6	53
-Kurosh Bohlul	      4	2	12	13	25
-Amirreza Soleimani	4	3	49	13	62
-Ali Zargari	        4	4	18	13	31
-Ilia Yadegari	      4	5	28	13	41
-Asal Jahanshahi	    4	6	46	13	59
-Ali Sharifi	        4	7	27	13	40
-Aylar Shamei	      4	8	33	0	33
-Reyhane Daraei	    4	9	27	0	27
-Ava Saeidi	        4	10	22	0	22
-
-
-09127323343
-09137318793
-09124065516
-09922358079
-09153557144
-09393029907
-09010108578
-09370893170
-09334949054
-09044163084
-09121970031
-09173765054
-09303140112
-09183518912
-09186599699
-09919600593
-09123882546
-09113321366
-09108380644
-09916240600
-09117903642
-09117903642
+09100045887
+09357053237
+09906438232
+09123801207
+09387639624
+09121154541
+09929286323
+09119253106
+09123938975
+09010370164
+09919580619
+09357514643
+09963779546
+09963779546
+09963779546
+09114110105
