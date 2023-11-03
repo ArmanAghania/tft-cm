@@ -2305,10 +2305,11 @@ class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
     success_url = reverse_lazy('leads:lead-list')
 
     def get_context_data(self, **kwargs):
+        user = self.request.user
         context = super().get_context_data(**kwargs)
         
         # Modify the categories query to only count leads without agents
-        categories = Category.objects.annotate(num_leads=Count('leads', filter=Q(leads__agent__isnull=True)))
+        categories = Category.objects.filter(organisation=user.userprofile).annotate(num_leads=Count('leads', filter=Q(leads__agent__isnull=True)))
         
         form_fields = []
         for category in categories:
