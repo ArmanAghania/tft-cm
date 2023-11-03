@@ -2308,7 +2308,7 @@ class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
         context = super().get_context_data(**kwargs)
         
         # Modify the categories query to only count leads without agents
-        categories = Category.objects.exclude(name='Converted').annotate(num_leads=Count('leads', filter=Q(leads__agent__isnull=True)))
+        categories = Category.objects.annotate(num_leads=Count('leads', filter=Q(leads__agent__isnull=True)))
         
         form_fields = []
         for category in categories:
@@ -2322,7 +2322,7 @@ class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
     def get_form(self, form_class=None):
         user = self.request.user
         form = super().get_form(form_class)
-        categories = Category.objects.exclude(name='Converted').filter(organisation=user.userprofile).annotate(num_leads=Count('leads', filter=Q(leads__agent__isnull=True)))
+        categories = Category.objects.filter(organisation=user.userprofile).annotate(num_leads=Count('leads', filter=Q(leads__agent__isnull=True)))
 
         # Dynamically add fields to the form for each category
         for category in categories:
@@ -2340,7 +2340,7 @@ class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
         for category in categories:
             num_to_assign = form.cleaned_data[f'num_leads_{category.id}']
             leads_to_assign = list(category.leads.filter(organisation=user.userprofile, agent__isnull=True).order_by('?')[:num_to_assign].values_list('id', flat=True))
-            Lead.objects.filter(id__in=leads_to_assign).update(agent=agent, date_assigned=datetime.today())
+            Lead.objects.filter(organisation=user.userprofile, id__in=leads_to_assign).update(agent=agent, date_assigned=datetime.today())
 
             # Populate phone_data for the agent
             for lead_id in leads_to_assign:
