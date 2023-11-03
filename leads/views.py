@@ -1250,9 +1250,9 @@ class LeadDistributionWizard(SessionWizardView):
                 notify_background_messages(chat_id, message, organisor_id)
 
         new_df_rank1, new_df_rank2, new_df_rank3, new_df_rank4, new_df_rank5 = self.generate_excel_dataframes(df_rank1, df_rank2, df_rank3, df_rank4, df_rank5)
-
+        today = datetime.today()
          # Generate a unique file name
-        file_name = f"output_{uuid.uuid4().hex}.xlsx"
+        file_name = f"output{today}_{uuid.uuid4().hex}.xlsx"
 
         # Assuming MEDIA_URL and MEDIA_ROOT are correctly set up in your Django settings
         excel_file_path = os.path.join(settings.MEDIA_ROOT, file_name)
