@@ -2340,7 +2340,7 @@ class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
         for category in categories:
             num_to_assign = form.cleaned_data[f'num_leads_{category.id}']
             leads_to_assign = list(category.leads.filter(organisation=user.userprofile, agent__isnull=True).order_by('?')[:num_to_assign].values_list('id', flat=True))
-            Lead.objects.filter(organisation=user.userprofile, id__in=leads_to_assign).update(agent=agent, date_assigned=datetime.today())
+            Lead.objects.filter(id__in=leads_to_assign).update(agent=agent, date_assigned=datetime.today())
 
             # Populate phone_data for the agent
             for lead_id in leads_to_assign:
