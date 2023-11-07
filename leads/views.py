@@ -86,6 +86,8 @@ from django.http import HttpResponseNotFound
 from django.http import StreamingHttpResponse
 from django import forms
 from django.db.models import Q, Count, Case, When, IntegerField
+from django.db import connection
+
 
 # logger = logging.getLogger(__name__)
 
@@ -745,15 +747,22 @@ def preprocess_csv_numbers(csv_file):
 def get_user_profile(organisation_id):
     return UserProfile.objects.get(id=organisation_id)
 
+def ensure_connection():
+    if connection.connection and not connection.is_usable():
+        connection.close()
+        connection.connect()
+
 @background(schedule=1)
 def notify_background_messages(chat_id, message, organisation_id):
     asyncio.run(send_telegram_message(chat_id, message, organisation_id))
 
 async def send_telegram_message(chat_id, message, organisation_id):
+
+    await sync_to_async(ensure_connection)()
     limiter = AsyncLimiter(1, 30)
 
     # Wrap the entire get operation inside sync_to_async
-    user_profile = await sync_to_async(UserProfile.objects.get)(id=organisation_id)
+    user_profile = await sync_to_async(UserProfile.objects.get, thread_sensitive=True)(id=organisation_id)
     TOKEN = user_profile.telegram_token
     bot = Bot(TOKEN)
 
