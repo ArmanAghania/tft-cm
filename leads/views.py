@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.http.response import JsonResponse
 from django.shortcuts import render, redirect, reverse, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.views import generic, View
 from agents.mixins import OrganisorAndLoginRequiredMixin
 from .models import (Lead, 
@@ -146,7 +146,7 @@ class DashboardView(OrganisorAndLoginRequiredMixin, generic.TemplateView):
 def landing_page(request):
     return render(request, "landing.html")
 
-class BankListView(OrganisorAndLoginRequiredMixin, generic.ListView):
+class BankListView(LoginRequiredMixin, generic.ListView):
     template_name = "leads/bank_list.html"
     context_object_name = "bank"
     paginate_by = 10
@@ -156,14 +156,22 @@ class BankListView(OrganisorAndLoginRequiredMixin, generic.ListView):
         
         if user.is_organisor:
             queryset = BankNumbers.objects.filter(organisation=user.userprofile).order_by('date_added')
+        else:
+            queryset = BankNumbers.objects.filter(organisation=user.agent.organisation).order_by('date_added')
 
         return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        total_bank_numbers = BankNumbers.objects.all().count()
-        bank_list = BankNumbers.objects.filter(organisation=user.userprofile).order_by('date_added')
+        
+        if user.is_organisor:
+            bank_list = BankNumbers.objects.filter(organisation=user.userprofile).order_by('date_added')
+            total_bank_numbers = bank_list.count()
+        else:
+            bank_list = BankNumbers.objects.filter(organisation=user.agent.organisation).order_by('date_added')
+            total_bank_numbers = bank_list.count()
+
         context["bank_numbers"] = {
             'bank_total': total_bank_numbers if total_bank_numbers else 0,
             'bank_list': bank_list if bank_list else _('Empty')
@@ -208,6 +216,30 @@ def bank_create(request):
     context = {"form": form}
     return render(request, "leads/bank_create.html", context)
 
+class CreateLeadFromBankNumberView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        # Get the BankNumber instance
+        bank_number = get_object_or_404(BankNumbers, id=pk)
+        
+        # Create the Lead instance
+        if Lead.objects.filter(phone_number=bank_number.number, organisation=bank_number.organisation).exists():
+            messages.error(request, "Lead already exists.")
+            return HttpResponseRedirect(reverse('leads:bank-list'))
+        else:
+            lead = Lead(
+                phone_number=bank_number.number,
+                organisation=bank_number.organisation,
+                agent=bank_number.agent,
+                
+            )
+        
+            # Save the Lead instance
+            lead.save()
+        
+        # Redirect to the bank list view or wherever is appropriate
+        messages.success(request, "Lead created successfully.")
+        return HttpResponseRedirect(reverse('leads:bank-list'))
+    
 class LeadListView(LoginRequiredMixin, generic.ListView):
     template_name = "leads/lead_list.html"
     context_object_name = "leads"
@@ -834,18 +866,7 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                 for number in all_numbers:
                     total_leads += 1
                     category = form.cleaned_data['category']
-                    if BankNumbers.objects.filter(organisation=user.userprofile, number=number).exists():
-                        duplicates += 1
-                        bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=number)
-                        DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
-                        if request.session.get('override_chat_id', False):
-                            chat_id = '-1001707390535'
-                        else:
-                            chat_id = bank_number.agent.chat_id if bank_number.agent.chat_id else '-1001707390535'
-                        message = f'تماس {number} {bank_number.agent}'
-                        # notify_background_messages_celery.delay(chat_id=chat_id, message=message, organisation_id=user.userprofile.id)
-                        notify_background_messages(chat_id=chat_id, message=message, organisation_id=user.userprofile.id)
-                    elif Lead.objects.filter(organisation=user.userprofile, phone_number=number).exists():
+                    if Lead.objects.filter(organisation=user.userprofile, phone_number=number).exists():
                         duplicates += 1
                         lead = Lead.objects.get(organisation=user.userprofile, phone_number=number)
                         DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=lead.agent)
@@ -860,6 +881,17 @@ class LeadImportView(OrganisorAndLoginRequiredMixin, View):
                         else:
                             message = f'شماره تکراری بدون کارشناس: {number}'
                             notify_background_messages(chat_id='-1001707390535', message=message, organisation_id=user.userprofile.id)
+                    elif BankNumbers.objects.filter(organisation=user.userprofile, number=number).exists():
+                        duplicates += 1
+                        bank_number = BankNumbers.objects.get(organisation=user.userprofile, number=number)
+                        DuplicateToFollow.objects.get_or_create(number=number, organisation=user.userprofile, agent=bank_number.agent)
+                        if request.session.get('override_chat_id', False):
+                            chat_id = '-1001707390535'
+                        else:
+                            chat_id = bank_number.agent.chat_id if bank_number.agent.chat_id else '-1001707390535'
+                        message = f'تماس {number} {bank_number.agent}'
+                        # notify_background_messages_celery.delay(chat_id=chat_id, message=message, organisation_id=user.userprofile.id)
+                        notify_background_messages(chat_id=chat_id, message=message, organisation_id=user.userprofile.id)
                     else:
                         if len(number) == 11:
                             print(type(number))
@@ -1131,6 +1163,7 @@ class LeadDistributionWizard(SessionWizardView):
             if category_data:
                 category = category_data['category']
                 alternate_category = category_data['alternate_category']
+                high_quality = category_data['high_quality']
             
                 # Calculate lead details
                 context.update(self.calculate_lead_details(category, alternate_category))
@@ -1141,7 +1174,6 @@ class LeadDistributionWizard(SessionWizardView):
 
         return context
         
-
     def calculate_lead_details(self, category, alternate_category):
         user = self.request.user
         category = self.get_cleaned_data_for_step('category')['category']
@@ -1170,10 +1202,6 @@ class LeadDistributionWizard(SessionWizardView):
             'display_data': True,
         }
     
-    
-    
-    
-
     def assign_leads_to_agent(self, df):
         user = self.request.user
         if df is None: 
@@ -1220,7 +1248,6 @@ class LeadDistributionWizard(SessionWizardView):
         df_rank3 = context.get('df_rank3')
         df_rank4 = context.get('df_rank4')
         df_rank5 = context.get('df_rank5')
-
         
         df_rank1_json = df_rank1.to_json()
         df_rank2_json = df_rank2.to_json()
@@ -1228,14 +1255,12 @@ class LeadDistributionWizard(SessionWizardView):
         df_rank4_json = df_rank4.to_json()
         df_rank5_json = df_rank5.to_json()
 
-        
         self.assign_leads_to_agent(df_rank1)
         self.assign_leads_to_agent(df_rank2)
         self.assign_leads_to_agent(df_rank3)
         self.assign_leads_to_agent(df_rank4)
         self.assign_leads_to_agent(df_rank5)
 
-        
         organisor_id = self.request.user.userprofile.id
         organisor = self.request.user 
         for df in [df_rank1, df_rank2, df_rank3, df_rank4, df_rank5]:
@@ -1259,9 +1284,9 @@ class LeadDistributionWizard(SessionWizardView):
                 notify_background_messages(chat_id, message, organisor_id)
 
         new_df_rank1, new_df_rank2, new_df_rank3, new_df_rank4, new_df_rank5 = self.generate_excel_dataframes(df_rank1, df_rank2, df_rank3, df_rank4, df_rank5)
-        today = datetime.today()
+        timestamp = datetime.now().strftime("%Y-%m-%d")
          # Generate a unique file name
-        file_name = f"output{today}_{uuid.uuid4().hex}.xlsx"
+        file_name = f"output{timestamp}_{uuid.uuid4().hex}.xlsx"
 
         # Assuming MEDIA_URL and MEDIA_ROOT are correctly set up in your Django settings
         excel_file_path = os.path.join(settings.MEDIA_ROOT, file_name)
@@ -1276,9 +1301,7 @@ class LeadDistributionWizard(SessionWizardView):
             new_df_rank4.to_excel(writer, sheet_name="rank 4", index=False)
             new_df_rank5.to_excel(writer, sheet_name="rank 5", index=False)
 
-
         # Store the file path in the session so it can be accessed in the next view
-
         self.request.session['excel_file_path'] = os.path.join(settings.MEDIA_URL, file_name)
 
         return redirect('leads:download_excel_page')
@@ -1290,7 +1313,6 @@ class LeadDistributionWizard(SessionWizardView):
         df_rank4 = self.create_dataframe_with_phone_numbers(df_rank4)
         df_rank5 = self.create_dataframe_with_phone_numbers(df_rank5)
 
-
         return df_rank1, df_rank2, df_rank3, df_rank4, df_rank5
     
     def create_dataframe_with_phone_numbers(self, dataframe):
@@ -1301,7 +1323,6 @@ class LeadDistributionWizard(SessionWizardView):
 
         return new_dataframe
     
-
     def compute_initial_distribution(self, N, active_agents_count, category=None):
         user = self.request.user
         if category:
@@ -1319,7 +1340,6 @@ class LeadDistributionWizard(SessionWizardView):
         each_rank4 = rank4_numbers // active_agents_count['rank_4'] if active_agents_count['rank_4'] != 0 else 0
         each_rank5 = rank4_numbers // active_agents_count['rank_5'] if active_agents_count['rank_5'] != 0 else 0
 
-
         # Step 3: Adjust each_rank values if necessary
         total_numbers_assigned = (
             each_rank1 * active_agents_count['rank_1']
@@ -1327,7 +1347,6 @@ class LeadDistributionWizard(SessionWizardView):
             + each_rank3 * active_agents_count['rank_3']
             + each_rank4 * active_agents_count['rank_4']
             + each_rank4 * active_agents_count['rank_5']
-
         )
         while total_numbers_assigned > N:
             each_rank1 -= 1
@@ -1342,7 +1361,6 @@ class LeadDistributionWizard(SessionWizardView):
                 + each_rank3 * active_agents_count['rank_3']
                 + each_rank4 * active_agents_count['rank_4']
                 + each_rank5 * active_agents_count['rank_5']
-
             )
 
         # Step 4: Distribute remaining numbers equally among all agents
@@ -1353,14 +1371,12 @@ class LeadDistributionWizard(SessionWizardView):
             + active_agents_count['rank_3']
             + active_agents_count['rank_4']
             + active_agents_count['rank_5']
-
         )
         each_rank1 += extra_numbers_per_agent
         each_rank2 += extra_numbers_per_agent
         each_rank3 += extra_numbers_per_agent
         each_rank4 += extra_numbers_per_agent
         each_rank5 += extra_numbers_per_agent
-
 
         return {
             "rank1": each_rank1 if each_rank1 else 0,
@@ -1375,7 +1391,6 @@ class LeadDistributionWizard(SessionWizardView):
                 + active_agents_count['rank_3']
                 + active_agents_count['rank_4']
                 + active_agents_count['rank_5']
-
             ),
         }
 
@@ -1400,7 +1415,6 @@ class LeadDistributionWizard(SessionWizardView):
         df_rank3 = pd.DataFrame(columns=active_agents_rank3)
         df_rank4 = pd.DataFrame(columns=active_agents_rank4)
         df_rank5 = pd.DataFrame(columns=active_agents_rank5)
-
 
         for i in range(recommended_leads_per_agent["rank1"]):
             df_rank1.loc[len(df_rank1)] = dist_list[:len(df_rank1.columns)]
@@ -1432,20 +1446,29 @@ class LeadDistributionWizard(SessionWizardView):
             'rank_3': Agent.objects.filter(organisation=organisor.userprofile, user__rank=3, is_available_for_leads=True).count(),
             'rank_4': Agent.objects.filter(organisation=organisor.userprofile, user__rank=4, is_available_for_leads=True).count(),
             'rank_5': Agent.objects.filter(organisation=organisor.userprofile, user__rank=5, is_available_for_leads=True).count(),
-
         }
         return active_agents_count
 
     def setup_confirmation_data(self, context):
         user = self.request.user
         distribution_data = self.get_cleaned_data_for_step('distribution_info')
-        
+        high_quality = self.get_cleaned_data_for_step('category')['high_quality']
+        print(high_quality)
         category = Category.objects.get(organisation=user.userprofile, pk=self.get_cleaned_data_for_step('category')['category'].id)
         alternate_category = Category.objects.get(organisation=user.userprofile, pk=self.get_cleaned_data_for_step('category')['alternate_category'].id)        
-
-        unassigned_leads = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category).exclude(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
+        
+        unassigned_leads = Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category).exclude(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11)
+        extra = Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=alternate_category).annotate(phone_length=Length('phone_number')).filter(phone_length=11)
+        
+        if high_quality:
+            unassigned_leads = unassigned_leads.filter(phone_number__startswith='091')
+            extra = extra.filter(phone_number__startswith='091')
+            
+        unassigned_leads = list(unassigned_leads.values('phone_number'))
+        extra = list(extra.values('phone_number'))
+        
         unassigned_912_leads = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category, phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
-        extra = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=alternate_category).annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
+        
         recommended_leads_per_agent = distribution_data
 
         df_rank1, df_rank2, df_rank3, df_rank4, df_rank5 = self.distribute_leads(unassigned_leads, unassigned_912_leads, recommended_leads_per_agent, extra)

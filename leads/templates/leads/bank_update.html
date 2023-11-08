@@ -14,5 +14,11 @@
     <button type="submit" class="block w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">{% trans "Update" %}</button>
     <a href="{% url 'leads:bank-delete' object.pk %}" class="block text-center w-full mt-2 text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-2 rounded-md">{% trans "Delete"%}</a>  
 </form>
+<td class="px-2 text-indigo-700 hover:text-indigo-900" style="background-color: white !important;">
+    <form action="{% url 'leads:create_lead_from_banknumber' object.pk %}" method="post">
+        {% csrf_token %}
+        <input class=" cursor-pointer bg-white text-sm" type="submit" value="{% trans "Add to Leads" %}">
+    </form>
+</td>
 </div>
 {% endblock %}

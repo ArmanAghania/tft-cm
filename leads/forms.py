@@ -235,6 +235,7 @@ class DistributionForm(forms.Form):
 class CategorySelectionForm(forms.Form):
     category = forms.ModelChoiceField(queryset=Category.objects.none(), label="Select a Category")
     alternate_category = forms.ModelChoiceField(queryset=Category.objects.none(), label="Select an Alternate Category")
+    high_quality = forms.BooleanField(required=False, label='High Quality Leads')
 
     def __init__(self, *args, **kwargs):
         print(f"Form kwargs: {kwargs}")  # Debugging

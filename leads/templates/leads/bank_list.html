@@ -56,15 +56,15 @@
                         <th scope="col" class="relative px-6 py-3">
                             <span class="sr-only">{% trans "Edit" %}</span>
                         </th>
+                        <th scope="col" class="relative px-6 py-3">
+                            <span class="sr-only">{% trans "Add to Leads" %}</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
                     
                     {% for bank_number in page_obj %}
-                        <tr class="bg-white">
-                            <form method="post" >
-                            
-                            
+                        <tr class="bg-white">    
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
                                 {{ bank_number.number }}
                             </td>
@@ -102,7 +102,12 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <a href="{% url 'leads:bank-update' bank_number.pk %}">{% trans "Edit"%}
                             </td>
-                        </form>
+                            <td class="px-2 text-indigo-700 hover:text-indigo-900" style="background-color: white !important;">
+                                <form action="{% url 'leads:create_lead_from_banknumber' bank_number.pk %}" method="post">
+                                    {% csrf_token %}
+                                    <input class=" cursor-pointer bg-white text-sm" type="submit" value="{% trans "Add to Leads" %}">
+                                </form>
+                            </td>
                         </tr>
                        
                     {% empty %}
