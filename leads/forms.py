@@ -233,30 +233,27 @@ class DistributionForm(forms.Form):
         return data
 
 class CategorySelectionForm(forms.Form):
+    ORDER_CHOICES = [
+        ('asc', 'Ascending'),
+        ('desc', 'Descending')
+    ]
+
     category = forms.ModelChoiceField(queryset=Category.objects.none(), label="Select a Category")
     alternate_category = forms.ModelChoiceField(queryset=Category.objects.none(), label="Select an Alternate Category")
     high_quality = forms.BooleanField(required=False, label='High Quality Leads')
+    order_by_date = forms.ChoiceField(choices=ORDER_CHOICES, label='Order by Date', required=False)
 
     def __init__(self, *args, **kwargs):
-        print(f"Form kwargs: {kwargs}")  # Debugging
         self.wizard_storage = kwargs.pop('wizard_storage', None)
-        print(self.wizard_storage.extra_data.get('user_id'))
         super().__init__(*args, **kwargs)
         
         if self.wizard_storage:
-            print("Inside wizard_storage check")  # Debug
             user_id = self.wizard_storage.extra_data.get('user_id')
-            print(f"Retrieved user_id: {user_id}")  # Debug
+            self.fields['order_by_date'].initial = 'desc'
             if user_id:
-                print(f"User ID from wizard_storage: {user_id}")  # Debug
                 user = User.objects.get(id=user_id)
-                print(f"Retrieved user: {user}")
-                
                 organisation = user.userprofile
-                print(f"Organisation from user profile: {organisation}")
-                
                 categories = Category.objects.filter(organisation=organisation)
-                print(f"Categories retrieved: {categories.count()}")
                 
                 self.fields['category'].queryset = categories
                 self.fields['alternate_category'].queryset = categories
@@ -362,7 +359,14 @@ class PasswordChangeForm(AuthPasswordChangeForm):
         return cleaned_data  
     
 class AssignLeadsForm(forms.Form):
+
+    ORDER_CHOICES = [
+        ('asc', 'Ascending'),
+        ('desc', 'Descending')
+    ]
+    
     agent = forms.ModelChoiceField(queryset=Agent.objects.none(), label=_("Agent to assign"))
+    order_by_date = forms.ChoiceField(choices=ORDER_CHOICES, label=_("Order by Date"), required=False)
     # Other fields for categories will be dynamically added in the view
 
     def __init__(self, user, *args, **kwargs):

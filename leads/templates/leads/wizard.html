@@ -192,63 +192,49 @@
     // Render table for df_rank1
     function renderTable(data, tableId) {
         const table = document.getElementById(tableId);
-        // If the data is empty or the first item is not an object, hide the table and return
-        if (!data.length || typeof data[0] !== 'object') {
-            table.style.display = 'none'; // Hide the table
-            return;
-        } else {
-            table.style.display = ''; // Show the table if it was previously hidden
-        }
-        // Clear existing content of the table
+    
+        // Clear existing content of the table and add Tailwind classes
         table.innerHTML = '';
+        table.className = 'min-w-full divide-y divide-gray-200';
     
         // Create the table head and body
         const thead = document.createElement('thead');
-        thead.classList.add('text-xs', 'text-gray-700', 'uppercase', 'bg-gray-50', 'dark:bg-gray-700', 'dark:text-gray-400');
-        table.appendChild(thead);
-        
+        thead.className = 'bg-gray-50';
         const tbody = document.createElement('tbody');
+        tbody.className = 'bg-white divide-y divide-gray-200';
+        table.appendChild(thead);
         table.appendChild(tbody);
-        
-        // Extract names from the first item in data for headers
-        const names = Object.keys(data[0]);
-        
+    
+        if (!data.length || typeof data[0] !== 'object') {
+            table.style.display = 'none'; // Hide the table if no data
+            return;
+        }
+    
         // Add table headers
         const trHead = document.createElement('tr');
-        trHead.classList.add('bg-white', 'border-b', 'dark:bg-gray-900', 'dark:border-gray-700');
-        const thIndex = document.createElement('th');
-        thIndex.textContent = "Phone #";
-        thIndex.classList.add('px-6', 'py-4', 'font-medium', 'text-gray-900', 'whitespace-nowrap', 'dark:text-white');
-        trHead.appendChild(thIndex);
-    
-        names.forEach(name => {
-            const thName = document.createElement('th');
-            thName.textContent = name;
-            thName.classList.add('px-6', 'py-4', 'font-medium', 'text-gray-900', 'whitespace-nowrap', 'dark:text-white');
-            trHead.appendChild(thName);
+        Object.keys(data[0]).forEach(agentName => {
+            const th = document.createElement('th');
+            th.textContent = agentName;
+            th.className = 'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider';
+            trHead.appendChild(th);
         });
         thead.appendChild(trHead);
     
-        // Populate the table body based on the length of the data
-        for (let i = 0; i < data.length; i++) {
+        // Populate the table body
+        data.forEach(rowData => {
             const tr = document.createElement('tr');
-            const tdIndex = document.createElement('td');
-            tdIndex.textContent = i + 1; // Phone #1, Phone #2, etc.
-            tdIndex.classList.add('px-6', 'py-4');
-            tr.appendChild(tdIndex);
-    
-            names.forEach(name => {
-                const tdPhone = document.createElement('td');
-                tdPhone.textContent = data[i][name] && data[i][name].phone_number;
-                tdPhone.classList.add('px-6', 'py-4');
-                tr.appendChild(tdPhone);
+            Object.values(rowData).forEach(phoneNumber => {
+                const td = document.createElement('td');
+                td.textContent = phoneNumber;
+                td.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+                tr.appendChild(td);
             });
-            
             tbody.appendChild(tr);
-        }
+        });
     }
 
     const df_rank1_data = JSON.parse('{{ df_rank1_json|escapejs }}'.replace(/&quot;/g,'"'));
+    console.log(df_rank1_data); 
     const df_rank2_data = JSON.parse('{{ df_rank2_json|escapejs }}'.replace(/&quot;/g,'"'));
     const df_rank3_data = JSON.parse('{{ df_rank3_json|escapejs }}'.replace(/&quot;/g,'"'));
     const df_rank4_data = JSON.parse('{{ df_rank4_json|escapejs }}'.replace(/&quot;/g,'"'));

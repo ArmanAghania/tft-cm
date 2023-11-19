@@ -87,6 +87,7 @@ from django.http import StreamingHttpResponse
 from django import forms
 from django.db.models import Q, Count, Case, When, IntegerField
 from django.db import connection
+from django.db.models.functions import TruncDate
 
 
 # logger = logging.getLogger(__name__)
@@ -141,6 +142,105 @@ class DashboardView(OrganisorAndLoginRequiredMixin, generic.TemplateView):
                 "converted_in_past30": converted_in_past30,
             }
         )
+
+        # Calculate agent sales data
+        agent = self.request.user.id
+        today = JalaliDate.today()  # Use JalaliDate from persiantools
+        
+        # Calculate the start of the week (Saturday) and month (first day of the month)
+        # Convert JalaliDate to a Gregorian date
+        gregorian_today = today.to_gregorian()
+
+        # Find out how many days we are away from the last Saturday
+        days_since_last_saturday = gregorian_today.weekday() + 2  # +1 to shift from Monday-start to Sunday-start, another +1 to make Sunday = 1, Monday = 2, ..., Saturday = 7
+
+        # Subtract those days
+        start_of_week_gregorian = gregorian_today - timedelta(days=days_since_last_saturday % 7)  # % 7 makes sure that if today is Saturday, we subtract 0 days
+
+        # Convert back to JalaliDate
+        start_of_week = JalaliDate(start_of_week_gregorian)
+        start_of_month = today.replace(day=1)
+
+        base_filter_args = {}
+        if user.is_organisor:
+            # Aggregate sales
+            daily_sales = Sale.objects.filter(organisation=user.userprofile, date__date=today.to_gregorian()).aggregate(Sum('amount'))['amount__sum'] or 0
+            weekly_sales = Sale.objects.filter(organisation=user.userprofile, date__date__range=(start_of_week.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
+            monthly_sales = Sale.objects.filter(organisation=user.userprofile, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
+            total_sales = Sale.objects.filter(organisation=user.userprofile).aggregate(Sum('amount'))['amount__sum'] or 0
+        elif user.is_agent:
+            # Aggregate sales
+            daily_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent, date__date=today.to_gregorian()).aggregate(Sum('amount'))['amount__sum'] or 0
+            weekly_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent, date__date__range=(start_of_week.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
+            monthly_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).aggregate(Sum('amount'))['amount__sum'] or 0
+            total_sales = Sale.objects.filter(organisation=user.agent.organisation, agent=user.agent).aggregate(Sum('amount'))['amount__sum'] or 0
+
+        context["sales_data"] = {
+            'daily_sales': daily_sales,
+            'weekly_sales': weekly_sales,
+            'monthly_sales': monthly_sales,
+            'total_sales': total_sales,
+        }
+
+        if user.is_organisor:
+            # Filter leads for the organisation in the last month
+            total_leads = Lead.objects.filter(organisation=user.userprofile, date_assigned__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).count()
+            total_leads_overall = Lead.objects.filter(organisation=user.userprofile).count()
+
+            print(total_leads)
+            # Filter sales made by the organisation in the last month
+            converted_leads = Sale.objects.filter(organisation=user.userprofile, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).values('lead').distinct().count()
+            converted_leads_overall = Sale.objects.filter(organisation=user.userprofile).values('lead').distinct().count()
+
+            print(converted_leads)
+            if total_leads == 0:
+                percentage = 0
+            else:
+                percentage = (converted_leads / total_leads) * 100
+
+            if total_leads_overall == 0:
+                percentage_overall = 0
+            else:
+                percentage_overall = (converted_leads_overall / total_leads_overall) * 100
+
+            agents_data = {
+                'total_leads': total_leads,
+                'converted_leads': converted_leads,
+                'percentage': percentage,
+                'total_leads_overall': total_leads_overall,
+                'converted_leads_overall': converted_leads_overall,
+                'percentage_overall': percentage_overall,
+            }
+
+        else:
+            # Filter leads for the agent in the last month
+            total_leads = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user, date_assigned__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).count()
+            total_leads_overall = Lead.objects.filter(organisation=user.agent.organisation,agent__user=user).count()
+
+            # Filter sales made by the agent in the last month
+            converted_leads = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user, date__date__range=(start_of_month.to_gregorian(), today.to_gregorian())).values('lead').distinct().count()
+            converted_leads_overall = Sale.objects.filter(organisation=user.agent.organisation,lead__agent__user=user).values('lead').distinct().count()
+
+            if total_leads == 0:
+                percentage = 0
+            else:
+                percentage = (converted_leads / total_leads) * 100
+
+            if total_leads_overall == 0:
+                percentage_overall = 0
+            else:
+                percentage_overall = (converted_leads_overall / total_leads_overall) * 100
+
+            agents_data = {
+                'total_leads': total_leads,
+                'converted_leads': converted_leads,
+                'percentage': percentage,
+                'total_leads_overall': total_leads_overall,
+                'converted_leads_overall': converted_leads_overall,
+                'percentage_overall': percentage_overall,
+            }
+
+        context['agents_data'] = agents_data
         return context
 
 def landing_page(request):
@@ -1097,8 +1197,9 @@ def create_agent_message(agent_name, rank, phone_data):
         رنک : {rank}
         ارجاع : {len(phone_data.values())}\n\n'''
 
-    for i, lead_details in enumerate(phone_data.values()):
-        message += f"{i + 1}. {lead_details['phone_number']} \n"
+    for i, phone_number in enumerate(phone_data.values()):
+            message += f"{i + 1}. {phone_number} \n"
+            
 
     return message
 
@@ -1214,7 +1315,7 @@ class LeadDistributionWizard(SessionWizardView):
             try:
                 agent = Agent.objects.get(organisation=user.userprofile, user__alt_name=alt_name)
                 for number in numbers:
-                    lead = Lead.objects.get(organisation=user.userprofile, phone_number=number['phone_number'])
+                    lead = Lead.objects.get(organisation=user.userprofile, phone_number=number)
                     lead.agent = agent
                     lead.save()
 
@@ -1394,7 +1495,7 @@ class LeadDistributionWizard(SessionWizardView):
             ),
         }
 
-    def distribute_leads(self, unassigned_leads, unassigned_912_leads, recommended_leads_per_agent, extra):
+    def distribute_leads(self, unassigned_leads, recommended_leads_per_agent, extra):
         organisor = self.request.user
         # This function will distribute the leads to the agents using pandas
         # and return a dataframe with the distribution
@@ -1404,11 +1505,10 @@ class LeadDistributionWizard(SessionWizardView):
         active_agents_rank4 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=organisor.userprofile, user__rank=4, is_available_for_leads=True).values('user__alt_name')]
         active_agents_rank5 = [agent['user__alt_name'] for agent in Agent.objects.filter(organisation=organisor.userprofile, user__rank=5, is_available_for_leads=True).values('user__alt_name')]
 
-        random.shuffle(unassigned_leads)
-        random.shuffle(unassigned_912_leads)
-        random.shuffle(extra)
+        # random.shuffle(unassigned_leads)
+        # random.shuffle(extra)
 
-        dist_list = unassigned_912_leads + unassigned_leads + extra
+        dist_list = unassigned_leads + extra
 
         df_rank1 = pd.DataFrame(columns=active_agents_rank1)
         df_rank2 = pd.DataFrame(columns=active_agents_rank2)
@@ -1448,30 +1548,58 @@ class LeadDistributionWizard(SessionWizardView):
             'rank_5': Agent.objects.filter(organisation=organisor.userprofile, user__rank=5, is_available_for_leads=True).count(),
         }
         return active_agents_count
+    
+    def shuffle_leads_by_date(self, leads_query, ordering):
+        # Determine the ordering based on the user's choice
+        date_ordering = 'date' if ordering == 'asc' else '-date'
+
+        # Group by date_added and order based on the user's choice
+        leads_grouped = leads_query.annotate(
+            date=TruncDate('date_added')
+        ).order_by(date_ordering, 'id').values('date', 'phone_number')
+
+        shuffled_leads = []
+        current_date = None
+        current_group = []
+
+        for lead in leads_grouped:
+            if lead['date'] != current_date:
+                if current_group:
+                    random.shuffle(current_group)
+                    shuffled_leads.extend(current_group)
+                    current_group = []
+                current_date = lead['date']
+            current_group.append(lead['phone_number'])
+        
+        # Shuffle the last group
+        if current_group:
+            random.shuffle(current_group)
+            shuffled_leads.extend(current_group)
+
+        return shuffled_leads
 
     def setup_confirmation_data(self, context):
         user = self.request.user
         distribution_data = self.get_cleaned_data_for_step('distribution_info')
         high_quality = self.get_cleaned_data_for_step('category')['high_quality']
-        print(high_quality)
+        order_by_date = self.get_cleaned_data_for_step('category')['order_by_date']
+
         category = Category.objects.get(organisation=user.userprofile, pk=self.get_cleaned_data_for_step('category')['category'].id)
         alternate_category = Category.objects.get(organisation=user.userprofile, pk=self.get_cleaned_data_for_step('category')['alternate_category'].id)        
         
-        unassigned_leads = Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category).exclude(phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11)
+        unassigned_leads = Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category).annotate(phone_length=Length('phone_number')).filter(phone_length=11)
         extra = Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=alternate_category).annotate(phone_length=Length('phone_number')).filter(phone_length=11)
         
         if high_quality:
             unassigned_leads = unassigned_leads.filter(phone_number__startswith='091')
             extra = extra.filter(phone_number__startswith='091')
             
-        unassigned_leads = list(unassigned_leads.values('phone_number'))
-        extra = list(extra.values('phone_number'))
-        
-        unassigned_912_leads = list(Lead.objects.filter(organisation=user.userprofile, agent__isnull=True, category=category, phone_number__startswith='0912').annotate(phone_length=Length('phone_number')).filter(phone_length=11).values('phone_number'))
-        
+        unassigned_leads_shuffled = self.shuffle_leads_by_date(unassigned_leads, order_by_date)
+        extra_shuffled = self.shuffle_leads_by_date(extra, order_by_date)                
         recommended_leads_per_agent = distribution_data
 
-        df_rank1, df_rank2, df_rank3, df_rank4, df_rank5 = self.distribute_leads(unassigned_leads, unassigned_912_leads, recommended_leads_per_agent, extra)
+        df_rank1, df_rank2, df_rank3, df_rank4, df_rank5 = self.distribute_leads(unassigned_leads_shuffled, recommended_leads_per_agent, extra_shuffled)
+        print(df_rank1)
         context.update({
             'df_rank1': df_rank1,
             'df_rank2': df_rank2,
@@ -2340,16 +2468,21 @@ class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
         user = self.request.user
         context = super().get_context_data(**kwargs)
         
-        # Modify the categories query to only count leads without agents
         categories = Category.objects.filter(organisation=user.userprofile).annotate(num_leads=Count('leads', filter=Q(leads__agent__isnull=True)))
         
         form_fields = []
         for category in categories:
-            field_name = f'num_leads_{category.id}'
-            form_fields.append((field_name, context['form'][field_name], category.num_leads))
-        
+            num_field_name = f'num_leads_{category.id}'
+            checkbox_field_name = f'high_quality_{category.id}'
+
+            num_field = context['form'][num_field_name]
+            checkbox_field = context['form'][checkbox_field_name]
+            form_fields.append((num_field, checkbox_field, category.num_leads))
+
         context['form_fields'] = form_fields
         return context
+
+
 
 
     def get_form(self, form_class=None):
@@ -2359,26 +2492,37 @@ class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
 
         # Dynamically add fields to the form for each category
         for category in categories:
-            form.fields[f'num_leads_{category.id}'] = forms.IntegerField(label=f"{category.name}", min_value=0 ,required=False, initial=0)
+            form.fields[f'num_leads_{category.id}'] = forms.IntegerField(label=f"{category.name}", min_value=0, required=False, initial=0)
+            form.fields[f'high_quality_{category.id}'] = forms.BooleanField(label=f"High Quality Leads for {category.name}", required=False)
 
         return form
+
 
     def form_valid(self, form):
         user = self.request.user
         agent = form.cleaned_data['agent']
+        order = form.cleaned_data.get('order_by_date', 'asc')
         categories = Category.objects.exclude(name='Converted').filter(organisation=user.userprofile).annotate(num_leads=Count('leads'))
-        
+        order_field = 'date_added' if order == 'asc' else '-date_added'
+
         phone_data = {}  # This will store phone numbers for the agent
         
         for category in categories:
             num_to_assign = form.cleaned_data[f'num_leads_{category.id}']
-            leads_to_assign = list(category.leads.filter(organisation=user.userprofile, agent__isnull=True).order_by('?')[:num_to_assign].values_list('id', flat=True))
+            high_quality = form.cleaned_data.get(f'high_quality_{category.id}', False)
+            leads_query = category.leads.filter(organisation=user.userprofile, agent__isnull=True).order_by(order_field)
+        
+            if high_quality:
+                leads_query = leads_query.filter(phone_number__startswith='091')
+
+            leads_to_assign = list(leads_query.order_by('?')[:num_to_assign].values_list('id', flat=True))
             Lead.objects.filter(organisation=user.userprofile, id__in=leads_to_assign).update(agent=agent, date_assigned=datetime.today())
 
             # Populate phone_data for the agent
             for lead_id in leads_to_assign:
                 lead = Lead.objects.get(organisation=user.userprofile, id=lead_id)
-                phone_data[lead_id] = {'phone_number': f"{lead.phone_number}, {lead.category}"}
+                phone_number_with_category = f"{lead.phone_number}, {lead.category.name}"  # Format the string as needed
+                phone_data[lead_id] = phone_number_with_category  # Store formatted string
 
         # Now that we have the phone data, let's create the message
         agent_name = agent.user.alt_name
@@ -2398,4 +2542,4 @@ class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
         return kwargs
     
 
-###TODO ---> Duplicate Followup List - Report View - Notify All Agents - 
+###TODO ---> Duplicate Followup List - Dashboard View - Notify All Agents - Save Messages to database

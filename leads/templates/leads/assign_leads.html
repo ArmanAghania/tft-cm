@@ -1,31 +1,55 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
+{% load tailwind_filters %}
+{% load i18n %}
 
 {% block content %}
-<div class="container mx-auto mt-10 max-w-2xl">
-    <form method="post" class="bg-white p-6 rounded shadow-md">
+
+<div class="max-w-2xl mx-auto p-6 bg-white shadow-md rounded-lg">
+    <a class="text-blue-500 hover:underline" href="{% url 'leads:lead-list' %}">
+        {% trans "Go back to leads" %}
+    </a>
+    <div class="py-5">
+        <h1 class="text-3xl font-semibold text-gray-800">
+            {% trans "Assign an agent to this lead" %}
+        </h1>
+    </div>
+    <form method="post" class="space-y-6">
         {% csrf_token %}
-        
+
+        <!-- Render the predefined 'agent' field -->
         <div class="mb-4">
-            {% comment %} <label for="{{ form.agent.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.agent.label }}</label> {% endcomment %}
             {{ form.agent|as_crispy_field }}
         </div>
-        
-        {% for field_name, field, num_leads in form_fields %}
         <div class="mb-4">
-            {% comment %} <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label> {% endcomment %}
-            <div class="mt-1 relative rounded-md shadow-sm">
-                {{ field|as_crispy_field }}
-                <div class="absolute inset-y-0 right-0 pr-3 pt-3 flex items-center text-gray-500 text-xs">
-                    Total: {{ num_leads }}
+            {{ form.order_by_date|as_crispy_field }}
+        </div>
+
+        <!-- Manually render fields for each category -->
+        {% for num_field, checkbox_field, num_leads in form_fields %}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <!-- Numeric field -->
+                <div>
+                    {{ num_field|as_crispy_field }}
+                    <p class="text-xs text-gray-500 mt-1">
+                        Total available: {{ num_leads }}
+                    </p>
+                </div>
+                
+                <!-- Checkbox field -->
+                <div class="md:col-span-2 flex items-center">
+                        {{ checkbox_field }}
+                        <span class="ml-2 text-sm text-gray-700">
+                            {{ checkbox_field.label }}
+                        </span>
                 </div>
             </div>
-        </div>
         {% endfor %}
-        
-        <div class="mt-6">
-            <input type="submit" value="Assign Leads" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow">
-        </div>
+
+        <!-- Submit button -->
+        <button type='submit' class="w-full text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md transition duration-300">
+            {% trans "Submit" %}
+        </button>
     </form>
 </div>
+
 {% endblock content %}

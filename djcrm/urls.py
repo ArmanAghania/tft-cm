@@ -13,6 +13,8 @@ from django.urls import path, include
 from leads.views import landing_page, LandingPageView, SignupView, DashboardView
 import debug_toolbar
 from leads.views import custom_404_view
+from leads.views import DailySalesChart, WeeklySalesChart, MonthlySalesChart, YearlySalesChart
+from django.views import generic
 
 handler404 = custom_404_view
 
@@ -30,6 +32,15 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('i18n/', include('django.conf.urls.i18n')),
+
+    path('dashboard/daily_sales_chart/', generic.TemplateView.as_view(template_name='leads/daily_chart.html'), name='daily_sales_chart'),
+    path('dashboard/daily_sales_chart/data/', DailySalesChart.as_view(), name='daily_sales_chart_data'),
+    path('dashboard/weekly_sales_chart/', generic.TemplateView.as_view(template_name='leads/weekly_chart.html'), name='weekly_sales_chart'),
+    path('dashboard/weekly_sales_chart/data/', WeeklySalesChart.as_view(), name='weekly_sales_chart_data'),
+    path('dashboard/monthly_sales_chart/', generic.TemplateView.as_view(template_name='leads/monthly_chart.html'), name='monthly_sales_chart'),
+    path('dashboard/monthly_sales_chart/data/', MonthlySalesChart.as_view(), name='monthly_sales_chart_data'),
+    path('dashboard/yearly_sales_chart/', generic.TemplateView.as_view(template_name='leads/yearly_chart.html'), name='yearly_sales_chart'),
+    path('dashboard/yearly_sales_chart/data/', YearlySalesChart.as_view(), name='yearly_sales_chart_data'),
 ]
 
 if settings.DEBUG:
