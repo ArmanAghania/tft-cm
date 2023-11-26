@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load tailwind_filters %}
+{% load static %}
 {% load i18n %}
 
 {% block content %}
@@ -33,7 +34,35 @@
             </div>
                         <form method="post">
                             {% csrf_token %}
-                            {{ form|crispy }}
+                            <div class="mb-8 p-4 sm:p-6 border border-gray-200 rounded-lg shadow-sm">
+                                <div class="mb-4">
+                                    <!-- Amount Field -->
+                                    <label for="{{ form.amount.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-700">
+                                        {{ form.amount.label }}
+                                    </label>
+                                    <input type="text" id="{{ form.amount.id_for_label }}" name="{{ form.amount.html_name }}"
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                                        value="{{ form.amount.value }}" placeholder="Enter amount">
+                                </div>
+        
+                                <div>
+                                    <!-- Jalali Date Field -->
+                                    {% comment %} <label for="{{ form.jalali_date.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-700">
+                                        {{ form.jalali_date.label }}
+                                    </label>
+                                    <input type="text" id="{{ form.jalali_date.id_for_label }}" name="{{ form.jalali_date.html_name }}"
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                                        value="{{ form.jalali_date.value }}" placeholder="YYYY-MM-DD"> {% endcomment %}
+                                        <div class="relative ">
+                                            <label for="{{ form.jalali_date.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                                {{ form.jalali_date.label }}
+                                            </label>
+                                            <div class="mt-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                                {{ form.jalali_date }}
+                                            </div>
+                                        </div>
+                                    </div>
+                            </div>
                             <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded-md">{% trans "Add Sale" %}</button>
                         </form>
                    
@@ -42,4 +71,7 @@
     </div>
   </section>
 </section>
+
+<link rel="stylesheet" type="text/css" href="{% static 'admin/jquery.ui.datepicker.jalali/themes/base/jquery-ui.min.css' %}">
+<script type="text/javascript" charset="utf8" src={% static "admin/js/django_jalali.min.js" %}></script>
 {% endblock content %}

@@ -88,6 +88,9 @@ from django import forms
 from django.db.models import Q, Count, Case, When, IntegerField
 from django.db import connection
 from django.db.models.functions import TruncDate
+from django.utils.timezone import now
+from jalali_date import datetime2jalali
+from django.utils.timezone import localtime
 
 
 # logger = logging.getLogger(__name__)
@@ -243,6 +246,82 @@ class DashboardView(OrganisorAndLoginRequiredMixin, generic.TemplateView):
         context['agents_data'] = agents_data
         return context
 
+# class DashboardView(generic.TemplateView):
+#     template_name = "dashboard.html"
+
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         user = self.request.user
+#         today_jalali = JalaliDate.today()
+#         today_gregorian = today_jalali.to_gregorian()
+#         start_of_week = self.get_start_of_week(today_gregorian)
+#         start_of_month = today_jalali.replace(day=1).to_gregorian()
+
+#         context['total_lead_count'] = self.get_total_lead_count(user)
+#         context['total_in_past30'] = self.get_leads_in_past_days(user, 30)
+#         context['converted_in_past30'] = self.get_converted_leads_in_past_days(user, 30)
+
+#         context['sales_data'] = self.get_sales_data(user, today_gregorian, start_of_week, start_of_month)
+
+#         context['agents_data'] = self.get_agents_data(user, start_of_month, today_gregorian)
+#         context['top_agents'] = self.get_top_agents(user, start_of_month, today_gregorian)
+
+#         return context
+
+#     def get_start_of_week(self, date):
+#         return date - timedelta(days=(date.weekday() + 2) % 7)
+
+#     def get_total_lead_count(self, user):
+#         return Lead.objects.filter(organisation=user.userprofile).count()
+
+#     def get_leads_in_past_days(self, user, days):
+#         past_date = now() - timedelta(days=days)
+#         return Lead.objects.filter(organisation=user.userprofile, date_added__gte=past_date).count()
+
+#     def get_converted_leads_in_past_days(self, user, days):
+#         converted_category = Category.objects.get(name="Converted")
+#         past_date = now() - timedelta(days=days)
+#         return Lead.objects.filter(organisation=user.userprofile, category=converted_category, converted_date__gte=past_date).count()
+
+#     def get_sales_data(self, user, today, start_of_week, start_of_month):
+#         if user.is_organisor:
+#             organisation = user.userprofile
+#         else:
+#             organisation = user.agent.organisation
+
+#         daily_sales = Sale.objects.filter(organisation=organisation, date__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
+#         weekly_sales = Sale.objects.filter(organisation=organisation, date__date__range=(start_of_week, today)).aggregate(Sum('amount'))['amount__sum'] or 0
+#         monthly_sales = Sale.objects.filter(organisation=organisation, date__date__range=(start_of_month, today)).aggregate(Sum('amount'))['amount__sum'] or 0
+#         total_sales = Sale.objects.filter(organisation=organisation).aggregate(Sum('amount'))['amount__sum'] or 0
+
+#         return {'daily_sales': daily_sales, 'weekly_sales': weekly_sales, 'monthly_sales': monthly_sales, 'total_sales': total_sales}
+
+#     def get_agents_data(self, user, start_of_month, today):
+#         if user.is_organisor:
+#             organisation = user.userprofile
+#         else:
+#             organisation = user.agent.organisation
+#         total_leads = Lead.objects.filter(organisation=organisation, date_assigned__date__range=(start_of_month, today)).count()
+#         converted_leads = Sale.objects.filter(organisation=organisation, date__date__range=(start_of_month, today)).values('lead').distinct().count()
+
+#         return self.calculate_conversion_data(total_leads, converted_leads)
+
+#     def get_top_agents(self, user, start_of_month, today):
+#         if user.is_organisor:
+#             organisation = user.userprofile
+#         else:
+#             return []  # Agents don't see top agents data
+
+#         return Agent.objects.filter(organisation=organisation).annotate(total_sales=Sum('sale__amount', filter=Q(sale__date__date__range=(start_of_month, today)))).order_by('-total_sales')[:5]
+
+#     def calculate_conversion_data(self, total_leads, converted_leads):
+#         if total_leads == 0:
+#             percentage = 0
+#         else:
+#             percentage = (converted_leads / total_leads) * 100
+
+#         return {'total_leads': total_leads, 'converted_leads': converted_leads, 'percentage': percentage}
+
 def landing_page(request):
     return render(request, "landing.html")
 
@@ -251,6 +330,12 @@ class BankListView(LoginRequiredMixin, generic.ListView):
     context_object_name = "bank"
     paginate_by = 10
 
+    def filter_queryset(self, queryset):
+        phone_number = self.request.GET.get('phone_number')
+        if phone_number:
+            queryset = queryset.filter(number__icontains=phone_number)
+        return queryset
+
     def get_queryset(self):
         user = self.request.user
         
@@ -258,6 +343,8 @@ class BankListView(LoginRequiredMixin, generic.ListView):
             queryset = BankNumbers.objects.filter(organisation=user.userprofile).order_by('date_added')
         else:
             queryset = BankNumbers.objects.filter(organisation=user.agent.organisation).order_by('date_added')
+
+        queryset = self.filter_queryset(queryset)
 
         return queryset
     
@@ -1770,6 +1857,12 @@ class SaleCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
         sale.save()
         return super(SaleCreateView, self).form_valid(form)
 
+    def get_initial(self):
+        initial = super(SaleCreateView, self).get_initial()
+        # Set the initial value for jalali_date to the current date
+        initial['jalali_date'] = jdatetime.date.fromgregorian(date=localtime()).strftime('%Y-%m-%d')
+        return initial
+
 class SaleUpdateView(LoginRequiredMixin, generic.UpdateView):
     template_name = "leads/sales_update.html"
     form_class = SaleModelForm
@@ -1785,7 +1878,6 @@ class SaleUpdateView(LoginRequiredMixin, generic.UpdateView):
             )
             # filter for the agent that is logged in
             queryset = queryset.filter(lead=self.kwargs['pk'])
-        print(queryset)
         return queryset
     
     def get_context_data(self, **kwargs):
@@ -1805,26 +1897,34 @@ class LeadSalesEditView(OrganisorAndLoginRequiredMixin, generic.FormView):
 
     def get_form_kwargs(self):
         kwargs = super(LeadSalesEditView, self).get_form_kwargs()
-        sale_instances = Sale.objects.filter(lead_id=self.kwargs['pk'])
-        print(sale_instances)
+        sale_instances = Sale.objects.filter(lead_id=self.kwargs['pk']).order_by('date')
         kwargs.update({
             'queryset': sale_instances,
         })
         return kwargs
 
     def form_valid(self, formset):
-        instances = formset.save(commit=False)
-        for obj in instances:
-            obj.save()
+        print("Formset is being processed in form_valid")
+
+        for form in formset:
+            if form.is_valid() and form.has_changed():
+                form.save()
+        
         return super(LeadSalesEditView, self).form_valid(formset)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         sale_instances = Sale.objects.filter(lead_id=self.kwargs['pk'])
-        context['formset'] = self.get_form()
+        formset = self.get_form()
+
+        # Update each form in the formset with its corresponding instance
+        for form, sale_instance in zip(formset.forms, sale_instances):
+            form.instance = sale_instance
+
+        context['formset'] = formset
         context['lead'] = get_object_or_404(Lead, pk=self.kwargs['pk'])
         context['sale_instances'] = sale_instances
-        return context    
+        return context  
         
 class SaleDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
     model = Sale
@@ -2342,9 +2442,10 @@ class TeamMemberLeadView(OrganisorAndLoginRequiredMixin, generic.ListView):
         
         # Get the start of the Jalali month
         jalali_start_of_month = jdatetime.date(jalali_today.year, jalali_today.month, 1)
-        
+        jalali_start_of_last_month = jdatetime.date(jalali_today.year, jalali_today.month - 1, 1)
         # Convert the start of the Jalali month back to Gregorian
         gregorian_start_of_month = jalali_start_of_month.togregorian()
+        gregorian_start_of_last_month = jalali_start_of_last_month.togregorian()
 
         user = self.request.user
         if user.is_organisor:
@@ -2352,7 +2453,7 @@ class TeamMemberLeadView(OrganisorAndLoginRequiredMixin, generic.ListView):
         else:
             organisation = user.agent.organisation
         agent_id = self.kwargs['agent_id']
-        return Lead.objects.filter(organisation=organisation, agent_id=agent_id, date_assigned__date__range=(gregorian_start_of_month, jalali_today.togregorian())).order_by('-date_assigned')
+        return Lead.objects.filter(organisation=organisation, agent_id=agent_id, date_assigned__date__range=(gregorian_start_of_last_month, jalali_today.togregorian())).order_by('-date_assigned')
 
     def get_context_data(self, **kwargs):
         user = self.request.user
@@ -2542,4 +2643,28 @@ class AssignLeadsView(OrganisorAndLoginRequiredMixin, generic.FormView):
         return kwargs
     
 
-###TODO ---> Duplicate Followup List - Dashboard View - Notify All Agents - Save Messages to database
+###TODO ---> 
+'''
+Duplicate Followup List
+Dashboard View
+Notify All Agents
+Save Messages to database
+### Add Sale Date Created to Form ###
+If agent not active do not send message 
+When updating a lead, update bank number agent too
+Delete leads and messages of an agent if needed
+Low Quality Option modified
+High quality option modified
+Try Except Errors
+Sales Pagination for speeding up the queries
+Team Leader Choices repair
+Send Distribution Report to telegram
+ِDashboard for Register agent to see sales registered to a number 
+Add Instagram Admins account to add numbers
+Add Image Processor
+### Add Bank Number to Leads
+Add Filter to Bank Numbers
+Update Details and Add Sale forms in the table
+Have a Better Navbar (Use Daisy UI)
+### Make Teams show 2 Months of Numbers for every agent ###
+'''

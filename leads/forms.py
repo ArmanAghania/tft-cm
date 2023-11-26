@@ -7,6 +7,11 @@ from jalali_date.fields import JalaliDateField
 from jalali_date.widgets import AdminJalaliDateWidget
 from django.contrib.auth.forms import PasswordChangeForm as AuthPasswordChangeForm
 from django.utils.translation import gettext as _
+from jalali_date import datetime2jalali
+from django.utils.timezone import localtime
+import jdatetime
+import datetime
+
 import logging
 # logger = logging.getLogger(__name__)
 
@@ -276,10 +281,50 @@ class LeadSearchForm(forms.Form):
     query = forms.CharField(label='', widget=forms.TextInput(attrs={'placeholder': 'Search leads...'}), required=False)
 
 class SaleModelForm(forms.ModelForm):
+    jalali_date = JalaliDateField(
+        label='Sale Date (Jalali)',
+        widget=AdminJalaliDateWidget(attrs={'class': 'jalali_date-input'}),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(SaleModelForm, self).__init__(*args, **kwargs)
+        if self.instance and self.instance.pk and self.instance.date:
+            # Convert the instance's Gregorian date to Jalali
+            # Make sure to use jdatetime.date for conversion
+            jalali_date = jdatetime.date.fromgregorian(date=self.instance.date)
+            self.initial['jalali_date'] = jalali_date.strftime('%Y-%m-%d')
+
+        self.fields['jalali_date'] = JalaliDateField(widget=AdminJalaliDateWidget(), required=False, label=_('Date'))
+        
+
     class Meta:
         model = Sale
-        fields = ("amount",)
+        fields = ("amount", "jalali_date")
         labels = {'amount': 'Sale Amount'}
+
+    def clean_jalali_date(self):
+        jalali_date = self.cleaned_data.get('jalali_date')
+
+        # Ensure that jalali_date is a string before attempting conversion
+        if isinstance(jalali_date, datetime.date):
+            return jalali_date
+
+        try:
+            parsed_jalali_date = jdatetime.datetime.strptime(jalali_date, '%Y-%m-%d').date()
+            gregorian_date = parsed_jalali_date.togregorian()
+        except ValueError:
+            raise forms.ValidationError("Invalid date format.")
+
+        return gregorian_date
+
+
+    def save(self, commit=True):
+        instance = super(SaleModelForm, self).save(commit=False)
+        instance.date = self.cleaned_data['jalali_date'] or instance.date
+        if commit:
+            instance.save()
+        return instance
 
 class SourceModelForm(forms.ModelForm):
     class Meta:
