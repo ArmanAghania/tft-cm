@@ -57,6 +57,7 @@
                     <div class="mb-8 p-4 sm:p-6 border border-gray-200 rounded-lg shadow-sm">
                         <div class="mb-4">
                             <!-- Amount Field -->
+                            {{ form.id }}
                             <label for="{{ form.amount.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-700">
                                 {{ form.amount.label }}
                             </label>
@@ -66,13 +67,7 @@
                         </div>
 
                         <div>
-                            <!-- Jalali Date Field -->
-                            {% comment %} <label for="{{ form.jalali_date.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-700">
-                                {{ form.jalali_date.label }}
-                            </label>
-                            <input type="text" id="{{ form.jalali_date.id_for_label }}" name="{{ form.jalali_date.html_name }}"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                                value="{{ form.jalali_date.value }}" placeholder="YYYY-MM-DD"> {% endcomment %}
+
                                 <div class="relative ">
                                     <label for="{{ form.jalali_date.id_for_label }}" class="block text-sm font-medium text-gray-700">
                                         {{ form.jalali_date.label }}
@@ -86,6 +81,8 @@
                                 {% trans 'Delete' %}
                             </a>
                     </div>
+                    {{ form.non_field_errors }}
+                    {{ form.errors }}
                 {% endfor %}
                 <button type="submit" class="w-full text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
                     {% trans 'Update Sales' %}

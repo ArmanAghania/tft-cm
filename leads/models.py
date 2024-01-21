@@ -263,3 +263,15 @@ class ChatSetting(models.Model):
     def load(cls):
         obj, created = cls.objects.get_or_create(pk=1)
         return obj
+    
+class TelegramMessage(models.Model):
+    chat_id = models.CharField(max_length=100)
+    chat_name = models.CharField(max_length=255, blank=True, null=True)  # Field for storing the chat's name
+    message_id = models.IntegerField()
+    text = models.TextField()
+    sent_date = models.DateTimeField(auto_now_add=True)
+    organisation = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name=_("Organisation"))
+    deleted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Message to {self.chat_name} ({self.chat_id}) on {self.sent_date}"

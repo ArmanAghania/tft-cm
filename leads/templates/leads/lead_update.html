@@ -71,4 +71,26 @@
 
     <link rel="stylesheet" type="text/css" href="{% static  'admin/jquery.ui.datepicker.jalali/themes/base/jquery-ui.min.css' %}">
     <script type="text/javascript" charset="utf8" src={% static "admin/js/django_jalali.min.js" %}></script>
+    <script>
+        {% if request.user.is_agent %}
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                // Disable the visible input fields
+                $('.phone-number-field, .category-field, .source-field').prop('disabled', true);
+
+                // Create hidden input fields with the same values
+                $('.phone-number-field, .category-field, .source-field').each(function() {
+                    
+                    var fieldName = $(this).attr('name');
+                    var fieldValue = $(this).val();
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: fieldName,
+                        value: fieldValue
+                    }).appendTo('form'); // Append to the form element
+                });
+            });
+        </script>
+        {% endif %}
 {% endblock content %}

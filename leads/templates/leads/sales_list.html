@@ -6,7 +6,7 @@
 {% block content %}
 <h1 class="text-4xl text-gray-800">{% trans "Sales" %}</h1>
 </br>
-<div class="flex flex-col w-full">
+{% comment %} <div class="flex flex-col w-full">
 <div class="flex flex-wrap -m-4 text-center">
     <div class="p-4 md:w-1/4 sm:w-1/2 w-full">
         <div class="border-2 border-gray-200 px-4 py-6 rounded-lg">
@@ -108,7 +108,7 @@
 </div>
 </div>
 <hr/>
-</br>
+</br> {% endcomment %}
 
     <div class="flex mb-4">
         <button class="tab-selector w-1/2 py-2" data-target="allSalesContent">{% trans "All Sales" %}</button>
@@ -265,7 +265,7 @@
         });
     });
     
-    const closeModalBtn = document.getElementById('closeModal');
+    {% comment %} const closeModalBtn = document.getElementById('closeModal');
                 const modal = document.getElementById('chartModal');
                 const overlay = document.getElementById('modalOverlay');
                 const chartTitle = document.getElementById('chartTitle');
@@ -318,7 +318,7 @@
                             });
                         });
                     }
-    
+     {% endcomment %}
 </script>
 
 <!-- DataTables CSS -->

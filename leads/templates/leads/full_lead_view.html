@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block content %}
+<hr>
+<form method="get" class="flex items-center justify-center my-4">
+    <label for="month-select" class="mr-2 text-lg text-gray-700">Select Month:</label>
+    <div class="relative">
+        <select id="month-select" name="month" onchange="this.form.submit()" class="block appearance-none w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+            <option value="">Select Month</option>
+            {% generate_range 1 12 as month_range %}
+            {% for i in month_range %}
+                <option value="{{ i }}" {% if request.GET.month|default:now_jalali_month|stringformat:"s" == i|stringformat:"s" %} selected {% endif %}>
+                    {{ i|to_jalali_month }}
+                </option>
+            {% endfor %}
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M5.5 7l4.5 4.5L14.5 7z"/>
+            </svg>
+        </div>
+    </div>
+</form>
+
+<br>
+<div class="container">
+    <p>Total Leads: {{ lead_count }}</p>
+    <br>
+    <!-- Display leads in a table format -->
+    <div class="flex flex-col w-full">
+        <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+            <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200 text-center" id="lead-table">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Pesented" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Phone Number" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "First Name" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Last Name" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "City" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Age" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Category" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Feedback" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Proposed Price" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Registered Price" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Sales" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Date Assigned" %}
+                        </th>
+                    </tr>
+                </thead>
+            <tbody>
+                {% for lead in lead_list %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center" >
+                            {% if lead.is_presented %}
+                                ✔️
+                            {% else %}
+                                ❌
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {% if lead.total_sale > 0 %}
+                                <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-green-800 hover:text-indigo-900 rounded-full bg-green-200">
+                                    {{ lead.phone_number }}
+                                </a>
+                            {% elif lead.low_quality %}
+                                <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-red-700 hover:text-indigo-900 rounded-full bg-red-200">
+                                    {{ lead.phone_number }}
+                                </a>
+                            {% else %}
+                                <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-indigo-700 hover:text-indigo-900">
+                                    {{ lead.phone_number }}
+                                </a>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {{ lead.first_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {{ lead.last_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {{ lead.city }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {{ lead.age }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                            {{ lead.category }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ lead.followups.last.notes|truncatechars:30 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ lead.proposed_price|intcomma }} {% trans "Tomans" %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ lead.registered_price|intcomma }} {% trans "Tomans" %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ lead.total_sale|intcomma }} {% trans "Tomans" %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ lead.date_assigned|to_jalali }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="12">No leads found.</td>
+                        </tr>
+                {% endfor %}
+            </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'jalali_date',
     'background_task',
     'debug_toolbar',
+    'rest_framework',
     # Local apps
     "leads",
     "agents",
@@ -52,7 +53,7 @@ INSTALLED_APPS = [
 ]
 
 JALALI_DATE_DEFAULTS = {
-   'Strftime': {
+    'Strftime': {
         'date': '%y/%m/%d',
         'datetime': '%H:%M:%S _ %y/%m/%d',
     },
@@ -102,6 +103,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                'leads.context_processors.language_code_context',
             ],
         },
     },

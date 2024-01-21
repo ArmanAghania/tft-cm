@@ -29,13 +29,24 @@
         </div>
         {% endif %}
     </div>
+    <div class="mb-4">
+        <form method="get" action="{% url 'leads:bank-list' %}" class="flex items-center">
+            <label for="phone_number" class="block text-gray-700 text-md font-bold mr-2">{% trans "Filter by Phone Number: " %}</label>
+            <input type="text" id="phone_number" name="phone_number" class="appearance-none border rounded flex-1 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="{% trans "Enter phone number" %}">
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2" type="submit">{% trans "Filter" %}</button>
+            <a href="{% url 'leads:bank-list' %}" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2" >{% trans "Clear Filters" %}</a>
+        </form>
+    </div>
+    
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    {% if request.user.is_organisor %}
     <div class="w-full justify-center">
         <!-- Search Input -->
     <input type="text" id="searchInput" placeholder="Search leads..." class="p-2 border rounded w-full" onkeyup="searchLeads()">
 
-<!-- Search Results Container (initially empty) -->
-<div id="searchResults" class="w-full mt-2 border-t border-gray-200 bg-white shadow-lg max-h-64 overflow-auto z-10"></div>
+    <!-- Search Results Container (initially empty) -->
+    <div id="searchResults" class="w-full mt-2 border-t border-gray-200 bg-white shadow-lg max-h-64 overflow-auto z-10"></div>
+{% endif %}
     <div class="flex flex-col w-full">
         <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
@@ -43,19 +54,20 @@
             <table class="min-w-full divide-y divide-gray-200" id="lead-table">
                 <thead class="bg-gray-50">
                     <tr>
-                        
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onClick="sortTable(0)" >
                         {% trans "Cell Phone Number" %}
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onClick="sortTable(2)">
                             {% trans "Agent" %}
-                            </th>
+                        </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onClick="sortTable(5)">
                             {% trans "Date Added" %}
-                            </th>
+                        </th>
+                        {% if request.user.is_organisor %}
                         <th scope="col" class="relative px-6 py-3">
                             <span class="sr-only">{% trans "Edit" %}</span>
                         </th>
+                        {% endif %}
                         <th scope="col" class="relative px-6 py-3">
                             <span class="sr-only">{% trans "Add to Leads" %}</span>
                         </th>
@@ -99,9 +111,11 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ bank_number.date_added_jalali }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <a href="{% url 'leads:bank-update' bank_number.pk %}">{% trans "Edit"%}
-                            </td>
+                            {% if request.user.is_organisor %}
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <a href="{% url 'leads:bank-update' bank_number.pk %}">{% trans "Edit"%}
+                                </td>
+                            {% endif %}
                             <td class="px-2 text-indigo-700 hover:text-indigo-900" style="background-color: white !important;">
                                 <form action="{% url 'leads:create_lead_from_banknumber' bank_number.pk %}" method="post">
                                     {% csrf_token %}

@@ -55,6 +55,140 @@
             justify-content: center; /* Center children horizontally */
             width: 100%; /* Make sure the container spans the entire width */
         }
+
+        .small-input {
+            height: 28px; /* Reduced height */
+            font-size: 0.875rem; /* Smaller font size */
+            padding: 0 0.5rem; /* Reduced padding */
+        }
+        
+        .small-select {
+            height: 28px;
+            font-size: 0.875rem;
+        }
+        
+        .small-textarea {
+            font-size: 0.875rem;
+            padding: 0.25rem;
+        }
+
+        .scrollable-table-body {
+            overflow-y: auto;
+            max-height: 400px; /* Adjust as needed */
+        }
+        
+        .fixed-header th {
+            position: sticky;
+            top: 0;
+            background-color: #fff; /* Or your table header background color */
+        }
+
+        .form-transition {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            visibility: hidden;  /* Add visibility property */
+            transition: max-height 0.5s ease-out, opacity 0.5s ease-out, visibility 0.5s ease-out;
+        }
+    
+        .form-transition.open {
+            max-height: 1000px; /* Adjust as needed */
+            opacity: 1;
+            visibility: visible;  /* Update visibility when open */
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+            align-items: stretch; /* Ensure elements in form-group stretch to fill the space */
+        }
+
+        .form-group select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+        }
+        
+        .form-group select:disabled {
+            background-color: #f3f3f3;
+        }
+        
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: bold; /* Make labels bold */
+            color: #333; /* Darker text for better readability */
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 8px; /* Add padding for better touch interaction */
+            border: 1px solid #ccc; /* Add a subtle border */
+            border-radius: 4px; /* Rounded corners for inputs */
+            font-size: 1rem; /* Increase font size for better readability */
+        }
+        
+        /* Focus styles for form inputs */
+        .form-group input:focus, 
+        .form-group select:focus, 
+        .form-group textarea:focus {
+            outline: none; /* Remove default outline */
+            border-color: #007bff; /* Highlight with a blue border */
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); /* Add a subtle glow */
+        }
+        
+        .form-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .form-content .form-group {
+            flex: 1 1 200px; /* Each form group will take a minimum of 200px space */
+        }
+        
+        /* Styles for small screens */
+        @media (max-width: 768px) {
+            .form-content {
+                flex-direction: column;
+            }
+        
+            .form-content .form-group {
+                flex: 1 1 auto; /* Each form group will take full width on small screens */
+                width: 30rem
+            }
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s; /* Smooth transition for hover effect */
+        }
+        
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .form-group select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%; /* Ensures the select field takes the full width of its container */
+            height: 38px; /* Adjust height to match your input fields */
+        }
+        
+        .form-group select:disabled {
+            background-color: #f3f3f3;
+            color: #666; /* Change text color for disabled selects for better readability */
+        }
+
+        
     </style>
 <hr>
 </br>
@@ -103,6 +237,11 @@
                         <button class="mx-2 px-4 py-2 bg-blue-600 text-white rounded justify-center flex w-1/2" id="stopTasksBtn">{% trans "Stop Tasks" %}</button>
                     </div>
 
+                    {% comment %} <form action="{% url 'leads:sync-leads' %}" method="post" class='disabled'>
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary disabled">Sync Leads with Bank Numbers</button>
+                    </form> {% endcomment %}
+
                     <!-- Modal for logs -->
                     <div id="logModal" class="modal">
                         <div class="modal-content">
@@ -113,11 +252,19 @@
                     
                     
         
-                 {% endif %} 
+                {% endif %} 
     <div class="w-full justify-center">
         <!-- Search Input -->
-    <input type="text" id="searchInput" placeholder="Search leads..." class="p-2 border rounded w-full" onkeyup="searchLeads()">
-
+    <div class="relative w-full py-10">
+        <input type="text" id="searchInput" placeholder="Search leads..." class="p-2 border border-black shadow rounded w-full pl-10" onkeyup="searchLeads()">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-5.2-5.2M15 10a5 5 0 11-10 0 5 5 0 0110 0z"></path>
+            </svg>
+        </div>
+    </div>
     <!-- Search Results Container (initially empty) -->
     <div id="searchResults" class="w-full mt-2 border-t border-gray-200 bg-white shadow-lg max-h-64 overflow-auto z-10"></div>
 
@@ -135,8 +282,12 @@
                     <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:source-list' %}">
                         {% trans "View Sources" %}
                     </a>
-                    {% comment %} <h1 class=" text-l text-gray-400">{% trans "There Are" %} {{bank_numbers.bank_total}} {% trans "Leads in the Bank" %}</h1> {% endcomment %}
+                </br>
+                {% comment %} <h1 class=" text-l text-gray-400">{% trans "There Are" %} {{bank_numbers.bank_total}} {% trans "Leads in the Bank" %}</h1> {% endcomment %}
                 {% endif %}
+                <a class="text-gray-500 hover:text-blue-500" href="{% url 'leads:full-lead-list' %}">
+                    {% trans "Show Full View" %}
+                </a>
             </div>
             <div>
                 {% if request.user.is_organisor %}
@@ -197,50 +348,54 @@
             
         </div>
         <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
-        <form method="GET" action="" class="flex justify-left">
-            <!-- Your existing form elements, if any -->
         
-            <!-- Add these two buttons -->
-            <button type="submit" name="filter_date" value="all" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans 'All' %}</button>
-            <button type="submit" name="filter_date" value="today" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans 'Today' %}</button>
-            <button type="submit" name="filter_date" value="yesterday" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{{ jalali_yesterday }}</button>
-            <button type="submit" name="filter_date" value="day_before" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{{ jalali_day_before }}</button>
-            
-            <div x-data="{ open: false }" class="relative  text-left">
-                <div>
-                    <button @click="open = !open" type="button" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">
-                {% trans "..." %}
-                        {% comment %} <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg> {% endcomment %}
-                    </button>
-                </div>
-                
-                <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                    <div class="py-1" role="none">
-                        <!-- Dropdown items (filters) -->
-                        <form method="GET" action="{% url 'leads:lead-list' %}">
-                            <!-- Display only the Jalali date field -->
-                            <label for="{{ filter_form.date_assigned_jalali.id_for_label }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                                {{ filter_form.date_assigned_jalali.label }}:
-                                {% render_field filter_form.date_assigned_jalali class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %}
-                            </label>
-                            <div class="px-4 py-1">
-                                <button type="submit" class="w-full text-sm text-left text-white bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1">{% trans "Apply Filter" %}</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </form> 
         
         <div class="flex flex-col w-full">
-            <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div class="-my-2 overflow-x-auto">
             <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-                <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200 text-center" id="lead-table">
+                <div class="shadow border-b border-gray-200 sm:rounded-lg">
+                    <form method="GET" action="" class="flex justify-left p-5">
+                        <!-- Your existing form elements, if any -->
+                    
+                        <!-- Add these two buttons -->
+                        <button type="submit" name="filter_date" value="all" class="m-1 inline-flex items-center bg-gray-200 border-0 py-1 px-2 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans 'All' %}</button>
+                        <button type="submit" name="filter_date" value="today" class="m-1 inline-flex items-center bg-gray-200 border-0 py-1 px-2 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{% trans 'Today' %}</button>
+                        <button type="submit" name="filter_date" value="yesterday" class="m-1 inline-flex items-center bg-gray-200 border-0 py-1 px-2 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{{ jalali_yesterday }}</button>
+                        <button type="submit" name="filter_date" value="day_before" class="m-1 inline-flex items-center bg-gray-200 border-0 py-1 px-2 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">{{ jalali_day_before }}</button>
+                        
+                        <div x-data="{ open: false }" class="relative  text-left">
+                            <div>
+                                <button @click="open = !open" type="button" class="m-2 inline-flex items-center bg-gray-200 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 rounded text-base mt-4 md:mt-0">
+                            {% trans "..." %}
+                                    {% comment %} <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg> {% endcomment %}
+                                </button>
+                            </div>
+                            
+                            <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                                <div class="py-1" role="none">
+                                    <!-- Dropdown items (filters) -->
+                                    <form method="GET" action="{% url 'leads:lead-list' %}">
+                                        <!-- Display only the Jalali date field -->
+                                        <label for="{{ filter_form.date_assigned_jalali.id_for_label }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                                            {{ filter_form.date_assigned_jalali.label }}:
+                                            {% render_field filter_form.date_assigned_jalali class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %}
+                                        </label>
+                                        <div class="px-4 py-1">
+                                            <button type="submit" class="w-full text-sm text-left text-white bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1">{% trans "Apply Filter" %}</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </form> 
+                <table class="min-w-full leading-normal" id="lead-table">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {% trans "Quick Update" %}
+                            </th>
                             <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {% trans "Pesented" %}
                             </th>
@@ -297,19 +452,23 @@
                                 <span class="sr-only">{% trans "Edit" %}</span>
                             </th>
                         </tr>
+                        
                     </thead>
-                    <tbody>
+                    <tbody class="scrollable-table-body">
                         {% for lead in page_obj %}
-                        <tr class="bg-white border-b">
-                                <form method="post" action="{% url 'leads:lead-update' lead.id%}">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center" >
+                        <tr class="bg-white even:bg-gray-50 border-b transition duration-300 ease-in-out hover:bg-gray-100">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <button onclick="toggleAndLoadEditForm('edit-form-{{ lead.id }}', {{ lead.id }})">➕</button>
+                            </td>
+                            <form method="post" action="{% url 'leads:lead-update' lead.id%}">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center" id="lead-is-presented-{{ lead.id }}">
                                     {% if lead.is_presented %}
                                         ✔️
                                     {% else %}
                                         ❌
                                     {% endif %}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                <td id="lead-phone-number-{{ lead.id }}" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {% if lead.total_sale > 0 %}
                                         <a href="{% url 'leads:lead-update' lead.pk %}" class="px-2 text-green-800 hover:text-indigo-900 rounded-full bg-green-200">
                                             {{ lead.phone_number }}
@@ -324,27 +483,27 @@
                                         </a>
                                     {% endif %}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"  id="lead-first-name-{{ lead.id }}">
                                     {{ lead.first_name }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"  id="lead-last-name-{{ lead.id }}">
                                     {{ lead.last_name }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"  id="lead-city-{{ lead.id }}">
                                     {{ lead.city }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"  id="lead-age-{{ lead.id }}">
                                     {{ lead.age }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"  id="lead-category-{{ lead.id }}">
                                     {{ lead.category }}
                                 </td>
                                 {% if request.user.is_organisor %}
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"  id="lead-source-{{ lead.id }}">
                                     {{ lead.source }}
                                 </td>
                                 {% endif %}
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap"  id="lead-agent-{{ lead.id }}">
                                     {% if lead.agent %}
                                         {% if lead.agent.user.rank == 1 %}
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -376,11 +535,19 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ lead.followups.last.notes|truncatechars:30 }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" id="lead-proposed_price-{{ lead.id }}">
+                                    {% if proposed_price == None %}
+                                    {% trans "0 Tomans" %}
+                                    {% else %}
                                     {{ lead.proposed_price|intcomma }} {% trans "Tomans" %}
+                                    {% endif %}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" id="lead-registered_price-{{ lead.id }}">
+                                    {% if registered_price == None %}
+                                    {% trans "0 Tomans" %}
+                                    {% else %}
                                     {{ lead.registered_price|intcomma }} {% trans "Tomans" %}
+                                    {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ lead.total_sale|intcomma }} {% trans "Tomans" %}
@@ -417,6 +584,13 @@
                                 {% endif %}
                             </form>
                             </tr> 
+                            <tr class="hidden form-transition" id="edit-form-{{ lead.id }}">
+                                <td colspan="100%" class="bg-gray-100 p-4">
+                                    <!-- Dynamic form content will be loaded here -->
+                                    <div class="form-content"></div>
+                                </td>
+                            </tr>
+                            
                         {% empty %}
                         {% if request.user.is_organisor %}
                         <p>{% trans "There are currently No Leads" %}</p>
@@ -532,11 +706,14 @@
                     }
                 }
 
-                    // Reference modal and elements
-                    var modal_log = document.getElementById("logModal");
-                    var span = document.getElementsByClassName("close")[0];
-                    var logOutput = document.getElementById("logOutput");
+                var isOrganisor = {{ request.user.is_organisor|yesno:"true,false" }};
 
+                // Reference modal and elements
+                if (isOrganisor) {
+                    // Elements and modal_log should be defined or selected from the DOM
+                    var modal_log = document.getElementById('yourModalLogElementId'); // Replace with actual ID
+                    var logOutput = document.getElementById('yourLogOutputElementId'); // Replace with actual ID
+            
                     // When the user clicks on the button, open the modal
                     document.getElementById('runTasksBtn').addEventListener('click', function() {
                         fetch('run_background_tasks/')
@@ -550,7 +727,7 @@
                             }
                         });
                     });
-
+            
                     // When the user clicks on the "Stop Tasks" button, stop the background tasks
                     document.getElementById('stopTasksBtn').addEventListener('click', function() {
                         fetch('stop_background_tasks/') // Endpoint to stop background tasks
@@ -563,18 +740,338 @@
                             }
                         });
                     });
-
                     // When the user clicks on <span> (x), close the modal
                     span.onclick = function() {
                         modal_log.style.display = "none";
                     }
-
                     // When the user clicks anywhere outside of the modal, close it
                     window.onclick = function(event) {
                         if (event.target == modal) {
                             modal_log.style.display = "none";
                         }
                     }
+                }
+
+
+                function toggleAndLoadEditForm(formId, leadId) {
+                    const formContainer = document.getElementById(formId);
+                    const formContentDiv = formContainer.querySelector('.form-content');
+                
+                    if (formContentDiv.innerHTML.trim() === '') {
+                        fetch(`/leads/api/lead/${leadId}/edit/`)
+                            .then(response => response.json())
+                            .then(data => {
+                                // Create the form element
+                                const form = document.createElement('form');
+                                form.className = 'form-content';
+                                form.method = 'post';
+                                form.action = `${leadId}/update/`;
+                
+                                // Create and append dropdowns
+                                form.appendChild(createDropdown('agent', data.agent_choices, data.agent ? data.agent.id : null, data.is_user_organisor, 'Agent'));
+                                form.appendChild(createDropdown('source', data.source_choices, data.source ? data.source.id : null, data.is_user_organisor, 'Source'));
+                                form.appendChild(createDropdown('category', data.category_choices, data.category ? data.category.id : null, data.is_user_organisor, 'Category'));
+                
+                                // Add other form fields
+                                const fields = [
+                                    { name: 'first_name', type: 'text', placeholder: 'First Name', value: data.first_name },
+                                    { name: 'last_name', type: 'text', placeholder: 'Last Name', value: data.last_name },
+                                    { name: 'job', type: 'text', placeholder: 'Job', value: data.job },
+                                    { name: 'city', type: 'text', placeholder: 'City', value: data.city },
+                                    { name: 'state', type: 'text', placeholder: 'State', value: data.state },
+                                    { name: 'country', type: 'text', placeholder: 'Country', value: data.country },
+                                    { name: 'age', type: 'number', placeholder: 'Age', value: data.age },
+                                    { name: 'is_presented', type: 'checkbox', label: 'Is Presented', value: data.is_presented },
+                                    { name: 'low_quality', type: 'checkbox', label: 'Low Quality', value: data.low_quality },
+                                    { name: 'birthday', type: 'date', placeholder: 'Birthday', value: data.birthday },
+                                    { name: 'proposed_price', type: 'number', placeholder: 'Proposed Price', value: data.proposed_price },
+                                    { name: 'registered_price', type: 'number', placeholder: 'Registered Price', value: data.registered_price },
+                                    { name: 'phone_number', type: 'text', placeholder: 'Phone Number', value: data.phone_number, readonly: true }
+                                ];
+                
+                                fields.forEach(field => {
+                                    // Create a container for each field
+                                    const fieldContainer = document.createElement('div');
+                                    fieldContainer.className = 'mb-4';
+                                
+                                    // Create a label for the field
+                                    const label = document.createElement('label');
+                                    label.className = 'block text-gray-700 text-sm font-bold mb-2 text-left px-2';
+                                    label.textContent = field.placeholder; // Using placeholder as label text
+                                    fieldContainer.appendChild(label);
+                                
+                                    // Create the input field
+                                    let input;
+                                    if (field.type === 'checkbox') {
+                                        input = createCheckbox(field);
+                                    } else {
+                                        input = createInput(field);
+                                    }
+                                    
+                                    fieldContainer.appendChild(input);
+                                    form.appendChild(fieldContainer);
+                                });
+                
+                                // Append the submit button
+                                const submitButton = document.createElement('button');
+                                submitButton.type = 'submit';
+                                submitButton.className = 'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-1/4';
+                                submitButton.textContent = 'Save';
+                                form.appendChild(submitButton);
+                
+                                // Clear existing content and append the new form
+                                formContentDiv.innerHTML = '';
+                                formContentDiv.appendChild(form);
+                
+                                // Add form submit event listener
+                                form.addEventListener('submit', function(event) {
+                                    event.preventDefault();
+                                    submitFormAjax(form, leadId);
+                                });
+                            })
+                            .catch(error => {
+                                console.error('Error loading the form:', error);
+                            });
+                    }
+                
+                    toggleFormVisibility(formContainer);
+                }
+
+                function createInput(field) {
+                    const input = document.createElement('input');
+                    input.type = field.type;
+                    input.name = field.name;
+                    input.placeholder = field.placeholder;
+                    input.value = field.value || '';
+                    input.className = 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline';
+                    if (field.readonly) {
+                        input.readOnly = true;
+                        input.className += ' bg-gray-100';
+                    }
+                    return input;
+                }
+                
+                function createCheckbox(field) {
+                    const label = document.createElement('label');
+                    label.className = 'block align-left text-left text-gray-700 text-sm font-bold m-2';
+                
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = field.name;
+                    checkbox.checked = field.value;
+                    checkbox.className = 'mr-2 leading-tight';
+                
+                    label.appendChild(checkbox);
+                    label.append(field.label); // Append the text node directly
+                
+                    return label;
+                }
+                
+
+                function createDropdown(name, choices, selectedId, isEditable, label) {
+                    const formGroup = document.createElement('div');
+                    formGroup.className = 'form-group mb-4';
+                
+                    const labelElement = document.createElement('label');
+                    labelElement.textContent = label;
+                    labelElement.className = 'block text-left text-gray-700 text-sm font-bold mb-2';
+                    formGroup.appendChild(labelElement);
+                
+                    const select = document.createElement('select');
+                    select.name = name;
+                    select.className = 'block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline';
+                
+                    if (!isEditable && selectedId) {
+                        const selectedOption = choices.find(choice => choice.id == selectedId);
+                        if (selectedOption) {
+                            const option = document.createElement('option');
+                            option.value = selectedOption.id;
+                            option.textContent = selectedOption.user__alt_name || selectedOption.name;
+                            option.selected = true;
+                            select.appendChild(option);
+                        }
+                    } else {
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = '';
+                        defaultOption.textContent = '--------';
+                        select.appendChild(defaultOption);
+                
+                        choices.forEach(choice => {
+                            const option = document.createElement('option');
+                            option.value = choice.id;
+                            option.textContent = choice.user__alt_name || choice.name;
+                            if (selectedId == choice.id) {
+                                option.selected = true;
+                            }
+                            select.appendChild(option);
+                        });
+                    }
+                
+                    select.disabled = !isEditable;
+                    formGroup.appendChild(select);
+                    return formGroup;
+                }
+                
+                
+                
+                
+                
+
+                function toggleFormVisibility(formContainer) {
+                    if (formContainer.classList.contains('hidden')) {
+                        formContainer.classList.remove('hidden');
+                        setTimeout(() => {
+                            formContainer.classList.add('open');
+                            formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 10);
+                    } else {
+                        formContainer.classList.remove('open');
+                        setTimeout(() => {
+                            formContainer.classList.add('hidden');
+                        }, 500);
+                    }
+                }
+                
+                function submitFormAjax(form, leadId) {
+                    const formData = new FormData(form);
+                
+                    // Explicitly handle checkbox fields
+                    const isPresentedCheckbox = form.querySelector('input[name="is_presented"]');
+                    if (isPresentedCheckbox) {
+                        formData.set('is_presented', isPresentedCheckbox.checked);
+                    }
+                
+                    const lowQualityCheckbox = form.querySelector('input[name="low_quality"]');
+                    if (lowQualityCheckbox) {
+                        formData.set('low_quality', lowQualityCheckbox.checked);
+                    }
+                
+                    // Manually append values of disabled fields
+                    form.querySelectorAll('select:disabled').forEach(select => {
+                        formData.append(select.name, select.value);
+                    });
+                
+                    const csrfToken = getCsrfToken();
+                
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest'  // Indicate an AJAX request
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Form submitted successfully:', data);
+                        updateLeadInformationInTable(leadId, data);
+                        const formContainer = form.closest('.form-transition');
+                        if (formContainer) {
+                            formContainer.classList.add('hidden');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error submitting the form:', error);
+                    });
+                }
+                
+                
+                
+                function updateLeadInformationInTable(leadId, data) {
+                    // Update the table with new lead information
+                
+                    document.getElementById(`lead-first-name-${leadId}`).textContent = data.first_name ? data.first_name : 'None';
+                    document.getElementById(`lead-last-name-${leadId}`).textContent = data.last_name ? data.last_name : 'None';
+                    document.getElementById(`lead-city-${leadId}`).textContent = data.city ? data.city : 'None';
+                    document.getElementById(`lead-age-${leadId}`).textContent = data.age ? data.age : 'None';
+                    document.getElementById(`lead-proposed_price-${leadId}`).textContent = data.proposed_price + 'Tomans' ? data.proposed_price : ' 0 Tomans';
+                    document.getElementById(`lead-registered_price-${leadId}`).textContent = data.registered_price + 'Tomans' ? data.registered_price : '0 Tomans';
+                    
+                    // Update the table with new lead information
+                    // document.getElementById(`lead-category-${leadId}`).textContent = data.category + 'Tomans' ? data.registered_price : '0 Tomans';
+                    // document.getElementById(`lead-source-${leadId}`).textContent = data.registered_price + 'Tomans' ? data.registered_price : '0 Tomans';
+                    // document.getElementById(`lead-agent-${leadId}`).textContent = data.registered_price + 'Tomans' ? data.registered_price : '0 Tomans';
+                    
+                    const phoneNumberElement = document.getElementById(`lead-phone-number-${leadId}`);
+                    if (phoneNumberElement) {
+                        let classList = 'px-2 hover:text-indigo-900 rounded-full';
+                        let textClass = 'text-indigo-700';
+
+                        if (data.total_sale > 0) {
+                            textClass = 'text-green-800 bg-green-200';
+                        } else if (data.low_quality) {
+                            textClass = 'text-red-700 bg-red-200';
+                        }
+
+                        phoneNumberElement.innerHTML = `<a href="/leads/lead-update/${leadId}/" class="${textClass} ${classList}">
+                                                            ${data.phone_number}
+                                                        </a>`;
+                    }
+
+                    const isPresentedElement = document.getElementById(`lead-is-presented-${leadId}`);
+                    if (isPresentedElement) {
+                        isPresentedElement.textContent = data.is_presented ? '✔️' : '❌';
+                    }
+                    // ... update other elements similarly ...
+                     // Update category, source, and agent
+                    console.log(data.category, data.source, data.agent)
+                    const categoryElement = document.getElementById(`lead-category-${leadId}`);
+                    if (categoryElement) {
+                        categoryElement.textContent = data.category ? data.category : 'None';
+                    }
+
+                    const sourceElement = document.getElementById(`lead-source-${leadId}`);
+                    if (sourceElement) {
+                        sourceElement.textContent = data.source ? data.source : 'None';
+                    }
+
+                    const agentElement = document.getElementById(`lead-agent-${leadId}`);
+                    if (agentElement) {
+                        // Assuming the agent name is in `user__alt_name` attribute in `data.agent`
+                        agentElement.textContent = data.agent ? data.agent : 'None';
+                    }
+                }
+
+                function updateElementText(elementId, newText) {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.textContent = newText;
+                    }
+                }
+                
+                function toggleFormVisibility(formContainer) {
+                    if (formContainer.classList.contains('hidden')) {
+                        formContainer.classList.remove('hidden');
+                        setTimeout(() => {
+                            formContainer.classList.add('open');
+                            formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 10);
+                    } else {
+                        formContainer.classList.remove('open');
+                        setTimeout(() => {
+                            formContainer.classList.add('hidden');
+                        }, 500);
+                    }
+                }
+                
+                function getCsrfToken() {
+                    let csrfToken = null;
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.startsWith('csrftoken=')) {
+                            csrfToken = cookie.substring('csrftoken='.length, cookie.length);
+                            break;
+                        }
+                    }
+                    return csrfToken;
+                }
+
                 </script>
                 
                 </div>

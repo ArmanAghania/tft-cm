@@ -17,6 +17,7 @@ import logging
 
 User = get_user_model()
 
+
 class LeadModelForm(forms.ModelForm):
 
     class Meta:
@@ -39,9 +40,16 @@ class LeadModelForm(forms.ModelForm):
             "category",
             'source',
         )
+
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Get the user from the keyword arguments
+        # Get the user from the keyword arguments
+        user = kwargs.pop('user', None)
         super(LeadModelForm, self).__init__(*args, **kwargs)
+
+        self.fields['agent'].widget.attrs['class'] = 'agent-field'
+        self.fields['phone_number'].widget.attrs['class'] = 'phone-number-field'
+        self.fields['category'].widget.attrs['class'] = 'category-field'
+        self.fields['source'].widget.attrs['class'] = 'source-field'
 
         if user:
             if user.is_organisor:
@@ -57,14 +65,16 @@ class LeadModelForm(forms.ModelForm):
                 self.fields['agent'].widget.attrs['readonly'] = True
                 self.fields['phone_number'].widget.attrs['readonly'] = True
 
-            
-            self.fields['category'].queryset = Category.objects.filter(organisation=organisation)
-            self.fields['source'].queryset = Source.objects.filter(organisation=organisation)
-            self.fields['agent'].queryset = Agent.objects.filter(organisation=organisation)
-            
-        self.fields['birthday'] = JalaliDateField(widget=AdminJalaliDateWidget(), required=False, label='Birthday')
+            self.fields['category'].queryset = Category.objects.filter(
+                organisation=organisation)
+            self.fields['source'].queryset = Source.objects.filter(
+                organisation=organisation)
+            self.fields['agent'].queryset = Agent.objects.filter(
+                organisation=organisation)
 
- 
+        self.fields['birthday'] = JalaliDateField(
+            widget=AdminJalaliDateWidget(), required=False, label='Birthday')
+
     def clean_category(self):
         instance = getattr(self, 'instance', None)
         user = self.initial.get('user')
@@ -73,7 +83,7 @@ class LeadModelForm(forms.ModelForm):
             return instance.category
         else:
             return self.cleaned_data['category']
-        
+
     def clean_phone_number(self):
         instance = getattr(self, 'instance', None)
         user = self.initial.get('user')
@@ -82,7 +92,7 @@ class LeadModelForm(forms.ModelForm):
             return instance.phone_number
         else:
             return self.cleaned_data['phone_number']
-    
+
     def clean_source(self):
         instance = getattr(self, 'instance', None)
         user = self.initial.get('user')
@@ -91,7 +101,7 @@ class LeadModelForm(forms.ModelForm):
             return instance.source
         else:
             return self.cleaned_data['source']
-    
+
     def clean_agent(self):
         instance = getattr(self, 'instance', None)
         user = self.initial.get('user')
@@ -100,18 +110,21 @@ class LeadModelForm(forms.ModelForm):
             return instance.agent
         else:
             return self.cleaned_data['agent']
-    
+
+
 class LeadForm(forms.Form):
     first_name = forms.CharField()
     last_name = forms.CharField()
     age = forms.IntegerField(min_value=0)
     # sale_amount = forms.IntegerField(min_value=0)
 
+
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ("username",)
         field_classes = {"username": UsernameField}
+
 
 class AssignAgentForm(forms.Form):
     agent = forms.ModelChoiceField(queryset=Agent.objects.none())
@@ -122,20 +135,24 @@ class AssignAgentForm(forms.Form):
         super(AssignAgentForm, self).__init__(*args, **kwargs)
         self.fields["agent"].queryset = agents
 
+
 class LeadCategoryUpdateForm(forms.ModelForm):
     class Meta:
         model = Lead
         fields = ("category",)
+
 
 class CategoryModelForm(forms.ModelForm):
     class Meta:
         model = Category
         fields = ("name",)
 
+
 class FollowUpModelForm(forms.ModelForm):
     class Meta:
         model = FollowUp
         fields = ("notes", "file")
+
 
 FORMAT_CHOICES = (
     ("xls", "xls"),
@@ -143,10 +160,13 @@ FORMAT_CHOICES = (
     ("json", "json"),
 )
 
+
 class FormatForm(forms.Form):
     format = forms.ChoiceField(
-        choices=FORMAT_CHOICES, widget=forms.Select(attrs={"class": "form-select"})
+        choices=FORMAT_CHOICES, widget=forms.Select(
+            attrs={"class": "form-select"})
     )
+
 
 class LeadImportForm(forms.Form):
     csv_file = forms.FileField()
@@ -157,8 +177,11 @@ class LeadImportForm(forms.Form):
         user = kwargs.pop('user', None)
         super(LeadImportForm, self).__init__(*args, **kwargs)
         if user:
-            self.fields['category'].queryset = Category.objects.filter(organisation=user.userprofile)
-            self.fields['source'].queryset = Source.objects.filter(organisation=user.userprofile)
+            self.fields['category'].queryset = Category.objects.filter(
+                organisation=user.userprofile)
+            self.fields['source'].queryset = Source.objects.filter(
+                organisation=user.userprofile)
+
 
 class BankImportForm(forms.Form):
     csv_file = forms.FileField()
@@ -168,7 +191,9 @@ class BankImportForm(forms.Form):
         user = kwargs.pop('user', None)
         super(BankImportForm, self).__init__(*args, **kwargs)
         if user:
-            self.fields['agent'].queryset = Agent.objects.filter(organisation=user.userprofile)
+            self.fields['agent'].queryset = Agent.objects.filter(
+                organisation=user.userprofile)
+
 
 class LeadImportFormAgents(forms.Form):
     csv_file = forms.FileField()
@@ -180,21 +205,26 @@ class LeadImportFormAgents(forms.Form):
         user = kwargs.pop('user', None)
         super(LeadImportFormAgents, self).__init__(*args, **kwargs)
         if user:
-            self.fields['category'].queryset = Category.objects.filter(organisation=user.userprofile)
-            self.fields['source'].queryset = Source.objects.filter(organisation=user.userprofile)
-            self.fields['agent'].queryset = Agent.objects.filter(organisation=user.userprofile)
+            self.fields['category'].queryset = Category.objects.filter(
+                organisation=user.userprofile)
+            self.fields['source'].queryset = Source.objects.filter(
+                organisation=user.userprofile)
+            self.fields['agent'].queryset = Agent.objects.filter(
+                organisation=user.userprofile)
+
 
 class BankModelForm(forms.ModelForm):
     class Meta:
         model = BankNumbers
         fields = (
             "agent",
-            "number",  
+            "number",
         )
 
     def __init__(self, *args, **kwargs):
         super(BankModelForm, self).__init__(*args, **kwargs)
         self.fields['agent'].required = False
+
 
 class DistributionForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -230,12 +260,13 @@ class DistributionForm(forms.Form):
         if data < 0:
             raise forms.ValidationError("Rank4 leads cannot be negative.")
         return data
-    
+
     def clean_rank5(self):
         data = self.cleaned_data['rank5']
         if data < 0:
             raise forms.ValidationError("Rank5 leads cannot be negative.")
         return data
+
 
 class CategorySelectionForm(forms.Form):
     ORDER_CHOICES = [
@@ -243,15 +274,19 @@ class CategorySelectionForm(forms.Form):
         ('desc', 'Descending')
     ]
 
-    category = forms.ModelChoiceField(queryset=Category.objects.none(), label="Select a Category")
-    alternate_category = forms.ModelChoiceField(queryset=Category.objects.none(), label="Select an Alternate Category")
-    high_quality = forms.BooleanField(required=False, label='High Quality Leads')
-    order_by_date = forms.ChoiceField(choices=ORDER_CHOICES, label='Order by Date', required=False)
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.none(), label="Select a Category")
+    alternate_category = forms.ModelChoiceField(
+        queryset=Category.objects.none(), label="Select an Alternate Category")
+    high_quality = forms.BooleanField(
+        required=False, label='High Quality Leads')
+    order_by_date = forms.ChoiceField(
+        choices=ORDER_CHOICES, label='Order by Date', required=False)
 
     def __init__(self, *args, **kwargs):
         self.wizard_storage = kwargs.pop('wizard_storage', None)
         super().__init__(*args, **kwargs)
-        
+
         if self.wizard_storage:
             user_id = self.wizard_storage.extra_data.get('user_id')
             self.fields['order_by_date'].initial = 'desc'
@@ -259,9 +294,10 @@ class CategorySelectionForm(forms.Form):
                 user = User.objects.get(id=user_id)
                 organisation = user.userprofile
                 categories = Category.objects.filter(organisation=organisation)
-                
+
                 self.fields['category'].queryset = categories
                 self.fields['alternate_category'].queryset = categories
+
 
 class ConfirmationForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -269,16 +305,21 @@ class ConfirmationForm(forms.Form):
         super().__init__(*args, **kwargs)
     confirmation = forms.BooleanField(label="Confirm", required=True)
 
+
 class ChatOverrideForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.wizard_storage = kwargs.pop('wizard_storage', None)
         super().__init__(*args, **kwargs)
+
     class Meta:
         model = ChatSetting
         fields = ['override_chat_id', 'chat_id']
-        
+
+
 class LeadSearchForm(forms.Form):
-    query = forms.CharField(label='', widget=forms.TextInput(attrs={'placeholder': 'Search leads...'}), required=False)
+    query = forms.CharField(label='', widget=forms.TextInput(
+        attrs={'placeholder': 'Search leads...'}), required=False)
+
 
 class SaleModelForm(forms.ModelForm):
     jalali_date = JalaliDateField(
@@ -290,13 +331,10 @@ class SaleModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(SaleModelForm, self).__init__(*args, **kwargs)
         if self.instance and self.instance.pk and self.instance.date:
-            # Convert the instance's Gregorian date to Jalali
-            # Make sure to use jdatetime.date for conversion
             jalali_date = jdatetime.date.fromgregorian(date=self.instance.date)
             self.initial['jalali_date'] = jalali_date.strftime('%Y-%m-%d')
-
-        self.fields['jalali_date'] = JalaliDateField(widget=AdminJalaliDateWidget(), required=False, label=_('Date'))
-        
+        self.fields['jalali_date'] = JalaliDateField(
+            widget=AdminJalaliDateWidget(), required=False, label=_('Date'))
 
     class Meta:
         model = Sale
@@ -306,18 +344,17 @@ class SaleModelForm(forms.ModelForm):
     def clean_jalali_date(self):
         jalali_date = self.cleaned_data.get('jalali_date')
 
-        # Ensure that jalali_date is a string before attempting conversion
         if isinstance(jalali_date, datetime.date):
             return jalali_date
 
         try:
-            parsed_jalali_date = jdatetime.datetime.strptime(jalali_date, '%Y-%m-%d').date()
+            parsed_jalali_date = jdatetime.datetime.strptime(
+                jalali_date, '%Y-%m-%d').date()
             gregorian_date = parsed_jalali_date.togregorian()
         except ValueError:
             raise forms.ValidationError("Invalid date format.")
 
         return gregorian_date
-
 
     def save(self, commit=True):
         instance = super(SaleModelForm, self).save(commit=False)
@@ -326,10 +363,12 @@ class SaleModelForm(forms.ModelForm):
             instance.save()
         return instance
 
+
 class SourceModelForm(forms.ModelForm):
     class Meta:
         model = Source
         fields = ("name",)
+
 
 class TeamModelForm(forms.ModelForm):
     class Meta:
@@ -342,13 +381,13 @@ class TeamModelForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         super(TeamModelForm, self).__init__(*args, **kwargs)
         # Filter the agents based on the organization of the logged-in user
-        self.fields['members'].queryset = Agent.objects.filter(organisation=user.userprofile)
+        self.fields['members'].queryset = Agent.objects.filter(
+            organisation=user.userprofile)
 
 
 class UserUpdateForm(forms.ModelForm):
     telegram_token = forms.CharField(required=False, max_length=500)
     chat_id = forms.CharField(required=False, max_length=255)
-
 
     class Meta:
         model = User
@@ -384,6 +423,7 @@ class UserUpdateForm(forms.ModelForm):
 
         return user
 
+
 class PasswordChangeForm(AuthPasswordChangeForm):
     class Meta:
         model = User
@@ -393,28 +433,35 @@ class PasswordChangeForm(AuthPasswordChangeForm):
         super(PasswordChangeForm, self).__init__(*args, **kwargs)
         for field_name in self.fields:
             self.fields[field_name].help_text = None
-            self.fields[field_name].required = False  # Making fields not required
+            # Making fields not required
+            self.fields[field_name].required = False
 
     def clean(self):
         cleaned_data = super().clean()
         # Check if any of the password fields are filled out
-        fields_filled = [cleaned_data.get('old_password'), cleaned_data.get('new_password1'), cleaned_data.get('new_password2')]
+        fields_filled = [cleaned_data.get('old_password'), cleaned_data.get(
+            'new_password1'), cleaned_data.get('new_password2')]
         if any(fields_filled) and not all(fields_filled):
-            raise forms.ValidationError(_('All password fields are required to change your password.'))
-        return cleaned_data  
-    
+            raise forms.ValidationError(
+                _('All password fields are required to change your password.'))
+        return cleaned_data
+
+
 class AssignLeadsForm(forms.Form):
 
     ORDER_CHOICES = [
         ('asc', 'Ascending'),
         ('desc', 'Descending')
     ]
-    
-    agent = forms.ModelChoiceField(queryset=Agent.objects.none(), label=_("Agent to assign"))
-    order_by_date = forms.ChoiceField(choices=ORDER_CHOICES, label=_("Order by Date"), required=False)
+
+    agent = forms.ModelChoiceField(
+        queryset=Agent.objects.none(), label=_("Agent to assign"))
+    order_by_date = forms.ChoiceField(
+        choices=ORDER_CHOICES, label=_("Order by Date"), required=False)
     # Other fields for categories will be dynamically added in the view
 
     def __init__(self, user, *args, **kwargs):
         super(AssignLeadsForm, self).__init__(*args, **kwargs)
         # Filter the agents based on the organization of the logged-in user
-        self.fields['agent'].queryset = Agent.objects.filter(organisation=user.userprofile)
+        self.fields['agent'].queryset = Agent.objects.filter(
+            organisation=user.userprofile)

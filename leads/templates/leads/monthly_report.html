@@ -1,0 +1,539 @@
+{% extends "base.html" %}
+{% load static %}
+{% load tailwind_filters %}
+{% load humanize %}
+{% load i18n %}
+
+{% block content %}
+
+<style>
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100px; /* Set height */
+    }
+    
+    .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border-left-color: #09f;
+        animation: spin 1s ease infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>    
+
+<div class="container mx-auto p-6 bg-white rounded-lg shadow">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Reports</h1>
+    <!-- Modal with full opacity -->
+    <div class="fixed inset-0 bg-black opacity-75 hidden" id="modalOverlay"></div>
+    <div class="fixed inset-0 flex items-center justify-center z-50 hidden" id="chartModal">
+        <div class="bg-white w-3/4 h-4/5 m-6 p-6 rounded shadow-lg overflow-auto relative text-center">
+            <h5 class="text-xl mb-4" id="chartTitle">Chart Title</h5>
+            <canvas class="m-6" id="myChart"></canvas>
+            <button class="mt-4 text-red-500 mx-auto" id="closeModal">Close</button>
+        </div>
+    </div>
+
+    <!-- Sales Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Daily Sales Card -->
+        <div class="border-2 border-gray-200 px-4 py-6 rounded-lg text-center">
+            <button class="btn btn-primary" id="showDailyModal">
+                <!-- SVG for Daily Sales -->
+                <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">
+                    <path stroke="none" d="M0 0h24v24H0z"/>
+                    <rect x="4" y="5" width="16" height="16" rx="2" />
+                    <line x1="16" y1="3" x2="16" y2="7" />
+                    <line x1="8" y1="3" x2="8" y2="7" />
+                    <line x1="4" y1="11" x2="20" y2="11" />
+                    <rect x="8" y="15" width="2" height="2" />
+                </svg>
+            </button>
+            <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.daily_sales|intcomma }}</h2>
+            <p class="leading-relaxed">{% trans "Daily Sales" %}</p>
+        </div>
+        <!-- Weekly Sales Card -->
+        <div class="border-2 border-gray-200 px-4 py-6 rounded-lg text-center">
+            <button class="btn btn-primary" id="showWeeklyModal">
+                <!-- SVG for Weekly Sales -->
+                <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+            </button>
+            <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.weekly_sales|intcomma }}</h2>
+            <p class="leading-relaxed">{% trans "Weekly Sales" %}</p>
+        </div>
+        <!-- Monthly Sales Card -->
+        <div class="border-2 border-gray-200 px-4 py-6 rounded-lg text-center">
+            <button class="btn btn-primary" id="showMonthlyModal">
+                <!-- SVG for Monthly Sales -->
+                <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">
+                    <polyline points="3 17 9 11 13 15 21 7" />
+                    <polyline points="14 7 21 7 21 14" />
+                </svg>
+            </button>
+            <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.monthly_sales|intcomma }}</h2>
+            <p class="leading-relaxed">{% trans "Monthly Sales" %}</p>
+        </div>
+        <!-- Yearly Sales Card -->
+        <div class="border-2 border-gray-200 px-4 py-6 rounded-lg text-center">
+            <button class="btn btn-primary" id="showYearlyModal">
+                <!-- SVG for Yearly Sales -->
+                <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="text-indigo-500 w-12 h-12 mb-3 inline-block" viewBox="0 0 24 24">
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+            </button>
+            <h2 class="title-font font-medium text-3xl text-gray-900">{{ sales_data.total_sales|intcomma }}</h2>
+            <p class="leading-relaxed">{% trans "Yearly Sales" %}</p>
+        </div>
+    </div>
+    
+        
+    <div class="mx-6 my-6">
+        {% if request.user.is_organisor %}
+            <h2 class="text-xl font-bold mb-3">{% trans "Monthly Sale Performance" %}</h2>
+        {% elif request.user.is_agent %}
+            <h2 class="text-xl font-bold mb-3">{% trans "Monthly Agent Performance" %}</h2>
+        {% endif %}
+        <div class="relative pt-1">
+            <div class="flex mb-2 items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                        {{ agents_data.percentage|floatformat:2 }} %
+                    </span>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-semibold inline-block text-blue-600">
+                        {{ agents_data.converted_leads }} / {{ agents_data.total_leads }}
+                    </span>
+                </div>
+            </div>
+            <div class="w-full h-2 bg-gray-300 rounded-full"> <!-- The overall bar with a gray background -->
+                <div style="width:{{ agents_data.percentage|default:0 }}%" class="h-full text-center text-xs text-white bg-blue-600 rounded-full p-1"> 
+                    <!-- The filled part of the bar with a blue background. The width is set dynamically based on the percentage. -->
+                    
+                </div>
+            </div>
+        </div>
+        </div>
+        <hr/>
+        <div class="mx-6 my-6">
+        {% if request.user.is_organisor %}
+            <h2 class="text-xl font-bold mb-3">{% trans "Overall Sale Performance" %}</h2>
+        {% elif request.user.is_agent %}
+            <h2 class="text-xl font-bold mb-3">{% trans "Overall Agent Performance" %}</h2>
+        {% endif %}
+        <div class="relative pt-1">
+            <div class="flex mb-2 items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-yellow-500 bg-yellow-200">
+                        {{ agents_data.percentage_overall|floatformat:2 }} %
+                    </span>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-semibold inline-block text-yellow-500">
+                        {{ agents_data.converted_leads_overall }} / {{ agents_data.total_leads_overall }}
+                    </span>
+                </div>
+            </div>
+            <div class="w-full h-2 bg-gray-300 rounded-full"> <!-- The overall bar with a gray background -->
+                <div style="width:{{ agents_data.percentage_overall|default:0 }}%" class="h-full text-center text-xs text-white bg-yellow-500 rounded-full p-1"> 
+                    <!-- The filled part of the bar with a blue background. The width is set dynamically based on the percentage_overall. -->
+                    
+                </div>
+            </div>
+        </div>
+        </div>
+        <!-- Year and Month Selection Form -->
+        <div class="bg-gray-100 p-6 rounded-lg shadow mb-6">
+            <form method="get" class="flex flex-wrap justify-center items-end gap-6">
+                <!-- Year Dropdown -->
+                <div class="w-full md:w-1/4 lg:w-1/6">
+                    <label for="year" class="block mb-2 text-md font-semibold text-gray-700">Select Year</label>
+                    <div class="relative">
+                        <select name="year" id="year" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:border-indigo-500">
+                            {% for year in years_range %}
+                                <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none">
+                            <svg class="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M5.5 7l4.5 4.5L14.5 7z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <!-- Month Dropdown -->
+                <div class="w-full md:w-1/4 lg:w-1/6">
+                    <label for="month" class="block mb-2 text-md font-semibold text-gray-700">Select Month</label>
+                    <div class="relative">
+                        <select name="month" id="month" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:border-indigo-500">
+                            {% for month in months_range %}
+                                <option value="{{ month }}" {% if month == selected_month %}selected{% endif %}>{{ month }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none">
+                            <svg class="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M5.5 7l4.5 4.5L14.5 7z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <!-- Submit Button -->
+                <div class="w-full md:w-1/4 lg:w-1/6">
+                    <button type="submit" class="w-full py-3 px-4 mt-1 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300">
+                        Show Report
+                    </button>
+                </div>
+            </form>
+        </div>
+        <style>
+            .custom-two-column {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        </style>
+        
+        <!-- Report Content -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Total Leads -->
+            <div class="bg-white p-6 rounded-lg shadow lg:col-span-1">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Total Leads</h3>
+                <p class="text-lg text-gray-600">{{ total_leads }}</p>
+            </div>
+            <!-- Converted Leads -->
+            <div class="bg-white p-6 rounded-lg shadow lg:col-span-1">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Converted Leads</h3>
+                <p class="text-lg text-gray-600">{{ converted_leads }}</p>
+            </div>
+            <!-- Conversion Rate -->
+            <div class="bg-white p-6 rounded-lg shadow lg:col-span-1">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Conversion Rate</h3>
+                <p class="text-lg text-gray-600">{{ conversion_rate|floatformat:2 }}</p>
+            </div>
+            <!-- Total Sales Value -->
+            <div class="bg-white p-6 rounded-lg shadow md:col-span-1 lg:col-span-1">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Total Sales Value</h3>
+                <p class="text-lg text-gray-600">{{ total_sales_value|intcomma }}</p>
+            </div>
+            <!-- Average Sale Value -->
+            <div class="bg-white p-6 rounded-lg shadow md:col-span-1 lg:col-span-1">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Average Sale Value</h3>
+                <p class="text-lg text-gray-600">{{ average_sale_value|floatformat:2|intcomma }}</p>
+            </div>
+            <!-- Additional Metrics... -->
+        </div>
+        <br>
+        <hr/>
+        <br>
+        {% if request.user.is_agent %}
+        {% comment %} <div class="chart-container" style="position: relative; height:40vh; width:80vw">
+            <canvas id="dailyPerformanceChart"></canvas>
+        </div> {% endcomment %}
+        {% elif request.user.is_organisor %}
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">Agent Performance</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full leading-normal">
+                    <thead class="sticky top-0 bg-white">
+                        <tr>
+                            <th rowspan="2">Agent Name</th>
+                            <th colspan="5">Total</th>
+                            <th colspan="5">Month</th>
+                        </tr>
+                        <tr>
+                            <!-- Headers for Total -->
+                            <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Total Leads
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Converted Leads
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Conversion Rate
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Modified Leads
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Modified Leads (%)
+                            </th>
+                            <!-- Headers for Month -->
+                            <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Total Leads
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Converted Leads
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Conversion Rate
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Modified Leads
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                                Modified Leads (%)
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="agent-performance-table-body">
+                        <div id="loading" class="loading-container">
+                            <div class="spinner"></div>
+                        </div>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        
+        
+
+
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                let currentChart = null;
+        
+                // Set up event listeners for modals
+                setupModalEventListeners();
+        
+                function setupModalEventListeners() {
+                    document.getElementById('showDailyModal')?.addEventListener('click', () => openModal('Daily Sales', 'daily_sales_chart/data/'));
+                    document.getElementById('showWeeklyModal')?.addEventListener('click', () => openModal('Weekly Sales', 'weekly_sales_chart/data/'));
+                    document.getElementById('showMonthlyModal')?.addEventListener('click', () => openModal('Monthly Sales', 'monthly_sales_chart/data/'));
+                    document.getElementById('showYearlyModal')?.addEventListener('click', () => openModal('Yearly Sales', 'yearly_sales_chart/data/'));
+                    document.getElementById('modalOverlay')?.addEventListener('click', closeAllModals);
+                    
+                    // Close modal when clicking outside the chart area
+                    document.getElementById('chartModal')?.addEventListener('click', function(event) {
+                        if (event.target.id === 'chartModal' || event.target.id === 'closeModal') {
+                            closeAllModals();
+                        }
+                    });
+        
+                    // Prevent modal from closing when clicking inside the chart content
+                    document.querySelector('#chartModal > div')?.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                    });
+                }
+        
+                function openModal(title, fetchUrl) {
+                    const chartTitle = document.getElementById('chartTitle');
+                    const modal = document.getElementById('chartModal');
+                    const overlay = document.getElementById('modalOverlay');
+        
+                    if (chartTitle && modal && overlay) {
+                        chartTitle.textContent = title;
+                        modal.classList.remove('hidden');
+                        overlay.classList.remove('hidden');
+                        loadChart(fetchUrl);
+                    } else {
+                        console.error('Modal elements not found');
+                    }
+                }
+        
+                function loadChart(fetchUrl) {
+                    const fullUrl = addQueryParamsToUrl(fetchUrl);
+                    fetch(fullUrl)
+                        .then(response => response.json())
+                        .then(data => renderChart(data))
+                        .catch(error => console.error('Error loading chart data:', error));
+                }
+        
+                function addQueryParamsToUrl(url) {
+                    const params = new URLSearchParams(window.location.search);
+                    return url + '?' + params.toString();
+                }
+        
+                function renderChart(data) {
+                    const ctx = document.getElementById('myChart');
+                    if (ctx) {
+                        if (currentChart) {
+                            currentChart.destroy();
+                        }
+                        currentChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: data.labels,
+                                datasets: [{
+                                    label: 'Sales Data',
+                                    data: data.datasets[0].data,
+                                    borderColor: 'rgba(99, 102, 241,0.8)',
+                                    backgroundColor: 'rgba(99, 102, 241,0.8)'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false
+                            }
+                        });
+                    } else {
+                        console.error('Chart canvas not found');
+                    }
+                }
+        
+                function closeAllModals() {
+                    const modal = document.getElementById('chartModal');
+                    const overlay = document.getElementById('modalOverlay');
+        
+                    if (modal && overlay) {
+                        modal.classList.add('hidden');
+                        overlay.classList.add('hidden');
+        
+                        if (currentChart) {
+                            currentChart.destroy();
+                            currentChart = null;
+                        }
+                    }
+                }
+            });
+
+        </script>
+        {% if request.user.is_organisor %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const yearSelect = document.getElementById('year');
+                const monthSelect = document.getElementById('month');
+            
+                function loadData() {
+                    showLoading();
+                    const selectedYear = yearSelect.value;
+                    const selectedMonth = monthSelect.value;
+            
+                    fetch(`/api/agent_performance/?year=${selectedYear}&month=${selectedMonth}`)
+                        .then(response => response.json())
+                        .then(data => updateAgentPerformanceTable(data))
+                        .catch(error => console.error('Error loading agent performance data:', error));
+                }
+            
+                function updateAgentPerformanceTable(data) {
+                    const tableBody = document.getElementById('agent-performance-table-body');
+                    tableBody.innerHTML = '';  // Clear existing content
+            
+                    data.slice(1).forEach(agent => {
+                        const row = `
+                            <tr class="hover:bg-gray-100 even:bg-gray-200">
+                                <td class="px-5 py-5 border-b border-gray-200 text-xs text-center"><p class="text-gray-900 whitespace-no-wrap">${agent.agent_name}</p></td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-xs text-center"><p class="text-gray-900 whitespace-no-wrap">${agent.total_leads}</p></td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-xs text-center"><p class="text-gray-900 whitespace-no-wrap">${agent.total_converted_leads}</p></td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-xs text-center"><p class="text-gray-900 whitespace-no-wrap">${(agent.conversion_rate || 0).toFixed(2)}%</p></td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-xs text-center"><p class="text-gray-900 whitespace-no-wrap">${agent.total_modified_leads}</p></td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-xs text-center"><p class="text-gray-900 whitespace-no-wrap">${(agent.total_modified_percentage || 0).toFixed(2)}%</p></td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-xs text-center"><p class="text-gray-900 whitespace-no-wrap">${agent.monthly_leads}</p></td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-xs text-center"><p class="text-gray-900 whitespace-no-wrap">${agent.monthly_converted_leads}</p></td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-xs text-center"><p class="text-gray-900 whitespace-no-wrap">${(agent.monthly_conversion_rate || 0).toFixed(2)}%</p></td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-xs text-center"><p class="text-gray-900 whitespace-no-wrap">${agent.monthly_modified_leads}</p></td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-xs text-center"><p class="text-gray-900 whitespace-no-wrap">${(agent.monthly_modified_percentage || 0).toFixed(2)}%</p></td>
+                            </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+
+                    hideLoading();
+                }
+            
+                // Load data when the page loads
+                loadData();
+            
+                // Reload data when year or month selection changes
+                yearSelect.addEventListener('change', loadData);
+                monthSelect.addEventListener('change', loadData);
+            });
+
+            function showLoading() {
+                const loadingElement = document.getElementById('loading');
+                if (loadingElement) {
+                    loadingElement.style.display = 'flex';
+                }
+            };
+            
+            function hideLoading() {
+                const loadingElement = document.getElementById('loading');
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+            };
+        </script>
+            {% elif request.user.is_agent %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const ctx = document.getElementById('dailyPerformanceChart').getContext('2d');
+                const yearSelect = document.getElementById('year');
+                const monthSelect = document.getElementById('month');
+                let chart = new Chart(ctx, {
+                    // The type of chart we want to create
+                    type: 'line',
+            
+                    // The data for our dataset
+                    data: {
+                        labels: [], // Dates will be added here
+                        datasets: [{
+                            label: 'Leads',
+                            backgroundColor: 'rgb(255, 99, 132)',
+                            borderColor: 'rgb(255, 99, 132)',
+                            data: [], // Leads data will be added here
+                        }, {
+                            label: 'Sales',
+                            backgroundColor: 'rgb(54, 162, 235)',
+                            borderColor: 'rgb(54, 162, 235)',
+                            data: [], // Sales data will be added here
+                        }]
+                    },
+            
+                    // Configuration options
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            
+                function fetchAndUpdateChart() {
+                    const selectedYear = yearSelect.value;
+                    const selectedMonth = monthSelect.value;
+            
+                    fetch(`/api/daily_performance/?year=${selectedYear}&month=${selectedMonth}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            // Process and update chart data
+                            console.log(data)
+                            chart.data.labels = data.map(item => item.date);
+                            chart.data.datasets[0].data = data.map(item => item.leads);
+                            chart.data.datasets[1].data = data.map(item => item.sales);
+                            chart.update();
+                        })
+                        .catch(error => console.error('Error:', error));
+                }
+            
+                // Function to update chart when year or month selection changes
+                yearSelect.addEventListener('change', fetchAndUpdateChart);
+                monthSelect.addEventListener('change', fetchAndUpdateChart);
+            
+                // Initial call to fetch data
+                fetchAndUpdateChart();
+            });
+            
+            
+        </script>
+        {% endif %}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+        
+        
+    
+{% endblock content %}
+
