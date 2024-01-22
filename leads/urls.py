@@ -64,7 +64,7 @@ from .views import (
     SyncLeadsToBankView,
     LeadEditAPIView,
     MonthlyReportView,
-    Register,
+    RegisterAgentCreateView,
     RecentSalesView,
     CustomLoginView,
 )
