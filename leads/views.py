@@ -47,7 +47,7 @@ from .forms import (
     PasswordChangeForm,
     LeadImportFormAgents,
     AssignLeadsForm,
-    RegisterAgentForm,
+    RegisterAgentModelForm,
 )
 from .serializers import (
     LeadSerializer,
@@ -4756,14 +4756,46 @@ class MonthlyReportView(LoginRequiredMixin, generic.TemplateView):
         return context
 
 
+# class RegisterAgentCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
+#     template_name = "leads/register_agent_create.html"
+#     form_class = RegisterAgentForm
+#     success_url = reverse_lazy("agents:agent-list")  # Replace with your success URL
+
+#     def form_valid(self, form):
+#         # You can add additional logic here if needed
+#         return super().form_valid(form)
+
+
 class RegisterAgentCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
     template_name = "leads/register_agent_create.html"
-    form_class = RegisterAgentForm
-    success_url = reverse_lazy("agents:agent-list")  # Replace with your success URL
+    form_class = RegisterAgentModelForm
+
+    def get_success_url(self):
+        return reverse("agents:agent-list")
 
     def form_valid(self, form):
-        # You can add additional logic here if needed
-        return super().form_valid(form)
+        user = form.save(commit=False)
+        user.username = form.cleaned_data["username"]
+        user.is_agent = False
+        user.is_organisor = False
+        user.is_register_agent = True
+        user.is_team_user = False
+        user.set_password(f"{user.username}123456")
+        user.save()
+
+        Agent.objects.create(user=user, organisation=self.request.user.userprofile)
+        # send_mail(
+        #     subject="You are invited to be an agent",
+        #     message="You were added as an agent on DJCRM. Please come login to start working.",
+        #     from_email="admin@test.com",
+        #     recipient_list=[user.email],
+        # )
+        return super(RegisterAgentCreateView, self).form_valid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class RecentSalesView(LoginRequiredMixin, generic.ListView):
@@ -4795,6 +4827,10 @@ class RecentSalesView(LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         # Get the selected or default date
+        user = self.request.user
+        print(user)
+        organisation = user.agent.organisation
+        print(organisation)
         selected_year = int(self.request.GET.get("year", jdatetime.date.today().year))
         selected_month = int(
             self.request.GET.get("month", jdatetime.date.today().month)
@@ -4810,7 +4846,9 @@ class RecentSalesView(LoginRequiredMixin, generic.ListView):
         print(f"Selected Jalali Date: {selected_year}-{selected_month}-{selected_day}")
         print(f"Converted Gregorian Date: {gregorian_date}")
 
-        return Sale.objects.filter(date__date=gregorian_date).order_by("-date")
+        return Sale.objects.filter(
+            organisation=organisation, date__date=gregorian_date
+        ).order_by("-date")
 
 
 # TODO --->

@@ -12,6 +12,7 @@ from .models import (
     Source,
     Team,
     ChatSetting,
+    UserProfile,
 )
 from jalali_date.fields import JalaliDateField
 from jalali_date.widgets import AdminJalaliDateWidget
@@ -495,25 +496,29 @@ class AssignLeadsForm(forms.Form):
         )
 
 
-class RegisterAgentForm(UserCreationForm):
+class RegisterAgentModelForm(forms.ModelForm):
+    chat_id = forms.IntegerField(required=False)
+
     class Meta:
         model = User
-        fields = UserCreationForm.Meta.fields + (
-            "alt_name",
-            "is_register_agent",
-        )
+        fields = ("username", "chat_id")
 
-    def __init__(self, *args, **kwargs):
-        super(RegisterAgentForm, self).__init__(*args, **kwargs)
-        self.fields["alt_name"].required = True
-        self.fields["is_register_agent"].initial = True
+    def __init__(self, user, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        organisation = user.userprofile
+
+        # Filter the teams based on the organization
+        if self.instance and hasattr(self.instance, "agent"):
+            self.fields["chat_id"].initial = self.instance.agent.chat_id
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.is_register_agent = True
-        user.is_agent = False  # Assuming registered agents are not regular agents
-        user.is_organisor = False  # Assuming registered agents are not organisors
 
         if commit:
             user.save()
+
+            # Ensure an Agent instance is associated with the user
+            agent, created = Agent.objects.get_or_create(user=user)
+            agent.chat_id = self.cleaned_data.get("chat_id")
+            agent.save()
         return user

@@ -398,3 +398,20 @@ class TelegramMessage(models.Model):
 
     def __str__(self):
         return f"Message to {self.chat_name} ({self.chat_id}) on {self.sent_date}"
+
+
+class RegisterAgent(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name=_("User"))
+    organisation = models.ForeignKey(
+        UserProfile, on_delete=models.CASCADE, verbose_name=_("Organisation")
+    )
+    chat_id = models.CharField(
+        max_length=50, unique=True, null=True, blank=True, verbose_name=_("Chat ID")
+    )
+
+    class Meta:
+        verbose_name = _("Register Agent")
+        verbose_name_plural = _("Register Agents")
+
+    def __str__(self):
+        return f"{self.user.username}, {self.user.userprofile}"
