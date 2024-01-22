@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% load humanize %}
+{% block content %}
+  <div class="container mx-auto p-4">
+    <h1 class="text-2xl font-semibold mb-4">Recent Sales</h1>
+
+    <form method="get" action="." class="mb-8 flex justify-center items-center">
+        <div class="flex flex-wrap gap-4">
+        <div>
+          <label for="year" class="block text-sm font-medium text-gray-700">Year:</label>
+          <select id="year" name="year" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            {% for year in years %}
+            <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="month" class="block text-sm font-medium text-gray-700">Month:</label>
+          <select id="month" name="month" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            {% for month in months %}
+            <option value="{{ month.0 }}" {% if selected_month == month.0 %}selected{% endif %}>{{ month.1 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="day" class="block text-sm font-medium text-gray-700">Day:</label>
+          <select id="day" name="day" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            {% for day in days %}
+            <option value="{{ day }}" {% if selected_day == day %}selected{% endif %}>{{ day }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="mt-7 py-1 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+          Filter
+        </button>
+      </div>
+    </form>
+
+    <div class="overflow-x-auto shadow-md sm:rounded-lg">
+        <table class="min-w-full text-sm divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Added</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Assigned</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sale Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sale</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for sale in sales %}
+                <tr class="{% cycle 'bg-white' 'bg-gray-50' %} hover:bg-gray-100">
+                    <td class="px-6 py-4 whitespace-nowrap">{{ sale.lead.agent.user.alt_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ sale.lead.phone_number }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ sale.lead.first_name }} {{ sale.lead.last_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ sale.lead.date_added|to_jalali }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ sale.lead.date_assigned|to_jalali }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ sale.lead.city }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ sale.date|to_jalali }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ sale.amount|intcomma }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ sale.lead.total_sale|intcomma }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="px-6 py-4 text-center text-gray-500">No recent sales.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+  </div>
+{% endblock %}
