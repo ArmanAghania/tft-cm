@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="csv_file" accept=".csv">
+    <input type="submit" value="Upload and Assign Leads">
+</form>
+
+{% if formset %}
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div>
+                <h3>Lead Phone: {{ form.initial.phone_number }}</h3>
+                {{ form.agent }}
+                {{ form.lead_id }}
+            </div>
+        {% endfor %}
+        <input type="submit" value="Update Leads">
+    </form>
+{% endif %}
+{% endblock %}

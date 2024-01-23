@@ -67,6 +67,7 @@ from .views import (
     RegisterAgentCreateView,
     RecentSalesView,
     CustomLoginView,
+    CSVUploadAndAssignView,
 )
 from rest_framework.routers import DefaultRouter
 
@@ -236,6 +237,11 @@ urlpatterns = [
     ),
     path("recent-sales/", RecentSalesView.as_view(), name="recent-sales"),
     path("login/", CustomLoginView.as_view(), name="login"),
+    path(
+        "assign-foreign-csv/",
+        CSVUploadAndAssignView.as_view(),
+        name="assign-foreign-leads",
+    ),
     # APIs
     path("api/lead/<int:pk>/edit/", LeadEditAPIView.as_view(), name="api-lead-edit"),
 ]

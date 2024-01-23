@@ -522,3 +522,17 @@ class RegisterAgentModelForm(forms.ModelForm):
             agent.chat_id = self.cleaned_data.get("chat_id")
             agent.save()
         return user
+
+
+class LeadAgentForm(forms.Form):
+    lead_id = forms.IntegerField(widget=forms.HiddenInput())
+    agent = forms.ModelChoiceField(queryset=Agent.objects.none(), required=False)
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+        if user:
+            organisation = user.userprofile
+            self.fields["agent"].queryset = Agent.objects.filter(
+                organisation=organisation
+            )

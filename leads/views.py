@@ -48,6 +48,7 @@ from .forms import (
     LeadImportFormAgents,
     AssignLeadsForm,
     RegisterAgentModelForm,
+    LeadAgentForm,
 )
 from .serializers import (
     LeadSerializer,
@@ -66,7 +67,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.utils import timezone
 from .filters import LeadFilter
 from django.urls import reverse_lazy
-from django.forms import modelformset_factory
+from django.forms import modelformset_factory, formset_factory
 from chartjs.views.lines import BaseLineChartView
 from dateutil.relativedelta import relativedelta
 from extensions.utils import jalali_converter
@@ -118,8 +119,9 @@ from django.contrib.auth.views import LoginView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets, status
+import io
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 # CRUD+L - Create, Retrieve, Update and Delete + List
 
@@ -4849,6 +4851,101 @@ class RecentSalesView(LoginRequiredMixin, generic.ListView):
         return Sale.objects.filter(
             organisation=organisation, date__date=gregorian_date
         ).order_by("-date")
+
+
+class CSVUploadAndAssignView(OrganisorAndLoginRequiredMixin, generic.FormView):
+    template_name = "leads/upload_and_assign.html"
+    form_class = formset_factory(LeadAgentForm, extra=0)
+
+    def get(self, request, *args, **kwargs):
+        # Clear any existing session data related to leads
+        if "leads_data" in request.session:
+            del request.session["leads_data"]
+
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if "csv_file" in request.FILES:
+            csv_file = request.FILES["csv_file"]
+            data_set = csv_file.read().decode("utf-8")
+            io_string = io.StringIO(data_set)
+            reader = csv.reader(io_string, delimiter=",", quotechar='"')
+
+            leads_data = []
+            for row in reader:
+                phone_number = row[0]
+                try:
+                    lead = Lead.objects.get(
+                        phone_number=phone_number, organisation=request.user.userprofile
+                    )
+                    if lead.agent:
+                        leads_data.append(
+                            {
+                                "lead_id": lead.id,
+                                "phone_number": phone_number,
+                                "agent": lead.agent,
+                            }
+                        )
+                    else:
+                        leads_data.append(
+                            {"lead_id": lead.id, "phone_number": phone_number}
+                        )
+                except Lead.DoesNotExist:
+                    logger.info(f"Lead not found for phone number: {phone_number}")
+                    continue
+
+            if leads_data:
+                LeadAgentFormSet = formset_factory(LeadAgentForm, extra=0)
+                formset = LeadAgentFormSet(
+                    initial=leads_data, form_kwargs={"user": request.user}
+                )
+                return self.render_to_response(self.get_context_data(formset=formset))
+            else:
+                logger.info("No matching leads found in the uploaded CSV.")
+                # You might want to handle this case by showing a message to the user.
+        else:
+            logger.error("CSV file not found in the request.")
+            # Handle the case when no file is uploaded
+
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, formset):
+        user = self.request.user
+        organisation = user.userprofile
+
+        for form in formset:
+            if form.is_valid() and form.cleaned_data:
+                lead_id = form.cleaned_data.get("lead_id")
+                agent = form.cleaned_data.get("agent")
+
+                # Update the lead with the selected agent
+                try:
+                    lead = Lead.objects.get(id=lead_id, organisation=organisation)
+                    if agent:
+                        lead.agent = agent
+                        lead.date_assigned = datetime.now()
+                        lead.save()
+
+                        chat_id = "-1001707390535"
+                        message = f"{lead.phone_number}, {lead.category}"
+                        notify_background_messages(
+                            chat_id, message, organisation_id=user.userprofile.id
+                        )
+
+                except Lead.DoesNotExist:
+                    # Handle the case where the lead does not exist
+                    print(f"Lead does not exist: {lead_id}")
+                    continue
+
+        return redirect(self.get_success_url())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["form_kwargs"] = {"user": self.request.user}
+        return kwargs
+
+    def get_success_url(self):
+        return reverse("leads:lead-list")
 
 
 # TODO --->
