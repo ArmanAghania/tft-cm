@@ -4926,7 +4926,11 @@ class CSVUploadAndAssignView(OrganisorAndLoginRequiredMixin, generic.FormView):
                         lead.date_assigned = datetime.now()
                         lead.save()
 
-                        chat_id = "-1001707390535"
+                        chat_id = (
+                            lead.agent.chat_id
+                            if lead.agent.chat_id
+                            else "-1001707390535"
+                        )
                         message = f"{lead.phone_number}, {lead.category}"
                         notify_background_messages(
                             chat_id, message, organisation_id=user.userprofile.id
@@ -4961,10 +4965,10 @@ Send Distribution Report to telegram
 Filter Options Redesign
 Add Instagram Admins account to add numbers
 Add Image Processor
-Have a system for foreign numbers
 
 
 
+### Have a system for foreign numbers ### --> Done
 ### Dashboard for Register Agent to see sales registered to a number ### --> Done
 ### Have a Better Navbar (Use Daisy UI) ### --> Done
 ### Remove 0.00 from Add Sale ### --> Done
